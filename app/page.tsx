@@ -1,6 +1,4 @@
-import { BottomBar } from "components/bottom-bar";
-import { Footer } from "components/footer";
-import { ScrollStage } from "components/scroll-stage";
+import { HomeScene } from "components/home-scene";
 import { getCollectionProducts, getProducts } from "lib/shopify";
 
 export const metadata = {
@@ -18,11 +16,5 @@ export default async function HomePage() {
       items.length > 0 ? items : getProducts({}).catch(() => []),
     );
 
-  return (
-    <>
-      <ScrollStage products={products} />
-      <BottomBar count={products.length} />
-      <Footer />
-    </>
-  );
+  return <HomeScene products={products} />;
 }

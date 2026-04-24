@@ -1,0 +1,21 @@
+/* Gives the page ~100dvh of scrollable distance (200dvh total - 100dvh viewport) */
+.spacer {
+  height: 200dvh;
+  pointer-events: none;
+}
+
+/* Main canvas: fixed behind everything, never moves */
+.mainFixed {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Footer wrapper: fixed to viewport bottom, slides up on scroll */
+.footerSlider {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}

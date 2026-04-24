@@ -1,15 +1,10 @@
-/* ── Scroll driver — provides scroll height so footer reveals naturally ── */
-.scrollDriver {
-  height: 200dvh;
-}
-
-/* ── Sticky canvas — stays pinned at top while user scrolls ── */
-.sticky {
-  position: sticky;
-  top: 0;
-  height: 100dvh;
-  overflow: hidden;
+/* ── Stage fills the fixed parent ── */
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
   background: var(--color-background);
+  overflow: hidden;
 }
 
 /* ── Collection title overlay — top-left ── */
@@ -63,74 +58,73 @@
   color: var(--color-off-black);
 }
 
-/* ── Large product figure — centered ── */
-.figure {
+/* ── Figures row — horizontal scroll strip ── */
+.figuresRow {
+  position: absolute;
+  top: 28dvh;
+  bottom: calc(var(--grid-margin) * 8);
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  padding: 0 var(--grid-margin);
+  gap: 0;
+}
+
+.figuresRow::-webkit-scrollbar {
+  display: none;
+}
+
+.figureSlot {
+  flex: 0 0 auto;
+  width: calc(100% / 10);
+  min-width: 80rem;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* ── Full-screen detail overlay ── */
+.detailView {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: calc(var(--grid-margin) * 5) var(--grid-margin)
-    calc(var(--grid-margin) * 5);
+  z-index: 5;
+  pointer-events: none; /* individual children opt-in */
 }
 
-.figure > * {
-  width: min(60vw, 700rem);
-  height: 75dvh;
-}
-
-/* ── Prev/next nav — bottom center ── */
-.nav {
+/* Selected product: fills full stage */
+.detailMain {
   position: absolute;
-  bottom: calc(var(--grid-margin) * 5);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 24rem;
+  inset: 0;
+  z-index: 1;
+  cursor: default;
+  pointer-events: auto;
 }
 
-.navBtn {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-off-black);
-  background: var(--color-inner-background);
-  border: var(--border-size) solid var(--color-divider);
-  border-radius: var(--border-radius);
-  padding: 6rem 12rem;
+/* Adjacent product: peek from edge */
+.detailAdjacent {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16%;
+  z-index: 2;
+  overflow: hidden;
   cursor: pointer;
-  font-family: inherit;
-  transition: color var(--transition-base);
-  white-space: nowrap;
+  pointer-events: auto;
 }
 
-.navBtn:hover {
-  color: var(--color-medium-grey);
+.detailLeft {
+  left: 0;
 }
 
-.dots {
-  display: flex;
-  align-items: center;
-  gap: 6rem;
+.detailRight {
+  right: 0;
 }
 
-.dot {
-  width: 6rem;
-  height: 6rem;
-  border-radius: 50%;
-  border: var(--border-size) solid var(--color-off-black);
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: background var(--transition-base);
-}
-
-.dotActive {
-  background: var(--color-off-black);
-}
-
+/* ── Responsive ── */
 @media (max-width: 900px) {
   .titleOverlay {
     top: calc(var(--grid-margin) * 7);
@@ -140,12 +134,18 @@
     font-size: clamp(32rem, 10vw, 60rem);
   }
 
-  .figure > * {
-    width: min(90vw, 500rem);
-    height: 60dvh;
+  .figuresRow {
+    top: 30dvh;
+    bottom: calc(var(--grid-margin) * 3);
+    justify-content: flex-start;
   }
 
-  .nav {
-    bottom: calc(var(--grid-margin) * 4);
+  .figureSlot {
+    width: calc(100% / 4);
+    min-width: 80rem;
+  }
+
+  .detailAdjacent {
+    width: 10%;
   }
 }

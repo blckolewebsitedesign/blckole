@@ -1,27 +1,22 @@
 .wrapper {
   position: relative;
   display: block;
+  flex-shrink: 0;
   width: 100%;
   height: 100%;
-  cursor: pointer;
+  cursor: inherit; /* slot or detailAdjacent sets the cursor */
+  background: none;
+  border: none;
+  padding: 0;
 }
 
-.imageWrap {
+.mediaWrap {
   position: relative;
   width: 100%;
   height: 100%;
 }
 
-.img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: bottom center;
-}
-
-.video {
+.media {
   position: absolute;
   inset: 0;
   width: 100%;
