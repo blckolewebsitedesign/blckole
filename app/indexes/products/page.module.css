@@ -1,6 +1,6 @@
 .wrapper {
-  padding: calc(var(--header-height) + var(--grid-margin) * 2) var(--grid-margin)
-    var(--grid-margin);
+  padding: calc(var(--header-height) + var(--grid-margin) * 2)
+    var(--grid-margin) var(--grid-margin);
 }
 
 .grid {

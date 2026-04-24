@@ -1,76 +1,73 @@
 .wrapper {
-  padding: calc(var(--grid-margin) * 3) var(--grid-margin) var(--grid-margin);
-  border-top: var(--border-size) solid var(--color-divider);
+  position: relative;
+  background: var(--color-off-white);
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: calc(var(--grid-margin) * 2);
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--grid-margin) * 4) var(--grid-margin) var(--grid-margin);
 }
 
 .manifesto {
-  font-size: var(--font-size-heading);
-  font-weight: 700;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(28rem, 5vw, 60rem);
+  font-weight: 900;
   font-stretch: expanded;
   text-transform: uppercase;
-  line-height: 1;
+  line-height: 1.05;
   letter-spacing: -0.01em;
   text-align: center;
+  color: var(--color-off-black);
   max-width: 900rem;
-  margin: 0 auto;
 }
 
+/* Bottom links row — pinned to bottom */
 .links {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--grid-gutter);
-  padding-top: var(--grid-margin);
-  border-top: var(--border-size) solid var(--color-divider);
-}
-
-.linkGroup {
+  position: absolute;
+  bottom: var(--grid-margin);
+  left: var(--grid-margin);
+  right: var(--grid-margin);
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--gap);
 }
 
+.leftLinks {
+  display: flex;
+  align-items: center;
+  gap: 20rem;
+}
+
+.rightLinks {
+  display: flex;
+  align-items: center;
+  gap: 20rem;
+}
+
 .link {
-  display: inline-block;
   font-size: var(--font-size-tiny);
   letter-spacing: var(--letter-spacing-base);
   text-transform: uppercase;
   color: var(--color-off-black);
   text-decoration: none;
   transition: color var(--transition-base);
+  white-space: nowrap;
 }
 
 .link:hover {
   color: var(--color-medium-grey);
 }
 
-.rightGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--gap);
-}
-
-.copyright {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-medium-grey);
-  margin-top: auto;
-}
-
 @media (max-width: 900px) {
-  .links {
-    grid-template-columns: 1fr;
-  }
-
-  .rightGroup {
-    align-items: flex-start;
-  }
-
   .manifesto {
-    font-size: 20rem;
+    font-size: clamp(24rem, 6vw, 40rem);
+  }
+
+  .links {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

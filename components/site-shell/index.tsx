@@ -14,10 +14,11 @@ type NavItem = {
 
 type Props = {
   navItems: NavItem[];
+  collectionLabel?: string;
   children: React.ReactNode;
 };
 
-export function SiteShell({ navItems, children }: Props) {
+export function SiteShell({ navItems, collectionLabel, children }: Props) {
   const [cartOpen, setCartOpen] = useState(false);
   const { cart } = useCart();
   const cartCount = cart?.totalQuantity ?? 0;
@@ -28,11 +29,11 @@ export function SiteShell({ navItems, children }: Props) {
         navItems={navItems}
         cartCount={cartCount}
         onCartClick={() => setCartOpen((v) => !v)}
+        collectionLabel={collectionLabel}
       />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-      <main style={{ paddingTop: "var(--header-height)" }}>
-        <PageTransition>{children}</PageTransition>
-      </main>
+      {/* No paddingTop — header is a small panel overlay, not full-width */}
+      <PageTransition>{children}</PageTransition>
     </>
   );
 }

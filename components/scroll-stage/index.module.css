@@ -1,0 +1,151 @@
+/* ── Scroll driver — provides scroll height so footer reveals naturally ── */
+.scrollDriver {
+  height: 200dvh;
+}
+
+/* ── Sticky canvas — stays pinned at top while user scrolls ── */
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+/* ── Collection title overlay — top-left ── */
+.titleOverlay {
+  position: absolute;
+  top: calc(var(--grid-margin) * 5);
+  left: var(--grid-margin);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+  pointer-events: none;
+}
+
+.breadcrumb {
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--letter-spacing-base);
+  text-transform: uppercase;
+  color: var(--color-off-black);
+}
+
+.collectionTitle {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(40rem, 7vw, 90rem);
+  font-weight: 900;
+  font-stretch: expanded;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  color: var(--color-off-black);
+}
+
+.productsMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 8rem;
+  margin-top: 4rem;
+}
+
+.productsLabel {
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--letter-spacing-base);
+  text-transform: uppercase;
+  color: var(--color-medium-grey);
+}
+
+.productsCount {
+  font-size: var(--font-size-tiny);
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-base);
+  color: var(--color-off-black);
+}
+
+/* ── Large product figure — centered ── */
+.figure {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--grid-margin) * 5) var(--grid-margin)
+    calc(var(--grid-margin) * 5);
+}
+
+.figure > * {
+  width: min(60vw, 700rem);
+  height: 75dvh;
+}
+
+/* ── Prev/next nav — bottom center ── */
+.nav {
+  position: absolute;
+  bottom: calc(var(--grid-margin) * 5);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 24rem;
+}
+
+.navBtn {
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--letter-spacing-base);
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  background: var(--color-inner-background);
+  border: var(--border-size) solid var(--color-divider);
+  border-radius: var(--border-radius);
+  padding: 6rem 12rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color var(--transition-base);
+  white-space: nowrap;
+}
+
+.navBtn:hover {
+  color: var(--color-medium-grey);
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 6rem;
+}
+
+.dot {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: var(--border-size) solid var(--color-off-black);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--transition-base);
+}
+
+.dotActive {
+  background: var(--color-off-black);
+}
+
+@media (max-width: 900px) {
+  .titleOverlay {
+    top: calc(var(--grid-margin) * 7);
+  }
+
+  .collectionTitle {
+    font-size: clamp(32rem, 10vw, 60rem);
+  }
+
+  .figure > * {
+    width: min(90vw, 500rem);
+    height: 60dvh;
+  }
+
+  .nav {
+    bottom: calc(var(--grid-margin) * 4);
+  }
+}

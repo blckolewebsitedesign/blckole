@@ -88,14 +88,12 @@ export default async function ProductPage(props: {
                     name={opt.name}
                     values={opt.values.map((v) => ({
                       value: v,
-                      available:
-                        product.variants.some(
-                          (variant) =>
-                            variant.selectedOptions.some(
-                              (o) =>
-                                o.name === opt.name && o.value === v,
-                            ) && variant.availableForSale,
-                        ),
+                      available: product.variants.some(
+                        (variant) =>
+                          variant.selectedOptions.some(
+                            (o) => o.name === opt.name && o.value === v,
+                          ) && variant.availableForSale,
+                      ),
                     }))}
                   />
                 </Suspense>

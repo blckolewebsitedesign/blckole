@@ -1,0 +1,41 @@
+.wrapper {
+  position: fixed;
+  bottom: var(--grid-margin);
+  left: var(--grid-margin);
+  z-index: var(--z-bars);
+  background: var(--color-inner-background);
+  border: var(--border-size) solid var(--color-divider);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rem 12rem;
+  min-width: 220rem;
+  gap: 24rem;
+}
+
+.count {
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--letter-spacing-base);
+  text-transform: uppercase;
+  color: var(--color-off-black);
+}
+
+.discover {
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--letter-spacing-base);
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+.discover:hover {
+  color: var(--color-medium-grey);
+}
+
+@media (max-width: 900px) {
+  .wrapper {
+    min-width: 160rem;
+  }
+}

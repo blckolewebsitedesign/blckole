@@ -39,7 +39,11 @@ export function ProductCard({ product, index, priority = false }: Props) {
         ease: [0.23, 1, 0.32, 1],
       }}
     >
-      <Link href={`/products/${product.handle}`} className={styles.wrapper} ref={ref}>
+      <Link
+        href={`/products/${product.handle}`}
+        className={styles.wrapper}
+        ref={ref}
+      >
         <div className={styles.media}>
           {image ? (
             <Image

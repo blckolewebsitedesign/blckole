@@ -126,7 +126,9 @@
   background: none;
   cursor: pointer;
   color: var(--color-off-black);
-  transition: color var(--transition-base), border-color var(--transition-base);
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base);
 }
 
 .qtyBtn:hover {
@@ -199,7 +201,9 @@
   letter-spacing: var(--letter-spacing-base);
   text-transform: uppercase;
   cursor: pointer;
-  transition: background var(--transition-base), color var(--transition-base);
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
 }
 
 .checkoutBtn:hover {

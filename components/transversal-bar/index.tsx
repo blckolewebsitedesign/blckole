@@ -26,7 +26,11 @@ export function TransversalBar({ items }: Props) {
     if (!track) return;
     const itemEl = track.children[index] as HTMLElement;
     if (itemEl) {
-      itemEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+      itemEl.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start",
+      });
     }
     setActiveIndex(index);
   }, []);

@@ -17,10 +17,12 @@ There is no ESLint config — Prettier is the sole code style enforcer.
 ## Environment Variables
 
 Required (validated at startup by `lib/utils.ts:validateEnvironmentVariables()`):
+
 - `SHOPIFY_STORE_DOMAIN` — store subdomain, e.g. `mystore.myshopify.com`
 - `SHOPIFY_STOREFRONT_ACCESS_TOKEN` — Storefront API public token
 
 Optional:
+
 - `SHOPIFY_REVALIDATION_SECRET` — shared secret for the ISR webhook
 - `COMPANY_NAME` — footer copyright name
 - `SITE_NAME` — navbar/metadata site title
@@ -45,6 +47,7 @@ lib/type-guards.ts    # isShopifyError(), isObject()
 ### Shopify Integration (`lib/shopify/`)
 
 `index.ts` is the single entry point for all Shopify calls. It exports:
+
 - **Cart:** `createCart`, `getCart`, `addToCart`, `removeFromCart`, `updateCart`
 - **Products:** `getProduct`, `getProducts`, `getProductRecommendations`
 - **Collections:** `getCollection`, `getCollections`, `getCollectionProducts`
@@ -55,6 +58,7 @@ Every read function (except `getCart`) wraps its body in `"use cache"` with `cac
 Cache is invalidated on-demand by the Shopify webhook at `app/api/revalidate/route.ts`, which calls `revalidateTag(TAGS.collections)` or `revalidateTag(TAGS.products)` based on the webhook topic. The request must carry `?secret=SHOPIFY_REVALIDATION_SECRET`.
 
 GraphQL structure:
+
 - `queries/` — 10 query strings (cart, collection, product, menu, page variants)
 - `mutations/` — 4 mutation strings (create/add/edit/remove cart)
 - `fragments/` — 4 fragments (cart, product, image, seo)
@@ -63,15 +67,15 @@ Response data is reshaped in `index.ts` (e.g. `reshapeProduct`, `reshapeCart`) t
 
 ### Routing
 
-| Route | Data fetched |
-|---|---|
-| `/` | `getCollectionProducts('hidden-homepage-featured-items')`, `getCollectionProducts('hidden-homepage-carousel')` |
-| `/search?q=&sort=` | `getProducts({ query, sortKey, reverse })` |
-| `/search/[collection]` | `getCollection`, `getCollectionProducts` |
-| `/product/[handle]` | `getProduct(handle)`, `getProductRecommendations(id)` |
-| `/[page]` | `getPage(handle)` |
-| `/sitemap.xml` | `getCollections`, `getProducts`, `getPages` |
-| `/api/revalidate` | Webhook — calls `revalidateTag` |
+| Route                  | Data fetched                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `/`                    | `getCollectionProducts('hidden-homepage-featured-items')`, `getCollectionProducts('hidden-homepage-carousel')` |
+| `/search?q=&sort=`     | `getProducts({ query, sortKey, reverse })`                                                                     |
+| `/search/[collection]` | `getCollection`, `getCollectionProducts`                                                                       |
+| `/product/[handle]`    | `getProduct(handle)`, `getProductRecommendations(id)`                                                          |
+| `/[page]`              | `getPage(handle)`                                                                                              |
+| `/sitemap.xml`         | `getCollections`, `getProducts`, `getPages`                                                                    |
+| `/api/revalidate`      | Webhook — calls `revalidateTag`                                                                                |
 
 All dynamic product/collection/page routes call `notFound()` if the Shopify query returns null.
 
@@ -82,6 +86,7 @@ All dynamic product/collection/page routes call `notFound()` if the Shopify quer
 `useCart()` returns `{ cart, updateCartItem, addCartItem }`. Cart mutations use `useOptimistic` so the UI updates immediately while the server action runs.
 
 Server actions live in `components/cart/actions.ts` (`"use server"`):
+
 - `addItem(prevState, selectedVariantId)`
 - `removeItem(prevState, merchandiseId)`
 - `updateItemQuantity(prevState, { merchandiseId, quantity })`
@@ -93,6 +98,7 @@ Cart ID is persisted in a `cartId` cookie.
 ### Server vs Client Components
 
 **Client Components** (`"use client"`):
+
 - `cart/cart-context.tsx`, `cart/modal.tsx`, `cart/add-to-cart.tsx`, `cart/delete-item-button.tsx`, `cart/edit-item-quantity-button.tsx`
 - `product/gallery.tsx`, `product/variant-selector.tsx`
 - `layout/navbar/search.tsx`

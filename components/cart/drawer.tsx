@@ -4,11 +4,7 @@ import { useCart } from "components/cart/cart-context";
 import { Panel } from "components/panel";
 import Image from "next/image";
 import { useTransition } from "react";
-import {
-  redirectToCheckout,
-  removeItem,
-  updateItemQuantity,
-} from "./actions";
+import { redirectToCheckout, removeItem, updateItemQuantity } from "./actions";
 import styles from "./drawer.module.css";
 
 type Props = {
@@ -97,11 +93,7 @@ export function CartDrawer({ open, onClose }: Props) {
                       <button
                         className={styles.qtyBtn}
                         onClick={() =>
-                          handleQty(
-                            item.merchandise.id,
-                            "minus",
-                            item.quantity,
-                          )
+                          handleQty(item.merchandise.id, "minus", item.quantity)
                         }
                         aria-label="Decrease quantity"
                       >
@@ -111,11 +103,7 @@ export function CartDrawer({ open, onClose }: Props) {
                       <button
                         className={styles.qtyBtn}
                         onClick={() =>
-                          handleQty(
-                            item.merchandise.id,
-                            "plus",
-                            item.quantity,
-                          )
+                          handleQty(item.merchandise.id, "plus", item.quantity)
                         }
                         aria-label="Increase quantity"
                       >
@@ -154,9 +142,7 @@ export function CartDrawer({ open, onClose }: Props) {
               </div>
               <div className={`${styles.totalRow} ${styles.grand}`}>
                 <span>Total</span>
-                <span>
-                  {formatPrice(total.amount, total.currencyCode)}
-                </span>
+                <span>{formatPrice(total.amount, total.currencyCode)}</span>
               </div>
             </div>
 
