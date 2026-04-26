@@ -77,6 +77,10 @@
   margin: 0;
 }
 
+.mobileDetailsTrigger {
+  display: none;
+}
+
 .thumbnailHeader {
   width: 100rem;
   flex-shrink: 0;
@@ -378,17 +382,126 @@
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .body {
-    flex-direction: column;
+  .container {
+    height: 100svh;
+    padding-top: 80px; /* Header height */
   }
 
-  .leftPanel {
-    width: 100%;
-    max-height: 45vh;
-    padding-top: calc(var(--grid-margin) * 3);
+  .body {
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* Image becomes the main background/hero */
+  .rightWrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
   }
 
   .rightPanel {
-    min-height: 40vh;
+    height: 100%;
+  }
+
+  .imageSlide {
+    height: 100%;
+  }
+
+  .rightImage {
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  /* Info section becomes a bottom overlay */
+  .leftPanel {
+    position: absolute;
+    bottom: 60rem; /* Above add to cart */
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    background: linear-gradient(to top, rgba(245,245,245,0.95) 0%, rgba(245,245,245,0.8) 60%, transparent 100%);
+    padding: 40rem var(--grid-margin) 20rem;
+    max-height: 50vh;
+    gap: 12rem;
+    pointer-events: none;
+  }
+
+  .leftPanel > * {
+    pointer-events: auto;
+  }
+
+  .category {
+    font-size: 10rem;
+    color: var(--color-off-black);
+    font-weight: 700;
+  }
+
+  .titleRow {
+    margin-bottom: 8rem;
+  }
+
+  .title {
+    font-size: 24rem;
+    width: 65%;
+  }
+
+  .mobileDetailsTrigger {
+    display: block;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 11rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-off-black);
+    margin-left: auto;
+  }
+
+  .price {
+    display: none; /* Shown in bottom bar */
+  }
+
+  /* Hide the regular accordions triggers on mobile since we have the top link */
+  .accordions {
+    display: block;
+    width: 100%;
+  }
+
+  .accordionTrigger {
+    display: none; /* Hide triggers on mobile */
+  }
+
+  /* Only show content for active section */
+  .accordionContent {
+    padding: 10rem 0;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
+
+  /* Fixed full-width bottom bar */
+  .bottomBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    z-index: 100;
+  }
+
+  .addToCartBtn {
+    padding: 18rem 20rem;
+    font-size: 13rem;
+    font-weight: 700;
+  }
+
+  .errorMsg {
+    position: fixed;
+    bottom: 70rem;
+    left: 20rem;
+    right: 20rem;
+    background: white;
+    padding: 10rem;
+    border: 1px solid #c0392b;
+    text-align: center;
   }
 }

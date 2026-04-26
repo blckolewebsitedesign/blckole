@@ -170,6 +170,12 @@ export function ProductPageClient({ product }: Props) {
           <div className={styles.titleRow}>
             <h1 className={styles.title}>{product.title}</h1>
             <p className={styles.price}>{priceDisplay}</p>
+            <button 
+              className={styles.mobileDetailsTrigger}
+              onClick={() => setOpenSection(openSection === "DETAILS" ? null : "DETAILS")}
+            >
+              DETAILS {openSection === "DETAILS" ? "—" : "+"}
+            </button>
           </div>
 
           {total > 1 && (

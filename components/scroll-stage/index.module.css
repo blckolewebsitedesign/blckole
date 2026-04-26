@@ -208,4 +208,19 @@
     width: 10%;
     opacity: 0.1;
   }
+
+  .quickJump {
+    top: 16rem;
+    right: 16rem;
+    padding: 2rem 6rem;
+    gap: 8rem;
+  }
+
+  .quickJumpCounter {
+    font-size: 8rem;
+  }
+
+  .jumpThumb {
+    width: 18rem;
+  }
 }
