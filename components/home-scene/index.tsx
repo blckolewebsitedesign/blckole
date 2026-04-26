@@ -1,16 +1,16 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
 import { BottomBar } from "components/bottom-bar";
 import { Footer } from "components/footer";
 import { ScrollStage } from "components/scroll-stage";
-import {
-  motion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Product } from "lib/shopify/types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 type Props = {
   products: Product[];
@@ -19,15 +19,9 @@ type Props = {
 };
 
 export function HomeScene({ products, recommendationsMap = {}, initialHandle }: Props) {
-  const { scrollY } = useScroll();
-
-  const [vh, setVh] = useState(800);
-  useEffect(() => {
-    const update = () => setVh(window.innerHeight);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(() => {
     if (initialHandle) {
@@ -37,7 +31,6 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     return null;
   });
   const [currentFrame, setCurrentFrame] = useState(0);
-
   const [isExpanded, setIsExpanded] = useState(false);
 
   function handleSelect(index: number | null) {
@@ -45,7 +38,6 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     setCurrentFrame(0);
     setIsExpanded(false);
 
-    // Update URL without triggering Next.js hard navigation
     if (index !== null && products[index]) {
       History.prototype.pushState.apply(window.history, [null, "", `/looks/${products[index].handle}`]);
     } else {
@@ -53,7 +45,7 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     }
   }
 
-  // Prevent page scroll when in detail view to stop footer from overlapping
+  // Prevent page scroll when in detail view
   useEffect(() => {
     if (selectedIndex !== null) {
       document.body.style.overflow = "hidden";
@@ -65,7 +57,7 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     };
   }, [selectedIndex]);
 
-  // Handle browser back/forward buttons
+  // Handle browser back/forward
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
@@ -85,17 +77,51 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     return () => window.removeEventListener("popstate", handlePopState);
   }, [products]);
 
-  const footerY = useTransform(scrollY, [0, vh], ["100%", "0%"]);
-  const mainOpacity = useTransform(scrollY, [0, vh], [1, 0]);
+  // GSAP: main fades out + footer slides up on scroll
+  useGSAP(
+    () => {
+      if (!mainRef.current || !footerRef.current) return;
+
+      // Main canvas fades out as you scroll toward footer
+      gsap.to(mainRef.current, {
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+        },
+      });
+
+      // Footer slides up from 100% → 0% as you scroll
+      gsap.fromTo(
+        footerRef.current,
+        { y: "100%" },
+        {
+          y: "0%",
+          ease: "none",
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 1,
+          },
+        }
+      );
+    },
+    { scope: containerRef }
+  );
 
   const selectedProduct =
     selectedIndex !== null ? products[selectedIndex] : undefined;
 
   return (
-    <>
+    <div ref={containerRef}>
+      {/* Gives page scrollable height so footer can slide up */}
       <div className={styles.spacer} />
 
-      <motion.div style={{ opacity: mainOpacity }} className={styles.mainFixed}>
+      <div ref={mainRef} className={styles.mainFixed}>
         <ScrollStage
           products={products}
           selectedIndex={selectedIndex}
@@ -104,19 +130,19 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
           onFrameChange={setCurrentFrame}
           onModelClick={() => setIsExpanded((prev) => !prev)}
         />
-      </motion.div>
+      </div>
 
-      <BottomBar 
-        count={products.length} 
-        selectedProduct={selectedProduct} 
+      <BottomBar
+        count={products.length}
+        selectedProduct={selectedProduct}
         relatedProducts={selectedProduct ? recommendationsMap[selectedProduct.id] : undefined}
         isExpanded={isExpanded}
         onClose={() => setIsExpanded(false)}
       />
 
-      <motion.div style={{ y: footerY }} className={styles.footerSlider}>
+      <div ref={footerRef} className={styles.footerSlider}>
         <Footer />
-      </motion.div>
-    </>
+      </div>
+    </div>
   );
 }

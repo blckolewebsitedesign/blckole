@@ -1,13 +1,14 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import type { Product } from "lib/shopify/types";
 import Image from "next/image";
 import Link from "next/link";
+import { useRef } from "react";
 import styles from "./index.module.css";
 
-import { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+gsap.registerPlugin(useGSAP);
 
 type Props = {
   count: number;
@@ -33,17 +34,17 @@ export function BottomBar({
       if (!selectedProduct) return;
 
       if (isExpanded) {
-        gsap.to(".collapsed", { autoAlpha: 0, y: 20, duration: 0.3, ease: "power2.out" });
+        gsap.to(".collapsed_group", { autoAlpha: 0, y: 10, duration: 0.3, ease: "power2.out" });
         gsap.fromTo(
-          ".expanded",
-          { autoAlpha: 0, y: 20 },
+          ".expanded_panel",
+          { autoAlpha: 0, y: 10 },
           { autoAlpha: 1, y: 0, duration: 0.4, delay: 0.1, ease: "power2.out" }
         );
       } else {
-        gsap.to(".expanded", { autoAlpha: 0, y: 20, duration: 0.3, ease: "power2.out" });
+        gsap.to(".expanded_panel", { autoAlpha: 0, y: 10, duration: 0.3, ease: "power2.out" });
         gsap.fromTo(
-          ".collapsed",
-          { autoAlpha: 0, y: 20 },
+          ".collapsed_group",
+          { autoAlpha: 0, y: 10 },
           { autoAlpha: 1, y: 0, duration: 0.4, delay: 0.1, ease: "power2.out" }
         );
       }
@@ -59,7 +60,7 @@ export function BottomBar({
 
   return (
     <div ref={containerRef}>
-      {/* Global default view */}
+      {/* Global default view (Single chip with product count) */}
       {!selectedProduct && (
         <div className={styles.group}>
           <div className={styles.wrapper}>
@@ -71,11 +72,11 @@ export function BottomBar({
         </div>
       )}
 
-      {/* Detail view with toggleable states */}
+      {/* Detail view chips */}
       {selectedProduct && (
         <>
           <div
-            className={`collapsed ${styles.group}`}
+            className={`collapsed_group ${styles.group}`}
             style={{
               opacity: isExpanded ? 0 : 1,
               visibility: isExpanded ? "hidden" : "visible",
@@ -83,6 +84,17 @@ export function BottomBar({
           >
             {productsToShow.map((p) => (
               <div key={p.id} className={styles.wrapper}>
+                {p.featuredImage && (
+                  <div className={styles.productThumb}>
+                    <Image
+                      src={p.featuredImage.url}
+                      alt=""
+                      fill
+                      sizes="24px"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
+                )}
                 <span className={styles.count}>{p.title.toUpperCase()}</span>
                 <Link href={`/products/${p.handle}`} className={styles.discover}>
                   VIEW
@@ -92,7 +104,7 @@ export function BottomBar({
           </div>
 
           <div
-            className={`expanded ${styles.expandedPanel}`}
+            className={`expanded_panel ${styles.expandedPanel}`}
             style={{
               opacity: isExpanded ? 1 : 0,
               visibility: isExpanded ? "visible" : "hidden",

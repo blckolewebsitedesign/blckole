@@ -60,6 +60,8 @@ type Props = {
 };
 
 export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
+  // Optimisation: track last rendered video time to skip duplicate frames
+  const lastVideoTimeRef = useRef<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -206,9 +208,14 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         }
 
         if (mediaElement instanceof HTMLVideoElement && mediaElement.readyState >= 2) {
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mediaElement);
-          gl.drawArrays(gl.TRIANGLES, 0, 6);
+          // Skip frame if video time hasn't advanced (saves GPU work)
+          const currentTime = mediaElement.currentTime;
+          if (currentTime !== lastVideoTimeRef.current) {
+            lastVideoTimeRef.current = currentTime;
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mediaElement);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+          }
         } else if (mediaElement instanceof HTMLImageElement && mediaElement.complete && mediaElement.naturalWidth > 0) {
           gl.bindTexture(gl.TEXTURE_2D, texture);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mediaElement);
@@ -228,9 +235,30 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         video.muted = true;
         video.playsInline = true;
         video.autoplay = true;
+        video.preload = "auto";
+        // Decode at normal speed — avoids GPU spike on first frame
+        video.playbackRate = 1;
         if (poster) video.poster = poster;
         video.play().catch(() => {});
         mediaElement = video;
+
+        // Pause rendering when off-screen to save GPU/CPU
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                video.play().catch(() => {});
+                animationFrameId = requestAnimationFrame(render);
+              } else {
+                video.pause();
+                cancelAnimationFrame(animationFrameId);
+              }
+            }
+          },
+          { threshold: 0.05 }
+        );
+        observer.observe(canvas);
+
         animationFrameId = requestAnimationFrame(render);
       } else {
         const img = new Image();

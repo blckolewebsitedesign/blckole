@@ -73,7 +73,10 @@ export function RotatingFigure({
         return (
           <button
             className={styles.wrapper}
-            onClick={onClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
             aria-label={product.title}
           >
             <div className={styles.mediaWrap}>
@@ -114,7 +117,10 @@ export function RotatingFigure({
     return (
       <button
         className={styles.wrapper}
-        onClick={onClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         aria-label={product.title}

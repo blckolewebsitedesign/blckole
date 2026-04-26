@@ -1,11 +1,14 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import type { Product } from "lib/shopify/types";
-import { motion } from "framer-motion";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./index.module.css";
+
+gsap.registerPlugin(useGSAP);
 
 const COLOR_MAP: Record<string, string> = {
   black: "#0a0a0a",
@@ -62,6 +65,7 @@ export function ProductDetailPanel({
   currentFrame,
   onFrameChange,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const images = product.images;
   const filmstripImage = images.length > 0 ? images[images.length - 1] : null;
 
@@ -76,10 +80,27 @@ export function ProductDetailPanel({
     return init;
   });
 
-  function handleFrameClick(i: number, url: string) {
-    onFrameChange(i);
-    setLightboxSrc(url);
-  }
+  useGSAP(
+    () => {
+      const isMobile = window.innerWidth <= 768;
+      gsap.fromTo(
+        containerRef.current,
+        { 
+          opacity: 0, 
+          x: isMobile ? 0 : -20,
+          y: isMobile ? 20 : 0 
+        },
+        { 
+          opacity: 1, 
+          x: 0, 
+          y: 0,
+          duration: 0.6, 
+          ease: "power3.out" 
+        }
+      );
+    },
+    { scope: containerRef, dependencies: [product.id] }
+  );
 
   function selectOption(optId: string, val: string) {
     setSelectedOptions((prev) => ({ ...prev, [optId]: val }));
@@ -87,19 +108,17 @@ export function ProductDetailPanel({
 
   return (
     <>
-      <motion.div
+      <div
+        ref={containerRef}
         className={styles.panel}
-        initial={{ opacity: 0, x: -16 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -16 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className={styles.lookCounter}>
-          LOOK {pad(lookIndex + 1)} / {pad(totalLooks)}
-        </span>
-
-        <h2 className={styles.title}>{product.title.toUpperCase()}</h2>
+        <div className={styles.header}>
+          <span className={styles.lookCounter}>
+            LOOK {pad(lookIndex + 1)} / {pad(totalLooks)}
+          </span>
+          <h2 className={styles.title}>{product.title.toUpperCase()}</h2>
+        </div>
 
         {filmstripImage && (
           <div className={styles.filmstripSection}>
@@ -137,7 +156,6 @@ export function ProductDetailPanel({
           <div className={styles.optionsSection}>
             {product.options.map((opt) => {
               const isColor = /colou?r/i.test(opt.name);
-              const isSize = /size/i.test(opt.name);
               return (
                 <div key={opt.id} className={styles.optionGroup}>
                   <span className={styles.optionLabel}>
@@ -161,17 +179,6 @@ export function ProductDetailPanel({
                           />
                         );
                       }
-                      if (isSize) {
-                        return (
-                          <button
-                            key={val}
-                            className={`${styles.sizeChip}${isActive ? ` ${styles.sizeChipActive}` : ""}`}
-                            onClick={() => selectOption(opt.id, val)}
-                          >
-                            {val}
-                          </button>
-                        );
-                      }
                       return (
                         <button
                           key={val}
@@ -188,7 +195,7 @@ export function ProductDetailPanel({
             })}
           </div>
         )}
-      </motion.div>
+      </div>
 
       {lightboxSrc &&
         typeof window !== "undefined" &&

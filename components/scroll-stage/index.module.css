@@ -1,4 +1,3 @@
-/* ── Stage fills the fixed parent ── */
 .stage {
   position: relative;
   width: 100%;
@@ -7,10 +6,10 @@
   overflow: hidden;
 }
 
-/* ── Collection title overlay — top-left ── */
+/* ── Title overlay ── */
 .titleOverlay {
   position: absolute;
-  top: calc(var(--grid-margin) * 5);
+  top: calc(var(--grid-margin) * 5.5);
   left: var(--grid-margin);
   z-index: 10;
   display: flex;
@@ -28,7 +27,7 @@
 
 .collectionTitle {
   font-family: "Barlow Condensed", sans-serif;
-  font-size: clamp(40rem, 7vw, 90rem);
+  font-size: clamp(32rem, 5vw, 64rem);
   font-weight: 900;
   font-stretch: expanded;
   text-transform: uppercase;
@@ -41,7 +40,6 @@
   display: flex;
   align-items: baseline;
   gap: 8rem;
-  margin-top: 4rem;
 }
 
 .productsLabel {
@@ -58,65 +56,66 @@
   color: var(--color-off-black);
 }
 
-/* ── Figures row — horizontal scroll strip ── */
+/* ── Figures grid/arc ── */
 .figuresRow {
   position: absolute;
-  top: 28dvh;
-  bottom: calc(var(--grid-margin) * 8);
-  left: 0;
-  right: 0;
+  inset: 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
+  overflow: hidden;
   padding: 0 var(--grid-margin);
-  gap: 0;
-}
-
-.figuresRow::-webkit-scrollbar {
-  display: none;
+  will-change: opacity, transform;
 }
 
 .figureSlot {
   flex: 0 0 auto;
-  width: calc(100% / 10);
-  min-width: 80rem;
-  height: 100%;
+  width: 160rem;
+  aspect-ratio: 1 / 2.5;
   cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-/* ── Full-screen detail overlay ── */
+.figureSlot:hover {
+  transform: scale(1.05);
+}
+
+/* ── Detail view ── */
 .detailView {
   position: absolute;
   inset: 0;
   z-index: 5;
-  pointer-events: none; /* individual children opt-in */
+  pointer-events: none;
+  will-change: opacity, transform;
 }
 
-/* Selected product: fills center of stage */
 .detailMain {
   position: absolute;
-  top: 15%;
+  top: 10%;
   bottom: 20%;
-  left: 40%;
-  right: 40%;
+  left: 30%;
+  right: 30%;
   z-index: 1;
   cursor: default;
   pointer-events: auto;
+  will-change: transform, opacity;
 }
 
-/* Adjacent product: peek from edge */
 .detailAdjacent {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 16%;
+  width: 15%;
   z-index: 2;
   overflow: hidden;
   cursor: pointer;
   pointer-events: auto;
+  opacity: 0.15;
+  transition: opacity 0.3s ease;
+}
+
+.detailAdjacent:hover {
+  opacity: 0.35;
 }
 
 .detailLeft {
@@ -127,35 +126,80 @@
   right: 0;
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
+/* ── Quick Jump Bar (Top Right) ── */
+.quickJump {
+  position: absolute;
+  top: calc(var(--grid-margin) * 3.5);
+  right: var(--grid-margin);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12rem;
+  background: var(--color-background);
+  border: var(--border-size) solid var(--color-divider);
+  padding: 4rem 10rem;
+  pointer-events: auto;
+}
+
+.quickJumpCounter {
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--letter-spacing-base);
+  text-transform: uppercase;
+  color: var(--color-medium-grey);
+}
+
+.quickJumpThumbs {
+  display: flex;
+  gap: 4rem;
+}
+
+.jumpThumb {
+  position: relative;
+  width: 20rem;
+  aspect-ratio: 1;
+  background: var(--color-background);
+  cursor: pointer;
+  border: 1px solid var(--color-divider);
+  opacity: 0.6;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+
+.jumpThumb:hover {
+  opacity: 1;
+}
+
+.jumpThumbActive {
+  opacity: 1;
+  border-color: var(--color-off-black);
+  cursor: default;
+}
+
+/* ── Mobile (Bécane circular arc) ── */
+@media (max-width: 768px) {
   .titleOverlay {
-    top: calc(var(--grid-margin) * 7);
+    bottom: 120rem;
+    left: 16rem;
+    right: 16rem;
   }
 
   .collectionTitle {
-    font-size: clamp(32rem, 10vw, 60rem);
+    font-size: 42rem;
   }
 
-  .figuresRow {
-    top: 30dvh;
-    bottom: calc(var(--grid-margin) * 3);
-    justify-content: flex-start;
-  }
-
+  /* Figure slots are fixed by JS on mobile */
   .figureSlot {
-    width: calc(100% / 4);
-    min-width: 80rem;
+    width: 60rem;
+  }
+
+  .detailMain {
+    top: 5%;
+    bottom: 25%;
+    left: 5%;
+    right: 5%;
   }
 
   .detailAdjacent {
     width: 10%;
-  }
-
-  .detailMain {
-    top: 15%;
-    bottom: 25%;
-    left: 25%;
-    right: 25%;
+    opacity: 0.1;
   }
 }

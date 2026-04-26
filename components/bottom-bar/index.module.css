@@ -11,13 +11,21 @@
 .wrapper {
   background: var(--color-inner-background);
   border: var(--border-size) solid var(--color-divider);
-  border-radius: var(--border-radius);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8rem 12rem;
-  min-width: 220rem;
-  gap: 24rem;
+  padding: 6rem 10rem;
+  min-width: 180rem;
+  gap: 16rem;
+  pointer-events: auto;
+}
+
+.productThumb {
+  position: relative;
+  width: 24rem;
+  aspect-ratio: 1;
+  background: var(--color-background);
+  flex-shrink: 0;
 }
 
 .count {
@@ -25,21 +33,30 @@
   letter-spacing: var(--letter-spacing-base);
   text-transform: uppercase;
   color: var(--color-off-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .discover {
   font-size: var(--font-size-tiny);
   letter-spacing: var(--letter-spacing-base);
   text-transform: uppercase;
-  color: var(--color-off-black);
+  color: var(--color-medium-grey);
   text-decoration: none;
   transition: color var(--transition-base);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
 }
 
 .discover:hover {
-  color: var(--color-medium-grey);
+  color: var(--color-off-black);
 }
 
+/* ── Expanded panel (Shop the Look) ── */
 .expandedPanel {
   position: fixed;
   bottom: var(--grid-margin);
@@ -51,18 +68,27 @@
   display: flex;
   flex-direction: column;
   gap: 16rem;
+  width: auto;
+  max-width: calc(100vw - var(--grid-margin) * 2);
 }
 
 .expandedCards {
   display: flex;
   gap: 16rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.expandedCards::-webkit-scrollbar {
+  display: none;
 }
 
 .productCard {
-  width: 220rem;
+  flex: 0 0 auto;
+  width: 200rem;
   display: flex;
   flex-direction: column;
-  gap: 12rem;
+  gap: 8rem;
 }
 
 .cardInfo {
@@ -79,6 +105,7 @@
   width: 100%;
   aspect-ratio: 1;
   background: var(--color-background);
+  display: block;
 }
 
 .cardImage {
@@ -90,37 +117,27 @@
   justify-content: space-between;
   align-items: center;
   border-top: var(--border-size) solid var(--color-divider);
-  padding-top: 16rem;
-  margin-top: 8rem;
+  padding-top: 12rem;
 }
 
-.discover {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-off-black);
-  text-decoration: none;
-  transition: color var(--transition-base);
-}
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .group {
+    bottom: 12rem;
+    left: 12rem;
+    right: 12rem;
+    gap: 6rem;
+  }
 
-@media (max-width: 900px) {
   .wrapper {
-    min-width: 160rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: 8rem 12rem;
   }
+
   .expandedPanel {
-    width: calc(100% - var(--grid-margin) * 2);
-    padding: 12rem;
-  }
-  .expandedCards {
-    overflow-x: auto;
-    padding-bottom: 8rem;
-  }
-  .productCard {
-    min-width: 160rem;
+    bottom: 12rem;
+    left: 12rem;
+    right: 12rem;
   }
 }
