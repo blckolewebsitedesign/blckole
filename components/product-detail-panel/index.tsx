@@ -80,6 +80,41 @@ export function ProductDetailPanel({
     return init;
   });
 
+  const [isHovered, setIsHovered] = useState(false);
+  const autoPlayProgress = useRef(0);
+  const lastFrameRef = useRef(currentFrame);
+  const [smoothProgress, setSmoothProgress] = useState(0);
+
+  // Sync if external reset (like selecting a new model)
+  if (currentFrame === 0 && lastFrameRef.current !== 0) {
+    autoPlayProgress.current = 0;
+    setSmoothProgress(0);
+    lastFrameRef.current = 0;
+  }
+
+  useGSAP(() => {
+    const tickerCallback = (_time: number, deltaTime: number) => {
+      if (isHovered) return;
+      
+      // 6 seconds for a full loop
+      autoPlayProgress.current += (deltaTime / 1000) / 6;
+      if (autoPlayProgress.current >= 1) {
+         autoPlayProgress.current = autoPlayProgress.current % 1; 
+      }
+      
+      setSmoothProgress(autoPlayProgress.current);
+      
+      const frame = Math.min(35, Math.floor(autoPlayProgress.current * 36));
+      if (frame !== lastFrameRef.current) {
+         lastFrameRef.current = frame;
+         onFrameChange(frame);
+      }
+    };
+    
+    gsap.ticker.add(tickerCallback);
+    return () => gsap.ticker.remove(tickerCallback);
+  }, [isHovered, onFrameChange]);
+
   useGSAP(
     () => {
       const isMobile = window.innerWidth <= 768;
@@ -127,34 +162,55 @@ export function ProductDetailPanel({
             </span>
             <div 
               className={styles.filmstripTrack}
+              onMouseEnter={() => setIsHovered(true)}
               onMouseMove={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
                 const percentage = x / rect.width;
+                
+                autoPlayProgress.current = percentage;
+                setSmoothProgress(percentage);
+                
                 const frame = Math.floor(percentage * 36);
-                onFrameChange(Math.max(0, Math.min(35, frame)));
+                if (frame !== lastFrameRef.current) {
+                  lastFrameRef.current = frame;
+                  onFrameChange(Math.max(0, Math.min(35, frame)));
+                }
               }}
-              onMouseLeave={() => onFrameChange(0)}
+              onMouseLeave={() => setIsHovered(false)}
             >
               <img
                 src={filmstripImage.url}
                 alt={`${product.title} filmstrip`}
                 className={styles.filmstripRawImg}
+                style={{ opacity: 0.15 }}
               />
               <div
                 className={styles.filmstripHighlight}
                 style={{
                   width: `${100 / 36}%`,
-                  transform: `translateX(${currentFrame * 100}%)`,
+                  transform: `translateX(${smoothProgress * 36 * 100}%)`,
                 }}
-              />
+              >
+                <img
+                  src={filmstripImage.url}
+                  alt=""
+                  className={styles.filmstripRawImg}
+                  style={{
+                    width: `${36 * 100}%`,
+                    maxWidth: "none",
+                    transform: `translateX(-${smoothProgress * 100}%)`,
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {product.options.length > 0 && (
+        {product.options.filter(o => !(o.name === "Title" && o.values.includes("Default Title"))).length > 0 && (
           <div className={styles.optionsSection}>
             {product.options.map((opt) => {
+              if (opt.name === "Title" && opt.values.includes("Default Title")) return null;
               const isColor = /colou?r/i.test(opt.name);
               return (
                 <div key={opt.id} className={styles.optionGroup}>
