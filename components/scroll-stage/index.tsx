@@ -63,30 +63,68 @@ export function ScrollStage({
       ? products[selectedIndex + 1]!
       : null;
 
-  // — Circular layout for mobile
+  const [mobileGridIndex, setMobileGridIndex] = useState(0);
+
+  useEffect(() => {
+    if (selectedIndex !== null) {
+      setMobileGridIndex(selectedIndex);
+    }
+  }, [selectedIndex]);
+
+  // — Mobile Grid Layout (Linear / V-shape)
   useGSAP(
     () => {
       const updateLayout = () => {
-        if (!rowRef.current || window.innerWidth > 768) return;
+        if (!rowRef.current || window.innerWidth > 768) {
+          slotRefs.current.forEach((slot) => {
+            // On desktop, we ONLY clear inline styles if the element was previously formatted for mobile (position: absolute).
+            // We never clear scale/opacity if in detail view, as it would instantly break the zooming animations.
+            if (slot && slot.style.position === "absolute") {
+              if (isDetail) {
+                gsap.set(slot, { clearProps: "position,left,top,margin" });
+              } else {
+                gsap.set(slot, { clearProps: "position,left,top,margin,scale,opacity,zIndex" });
+              }
+            }
+          });
+          return;
+        }
 
         const slots = slotRefs.current.filter(Boolean) as HTMLDivElement[];
-        const radius = Math.min(window.innerWidth, window.innerHeight) * 0.42;
-        const center = {
-          x: window.innerWidth / 2,
-          y: window.innerHeight * 0.45,
-        };
+        const drCX = window.innerWidth * 0.5;
+        const drCY = window.innerHeight * 0.45;
 
         slots.forEach((slot, i) => {
-          const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
-          const x = center.x + radius * Math.cos(angle) - slot.offsetWidth / 2;
-          const y = center.y + radius * Math.sin(angle) - slot.offsetHeight / 2;
+          const offset = i - mobileGridIndex;
+          
+          const x = drCX + offset * (window.innerWidth * 0.35) - slot.offsetWidth / 2;
+          const y = drCY - Math.abs(offset) * 15 - slot.offsetHeight / 2;
+          
+          const scale = Math.max(1 - Math.abs(offset) * 0.15, 0.4);
+          const opacity = Math.max(1 - Math.abs(offset) * 0.3, 0);
 
-          gsap.set(slot, {
-            position: "absolute",
-            left: x,
-            top: y,
-            margin: 0,
-          });
+          if (!isDetail) {
+            gsap.to(slot, {
+              position: "absolute",
+              left: x,
+              top: y,
+              scale: scale,
+              opacity: opacity,
+              zIndex: 10 - Math.abs(offset),
+              margin: 0,
+              duration: 0.5,
+              ease: "power2.out",
+              overwrite: "auto"
+            });
+          } else {
+            gsap.set(slot, {
+              position: "absolute",
+              left: x,
+              top: y,
+              margin: 0,
+              zIndex: 10 - Math.abs(offset)
+            });
+          }
         });
       };
 
@@ -94,7 +132,7 @@ export function ScrollStage({
       window.addEventListener("resize", updateLayout);
       return () => window.removeEventListener("resize", updateLayout);
     },
-    { scope: stageRef, dependencies: [total, isDetail] },
+    { scope: stageRef, dependencies: [total, isDetail, mobileGridIndex] },
   );
 
   // — Escape to deselect
@@ -133,7 +171,7 @@ export function ScrollStage({
 
   // — Touch swipe for mobile
   useEffect(() => {
-    if (!isDetail || selectedIndex === null) return;
+    if (total <= 1) return;
     let touchStartX = 0;
     let touchStartY = 0;
     const onTouchStart = (e: TouchEvent) => {
@@ -149,14 +187,21 @@ export function ScrollStage({
 
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         const dir = deltaX > 0 ? 1 : -1;
-        const nextIndex = selectedIndex + dir;
-        if (nextIndex >= 0 && nextIndex < total) {
-          navCooldown.current = true;
-          setTransformOrigin(dir > 0 ? "88% 50%" : "12% 50%");
-          onSelect(nextIndex);
-          setTimeout(() => {
-            navCooldown.current = false;
-          }, 600);
+        if (isDetail && selectedIndex !== null) {
+          const nextIndex = selectedIndex + dir;
+          if (nextIndex >= 0 && nextIndex < total) {
+            navCooldown.current = true;
+            setTransformOrigin(dir > 0 ? "88% 50%" : "12% 50%");
+            onSelect(nextIndex);
+            setTimeout(() => { navCooldown.current = false; }, 600);
+          }
+        } else if (!isDetail && window.innerWidth <= 768) {
+          const nextIndex = mobileGridIndex + dir;
+          if (nextIndex >= 0 && nextIndex < total) {
+            navCooldown.current = true;
+            setMobileGridIndex(nextIndex);
+            setTimeout(() => { navCooldown.current = false; }, 400);
+          }
         }
       }
     };
@@ -166,7 +211,7 @@ export function ScrollStage({
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [isDetail, selectedIndex, total, onSelect]);
+  }, [isDetail, selectedIndex, total, onSelect, mobileGridIndex]);
 
   // — Figures row opacity and Flying Thumbnail
   const prevDetailRef = useRef(isDetail);
@@ -230,13 +275,18 @@ export function ScrollStage({
             gsap.to(slot, { x: 0, y: 0, scale: 1, duration: 0.6, ease: "power3.inOut", zIndex: 1, onComplete: () => gsap.set(slot, { clearProps: "transition" }) });
           } else {
             gsap.set(slot, { transition: "none" });
-            gsap.to(slot, { opacity: 1, scale: 1, duration: 0.6, ease: "power3.inOut", onComplete: () => gsap.set(slot, { clearProps: "transition" }) });
+            const isMobile = window.innerWidth <= 768;
+            const offset = i - mobileGridIndex;
+            const targetScale = isMobile ? Math.max(1 - Math.abs(offset) * 0.15, 0.4) : 1;
+            const targetOpacity = isMobile ? Math.max(1 - Math.abs(offset) * 0.3, 0) : 1;
+            
+            gsap.to(slot, { opacity: targetOpacity, scale: targetScale, duration: 0.6, ease: "power3.inOut", onComplete: () => gsap.set(slot, { clearProps: "transition" }) });
           }
         });
         rowRef.current.style.pointerEvents = "auto";
       }
     },
-    { scope: stageRef, dependencies: [isDetail] },
+    { scope: stageRef, dependencies: [isDetail, mobileGridIndex] },
   );
 
   // — Title overlay fade

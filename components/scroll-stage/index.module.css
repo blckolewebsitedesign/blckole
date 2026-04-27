@@ -184,7 +184,7 @@
 
   /* Figure slots are fixed by JS on mobile */
   .figureSlot {
-    width: 60rem;
+    width: 100rem;
   }
 
   .detailSlide {
