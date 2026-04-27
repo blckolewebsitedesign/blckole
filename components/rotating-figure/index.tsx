@@ -2,9 +2,9 @@
 
 import { ChromaKeyCanvas } from "components/chroma-key-canvas";
 import type { Product, ProductMedia } from "lib/shopify/types";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
 import styles from "./index.module.css";
 
 type Props = {
@@ -32,6 +32,10 @@ export function RotatingFigure({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const displayFrame = externalFrame !== undefined ? externalFrame : frame;
+
+  if (priority && images.length > 0 && images[0]?.url) {
+    preload(images[0].url, { as: "image" });
+  }
 
   useEffect(() => {
     if (externalFrame !== undefined || videoMedia || images.length <= 1) return;
@@ -126,16 +130,6 @@ export function RotatingFigure({
         aria-label={product.title}
       >
         <div className={styles.mediaWrap}>
-          {priority && (
-            <Image
-              src={currentImage.url}
-              alt=""
-              priority
-              fill
-              sizes="1px"
-              style={{ opacity: 0, pointerEvents: "none", zIndex: -1 }}
-            />
-          )}
           <ChromaKeyCanvas
             src={currentImage.url}
             className={styles.media}
@@ -154,16 +148,6 @@ export function RotatingFigure({
       aria-label={product.title}
     >
       <div className={styles.mediaWrap}>
-        {priority && (
-          <Image
-            src={currentImage.url}
-            alt=""
-            priority
-            fill
-            sizes="1px"
-            style={{ opacity: 0, pointerEvents: "none", zIndex: -1 }}
-          />
-        )}
         <ChromaKeyCanvas
           src={currentImage.url}
           className={styles.media}

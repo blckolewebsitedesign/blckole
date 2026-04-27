@@ -89,41 +89,31 @@
   will-change: opacity, transform;
 }
 
-.detailMain {
+.detailSlide {
   position: absolute;
   top: 10%;
   bottom: 20%;
   left: 30%;
   right: 30%;
   z-index: 1;
-  cursor: default;
-  pointer-events: auto;
   will-change: transform, opacity;
+  pointer-events: none;
+  opacity: 0;
 }
 
-.detailAdjacent {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 15%;
-  z-index: 2;
-  overflow: hidden;
-  cursor: pointer;
+.detailSlideActive {
   pointer-events: auto;
-  opacity: 0.15;
-  transition: opacity 0.3s ease;
+  z-index: 5;
 }
 
-.detailAdjacent:hover {
-  opacity: 0.35;
+.detailSlideAdjacent {
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 2;
 }
 
-.detailLeft {
-  left: 0;
-}
-
-.detailRight {
-  right: 0;
+.detailSlideAdjacent:hover {
+  opacity: 0.35 !important;
 }
 
 /* ── Quick Jump Bar (Top Right) ── */
@@ -197,16 +187,11 @@
     width: 60rem;
   }
 
-  .detailMain {
+  .detailSlide {
     top: 5%;
     bottom: 25%;
     left: 5%;
     right: 5%;
-  }
-
-  .detailAdjacent {
-    width: 10%;
-    opacity: 0.1;
   }
 
   .quickJump {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const VS = `
   attribute vec2 a_position;
@@ -60,11 +60,12 @@ type Props = {
 };
 
 export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
-  // Optimisation: track last rendered video time to skip duplicate frames
   const lastVideoTimeRef = useRef<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [useFallback, setUseFallback] = useState(false);
 
   useEffect(() => {
+    lastVideoTimeRef.current = -1;
     const container = containerRef.current;
     if (!container) return;
 
@@ -116,15 +117,24 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
 
     try {
       gl = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true });
-      if (!gl) return cleanup;
+      if (!gl) {
+        setUseFallback(true);
+        return cleanup;
+      }
 
       program = gl.createProgram();
-      if (!program) return cleanup;
+      if (!program) {
+        setUseFallback(true);
+        return cleanup;
+      }
       
       vs = compileShader(gl, gl.VERTEX_SHADER, VS);
       fs = compileShader(gl, gl.FRAGMENT_SHADER, FS);
       
-      if (!vs || !fs) return cleanup;
+      if (!vs || !fs) {
+        setUseFallback(true);
+        return cleanup;
+      }
 
       gl.attachShader(program, vs);
       gl.attachShader(program, fs);
@@ -132,6 +142,7 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         console.warn("Program link error", gl.getProgramInfoLog(program));
+        setUseFallback(true);
         return cleanup;
       }
       
@@ -271,10 +282,36 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       }
     } catch (e) {
       console.error("ChromaKeyCanvas WebGL error:", e);
+      setUseFallback(true);
     }
 
     return cleanup;
   }, [src, isVideo, poster, className]);
+
+  if (useFallback) {
+    if (isVideo) {
+      return (
+        <video
+          src={src}
+          poster={poster}
+          className={className}
+          style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      );
+    }
+    return (
+      <img
+        src={src}
+        alt=""
+        className={className}
+        style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+      />
+    );
+  }
 
   return <div ref={containerRef} className={className} style={{ width: '100%', height: '100%' }} />;
 }
