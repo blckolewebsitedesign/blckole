@@ -1,6 +1,6 @@
-/* Gives the page ~100dvh of scrollable distance (200dvh total - 100dvh viewport) */
-.spacer {
-  height: 200dvh;
+/* Gives the page ~100dvh of scrollable distance for the hero section */
+.heroSpacer {
+  height: 100dvh;
   pointer-events: none;
 }
 
@@ -11,11 +11,9 @@
   z-index: 1;
 }
 
-/* Footer wrapper: fixed to viewport bottom, slides up on scroll */
-.footerSlider {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+/* Scrollable content wrapper: glides natively over the 3D grid */
+.scrollableContent {
+  position: relative;
   z-index: 2;
+  background: var(--color-background);
 }

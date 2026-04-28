@@ -2,6 +2,7 @@
 
 import { useGSAP } from "@gsap/react";
 import { BottomBar } from "components/bottom-bar";
+import { FeaturedProducts } from "components/featured-products";
 import { Footer } from "components/footer";
 import { ScrollStage } from "components/scroll-stage";
 import gsap from "gsap";
@@ -16,12 +17,18 @@ type Props = {
   products: Product[];
   recommendationsMap?: Record<string, Product[]>;
   initialHandle?: string;
+  featuredProducts: Product[];
 };
 
-export function HomeScene({ products, recommendationsMap = {}, initialHandle }: Props) {
+export function HomeScene({
+  products,
+  recommendationsMap = {},
+  initialHandle,
+  featuredProducts,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(() => {
     if (initialHandle) {
@@ -39,7 +46,11 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     setIsExpanded(false);
 
     if (index !== null && products[index]) {
-      History.prototype.pushState.apply(window.history, [null, "", `/looks/${products[index].handle}`]);
+      History.prototype.pushState.apply(window.history, [
+        null,
+        "",
+        `/looks/${products[index].handle}`,
+      ]);
     } else {
       History.prototype.pushState.apply(window.history, [null, "", `/`]);
     }
@@ -77,49 +88,33 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     return () => window.removeEventListener("popstate", handlePopState);
   }, [products]);
 
-  // GSAP: main fades out + footer slides up on scroll
+  // GSAP: main fades out as you scroll down to reveal content
   useGSAP(
     () => {
-      if (!mainRef.current || !footerRef.current) return;
+      if (!mainRef.current || !contentRef.current) return;
 
-      // Main canvas fades out as you scroll toward footer
+      // Main canvas fades out as the scrollable content glides up over it
       gsap.to(mainRef.current, {
         opacity: 0,
         ease: "none",
         scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 1,
+          trigger: contentRef.current,
+          start: "top bottom", // when the top of content hits bottom of viewport
+          end: "top center", // fully faded out when content reaches the middle
+          scrub: true,
         },
       });
-
-      // Footer slides up from 100% → 0% as you scroll
-      gsap.fromTo(
-        footerRef.current,
-        { y: "100%" },
-        {
-          y: "0%",
-          ease: "none",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top top",
-            end: "bottom bottom",
-            scrub: 1,
-          },
-        }
-      );
     },
-    { scope: containerRef }
+    { scope: containerRef },
   );
 
   const selectedProduct =
     selectedIndex !== null ? products[selectedIndex] : undefined;
 
   return (
-    <div ref={containerRef}>
-      {/* Gives page scrollable height so footer can slide up */}
-      <div className={styles.spacer} />
+    <div ref={containerRef} style={{ position: "relative" }}>
+      {/* Gives page scrollable height so the 3D models are shown fully before scrolling */}
+      <div className={styles.heroSpacer} />
 
       <div ref={mainRef} className={styles.mainFixed}>
         <ScrollStage
@@ -135,12 +130,15 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
       <BottomBar
         count={products.length}
         selectedProduct={selectedProduct}
-        relatedProducts={selectedProduct ? recommendationsMap[selectedProduct.id] : undefined}
+        relatedProducts={
+          selectedProduct ? recommendationsMap[selectedProduct.id] : undefined
+        }
         isExpanded={isExpanded}
         onClose={() => setIsExpanded(false)}
       />
 
-      <div ref={footerRef} className={styles.footerSlider}>
+      <div ref={contentRef} className={styles.scrollableContent}>
+        <FeaturedProducts products={featuredProducts} />
         <Footer />
       </div>
     </div>
