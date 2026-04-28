@@ -13,6 +13,15 @@
   border-bottom: 1px solid var(--color-divider);
 }
 
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20rem;
+    padding: 30rem var(--grid-margin);
+  }
+}
+
 .title {
   font-family: "Barlow Condensed", sans-serif;
   font-size: clamp(48rem, 6vw, 84rem);
@@ -78,6 +87,7 @@
 }
 
 .productTitle {
+  flex: 1;
   font-size: var(--font-size-base);
   font-weight: 700;
   text-transform: uppercase;
@@ -85,6 +95,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .price {
@@ -105,10 +116,38 @@
 }
 
 @media (max-width: 768px) {
+  .section {
+    padding-bottom: 40rem;
+  }
   .grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .grid::-webkit-scrollbar {
+    display: none;
   }
   .card {
+    flex: 0 0 85vw; /* Show 85% of one card to hint at next one */
+    scroll-snap-align: center;
+    border-right: 1px solid var(--color-divider) !important;
+    border-bottom: 1px solid var(--color-divider) !important;
+  }
+  .card:last-child {
     border-right: none !important;
+    padding-right: var(--grid-margin); /* Add some padding at the end */
+  }
+  .details {
+    padding: 12rem var(--grid-margin);
+  }
+  .productTitle {
+    font-size: 14rem;
   }
 }

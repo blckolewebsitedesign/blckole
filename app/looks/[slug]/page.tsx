@@ -45,5 +45,7 @@ export default async function LookPage(props: {
     })
   );
 
-  return <HomeScene products={products} recommendationsMap={recommendationsMap} initialHandle={params.slug} />;
+  const featuredProducts = await getProducts({}).catch(() => []);
+
+  return <HomeScene products={products} recommendationsMap={recommendationsMap} initialHandle={params.slug} featuredProducts={featuredProducts} />;
 }

@@ -17,9 +17,15 @@ type Props = {
   products: Product[];
   recommendationsMap?: Record<string, Product[]>;
   initialHandle?: string;
+  featuredProducts: Product[];
 };
 
-export function HomeScene({ products, recommendationsMap = {}, initialHandle }: Props) {
+export function HomeScene({
+  products,
+  recommendationsMap = {},
+  initialHandle,
+  featuredProducts,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -40,7 +46,11 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
     setIsExpanded(false);
 
     if (index !== null && products[index]) {
-      History.prototype.pushState.apply(window.history, [null, "", `/looks/${products[index].handle}`]);
+      History.prototype.pushState.apply(window.history, [
+        null,
+        "",
+        `/looks/${products[index].handle}`,
+      ]);
     } else {
       History.prototype.pushState.apply(window.history, [null, "", `/`]);
     }
@@ -90,12 +100,12 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
         scrollTrigger: {
           trigger: contentRef.current,
           start: "top bottom", // when the top of content hits bottom of viewport
-          end: "top center",   // fully faded out when content reaches the middle
+          end: "top center", // fully faded out when content reaches the middle
           scrub: true,
         },
       });
     },
-    { scope: containerRef }
+    { scope: containerRef },
   );
 
   const selectedProduct =
@@ -120,13 +130,15 @@ export function HomeScene({ products, recommendationsMap = {}, initialHandle }: 
       <BottomBar
         count={products.length}
         selectedProduct={selectedProduct}
-        relatedProducts={selectedProduct ? recommendationsMap[selectedProduct.id] : undefined}
+        relatedProducts={
+          selectedProduct ? recommendationsMap[selectedProduct.id] : undefined
+        }
         isExpanded={isExpanded}
         onClose={() => setIsExpanded(false)}
       />
 
       <div ref={contentRef} className={styles.scrollableContent}>
-        <FeaturedProducts products={products} />
+        <FeaturedProducts products={featuredProducts} />
         <Footer />
       </div>
     </div>

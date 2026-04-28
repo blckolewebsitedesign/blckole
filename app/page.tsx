@@ -24,5 +24,7 @@ export default async function HomePage() {
     })
   );
 
-  return <HomeScene products={products} recommendationsMap={recommendationsMap} />;
+  const featuredProducts = await getProducts({}).catch(() => []);
+
+  return <HomeScene products={products} recommendationsMap={recommendationsMap} featuredProducts={featuredProducts} />;
 }
