@@ -29,13 +29,14 @@ export function FeaturedProducts({ products }: Props) {
 
       gsap.fromTo(
         cards,
-        { y: 60, opacity: 0 },
+        { y: 60, autoAlpha: 0 },
         {
           y: 0,
-          opacity: 1,
+          autoAlpha: 1,
           duration: 0.8,
           stagger: 0.1,
           ease: "power3.out",
+          overwrite: true,
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 80%",
@@ -46,9 +47,9 @@ export function FeaturedProducts({ products }: Props) {
     },
     { scope: sectionRef },
   );
+  console.log("featured products rendering......");
 
   if (displayProducts.length === 0) return null;
-
   return (
     <section ref={sectionRef} className={styles.section}>
       <div className={styles.header}>
@@ -60,10 +61,7 @@ export function FeaturedProducts({ products }: Props) {
 
       <div ref={gridRef} className={styles.grid}>
         {displayProducts.map((product) => (
-          <div
-            key={product.id}
-            className={styles.card}
-          >
+          <div key={product.id} className={styles.card}>
             <Link
               href={`/products/${product.handle}`}
               className={styles.cardLinkOverlay}

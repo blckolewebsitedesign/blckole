@@ -59,25 +59,67 @@ Cache is invalidated on-demand by the Shopify webhook at `app/api/revalidate/rou
 
 GraphQL structure:
 
-- `queries/` — 10 query strings (cart, collection, product, menu, page variants)
-- `mutations/` — 4 mutation strings (create/add/edit/remove cart)
-- `fragments/` — 4 fragments (cart, product, image, seo)
+- `queries/` — query strings (cart, collection, product, menu, page variants)
+- `mutations/` — mutation strings (create/add/edit/remove cart)
+- `fragments/` — fragments (cart, product, image, seo)
 
 Response data is reshaped in `index.ts` (e.g. `reshapeProduct`, `reshapeCart`) to flatten Shopify's nested edges/nodes structure into plain app types defined in `types.ts`.
 
 ### Routing
 
-| Route                  | Data fetched                                                                                                   |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `/`                    | `getCollectionProducts('hidden-homepage-featured-items')`, `getCollectionProducts('hidden-homepage-carousel')` |
-| `/search?q=&sort=`     | `getProducts({ query, sortKey, reverse })`                                                                     |
-| `/search/[collection]` | `getCollection`, `getCollectionProducts`                                                                       |
-| `/product/[handle]`    | `getProduct(handle)`, `getProductRecommendations(id)`                                                          |
-| `/[page]`              | `getPage(handle)`                                                                                              |
-| `/sitemap.xml`         | `getCollections`, `getProducts`, `getPages`                                                                    |
-| `/api/revalidate`      | Webhook — calls `revalidateTag`                                                                                |
+| Route                  | Data fetched                                                                                                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                    | `getCollectionProducts('hidden-homepage-featured-items')` → fallback `getProducts({})`, `getProductRecommendations` per product, `getProducts({})` for featured section |
+| `/looks/[slug]`        | Same as `/` but pre-selects the product matching `slug` via `initialHandle` prop                                                                                        |
+| `/products/[handle]`   | `getProduct(handle)`                                                                                                                                                    |
+| `/indexes/products`    | Products index listing                                                                                                                                                  |
+| `/indexes/collections` | Collections index listing                                                                                                                                               |
+| `/story/[slug]`        | Story/editorial page                                                                                                                                                    |
+| `/[page]`              | `getPage(handle)`                                                                                                                                                       |
+| `/sitemap.xml`         | `getCollections`, `getProducts`, `getPages`                                                                                                                             |
+| `/api/revalidate`      | Webhook — calls `revalidateTag`                                                                                                                                         |
 
 All dynamic product/collection/page routes call `notFound()` if the Shopify query returns null.
+
+### HomeScene Interaction Model
+
+The homepage is a single-page "look browser" experience, not a traditional product listing:
+
+- **`HomeScene`** (`components/home-scene/`) — root Client Component that owns all interaction state: `selectedIndex` (which product is in detail view), `currentFrame` (360° rotation frame), `isExpanded` (bottom panel expanded state). It manages the URL via `history.pushState` directly (not Next.js router) so that selecting a product deep-links to `/looks/[handle]` without a page reload.
+
+- **`ScrollStage`** (`components/scroll-stage/`) — renders all products as a horizontal row of `RotatingFigure` slots. On product select, GSAP animates the selected thumbnail to fly into the detail view position ("flying thumbnail" transition). In detail mode, all products are rendered as a carousel with GSAP-driven slide positions. Keyboard (Escape), wheel, and touch swipe are all wired here.
+
+- The `HomeScene` container has a fixed-position hero (`mainRef`) that fades out via GSAP ScrollTrigger as the scrollable content below (`contentRef`) glides up. `FeaturedProducts` and `Footer` live in that scrollable section.
+
+- **`/looks/[slug]`** renders the identical `HomeScene` but passes `initialHandle` so the detail view opens immediately on load, enabling shareable deep links.
+
+### Product Media & ChromaKeyCanvas
+
+All product media rendering goes through `ChromaKeyCanvas` (`components/chroma-key-canvas/`):
+
+- Implements a WebGL chroma-key shader that composites green-screen product images/videos onto a transparent background in real time.
+- For images: renders a single frame onto a WebGL canvas.
+- For videos: drives a `requestAnimationFrame` render loop; pauses via `IntersectionObserver` when off-screen.
+- Falls back to a plain `<img>` or `<video>` tag if WebGL is unavailable.
+
+**`RotatingFigure`** (`components/rotating-figure/`) wraps `ChromaKeyCanvas` and handles the product display logic:
+
+- If the product has a `VIDEO` media item, it renders the video through `ChromaKeyCanvas`.
+- Otherwise, it cycles through `product.images` as rotation frames at 900ms intervals (3× faster on hover), controlled by an `externalFrame` prop when in detail mode.
+- Renders as a `<button>` (when `onClick` is provided) or a `<Link>` to `/products/[handle]` (default).
+
+**Filmstrip convention:** The **last image** in `product.images` is treated as a horizontal filmstrip sprite sheet for 36-frame 360° rotation. `ProductDetailPanel` uses it to render a scrubbable filmstrip UI that drives `currentFrame` back up to `HomeScene` → `ScrollStage` → `RotatingFigure`.
+
+### Animation System
+
+GSAP is the primary animation engine throughout:
+
+- `gsap` + `@gsap/react` (`useGSAP`) are used in every major interactive component.
+- `ScrollTrigger` is registered globally in `HomeScene` and `FeaturedProducts`.
+- All GSAP instances are scoped (`{ scope: ref }`) to avoid selector collisions.
+- `gsap.matchMedia` is used in `ScrollStage` for mobile/desktop responsive animation differences.
+
+Smooth scrolling uses Lenis (`lenis` / `@studio-freight/lenis`).
 
 ### Cart State
 
@@ -99,25 +141,22 @@ Cart ID is persisted in a `cartId` cookie.
 
 **Client Components** (`"use client"`):
 
-- `cart/cart-context.tsx`, `cart/modal.tsx`, `cart/add-to-cart.tsx`, `cart/delete-item-button.tsx`, `cart/edit-item-quantity-button.tsx`
-- `product/gallery.tsx`, `product/variant-selector.tsx`
-- `layout/navbar/search.tsx`
-- `welcome-toast.tsx`, `error.tsx`
+- `home-scene/index.tsx`, `scroll-stage/index.tsx`, `bottom-bar/index.tsx`
+- `rotating-figure/index.tsx`, `chroma-key-canvas/index.tsx`
+- `featured-products/index.tsx`, `product-detail-panel/index.tsx`
+- `cart/cart-context.tsx`, `cart/add-to-cart.tsx`, `cart/drawer.tsx`
+- `page-transition/index.tsx`
 
-Everything else is a Server Component, including `Navbar`, `Footer`, `Carousel`, `ThreeItemGrid`, and all page files.
+Everything else (page files, `Header`, `Footer`, `SiteShell`, etc.) is a Server Component.
 
 ### Key Conventions
 
-**Hidden content:** Products tagged `nextjs-frontend-hidden` (constant `HIDDEN_PRODUCT_TAG`) are excluded from listings and set `robots: noindex`. Collections prefixed `hidden-*` are filtered out of the public collections list but used internally (homepage slots).
+**Hidden content:** Products tagged `nextjs-frontend-hidden` (constant `HIDDEN_PRODUCT_TAG`) are excluded from listings and set `robots: noindex`. Collections prefixed `hidden-*` are filtered out of the public collections list but used internally (homepage featured slot uses `hidden-homepage-featured-items`).
 
-**Variant state in URL:** The product page stores selected variant options as search params (e.g. `?color=Red&size=L`). `VariantSelector` reads/writes these params via `useRouter.replace` — do not use local state for variant selection.
+**URL construction:** Always use `createUrl(pathname, searchParams)` from `lib/utils.ts` when building URLs with query params.
 
-**URL construction:** Always use `createUrl(pathname, searchParams)` from `lib/utils.ts` when building URLs with query params. It merges params cleanly and is used consistently across search, filters, and variant links.
-
-**Sorting:** Sort options are defined in `lib/constants.ts` as the `sorting` array. Each entry maps a UI label to a Shopify `sortKey` + `reverse` flag. Adding a new sort option requires updating this array and ensuring the Shopify query supports the key.
-
-**Image optimization:** Shopify CDN domains are whitelisted in `next.config.ts` for `<Image>`. When switching stores, update the `images.remotePatterns` entry there.
-
-**Product JSON-LD:** The product page emits a `<script type="application/ld+json">` schema block — keep it in sync when changing how product data is fetched or reshaped.
+**Image optimization:** Shopify CDN domains are whitelisted in `next.config.ts` for `<Image>` (`cdn.shopify.com`). When switching stores, update the `images.remotePatterns` entry there.
 
 **Metadata:** Each page route exports a `generateMetadata` function that sources titles and OG images from Shopify data. The root layout sets a `%s | SITE_NAME` title template.
+
+**Product JSON-LD:** The product page emits a `<script type="application/ld+json">` schema block — keep it in sync when changing how product data is fetched or reshaped.

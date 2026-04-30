@@ -7,11 +7,26 @@ import { useEffect, useRef, useState } from "react";
 import { preload } from "react-dom";
 import styles from "./index.module.css";
 
+type FrameListener = (frame: number) => void;
+const frameListeners = new Set<FrameListener>();
+
+export const subscribeToFrame = (listener: FrameListener) => {
+  frameListeners.add(listener);
+  return () => {
+    frameListeners.delete(listener);
+  };
+};
+
+export const dispatchFrame = (frame: number) => {
+  frameListeners.forEach((l) => l(frame));
+};
+
 type Props = {
   product: Product;
   priority?: boolean;
   onClick?: () => void;
   externalFrame?: number;
+  listenToGlobalFrame?: boolean;
 };
 
 type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
@@ -23,22 +38,41 @@ export function RotatingFigure({
   priority = false,
   onClick,
   externalFrame,
+  listenToGlobalFrame,
 }: Props) {
   const rawVideo = product.media?.find((m) => m.mediaContentType === "VIDEO");
   const videoMedia = rawVideo as VideoMedia | undefined;
 
   const images = product.images;
   const [frame, setFrame] = useState(0);
+  const [globalFrame, setGlobalFrame] = useState<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const displayFrame = externalFrame !== undefined ? externalFrame : frame;
+  const displayFrame =
+    externalFrame !== undefined
+      ? externalFrame
+      : listenToGlobalFrame && globalFrame !== undefined
+        ? globalFrame
+        : frame;
 
   if (priority && images.length > 0 && images[0]?.url) {
     preload(images[0].url, { as: "image" });
   }
 
   useEffect(() => {
-    if (externalFrame !== undefined || videoMedia || images.length <= 1) return;
+    if (listenToGlobalFrame) {
+      return subscribeToFrame(setGlobalFrame);
+    }
+  }, [listenToGlobalFrame]);
+
+  useEffect(() => {
+    if (
+      externalFrame !== undefined ||
+      listenToGlobalFrame ||
+      videoMedia ||
+      images.length <= 1
+    )
+      return;
     timerRef.current = setInterval(
       () => setFrame((f) => (f + 1) % images.length),
       FRAME_MS,
@@ -46,10 +80,16 @@ export function RotatingFigure({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [externalFrame, videoMedia, images.length]);
+  }, [externalFrame, listenToGlobalFrame, videoMedia, images.length]);
 
   function onMouseEnter() {
-    if (externalFrame !== undefined || videoMedia || images.length <= 1) return;
+    if (
+      externalFrame !== undefined ||
+      listenToGlobalFrame ||
+      videoMedia ||
+      images.length <= 1
+    )
+      return;
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(
       () => setFrame((f) => (f + 1) % images.length),
@@ -58,7 +98,13 @@ export function RotatingFigure({
   }
 
   function onMouseLeave() {
-    if (externalFrame !== undefined || videoMedia || images.length <= 1) return;
+    if (
+      externalFrame !== undefined ||
+      listenToGlobalFrame ||
+      videoMedia ||
+      images.length <= 1
+    )
+      return;
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(
       () => setFrame((f) => (f + 1) % images.length),
@@ -130,10 +176,7 @@ export function RotatingFigure({
         aria-label={product.title}
       >
         <div className={styles.mediaWrap}>
-          <ChromaKeyCanvas
-            src={currentImage.url}
-            className={styles.media}
-          />
+          <ChromaKeyCanvas src={currentImage.url} className={styles.media} />
         </div>
       </button>
     );
@@ -148,10 +191,7 @@ export function RotatingFigure({
       aria-label={product.title}
     >
       <div className={styles.mediaWrap}>
-        <ChromaKeyCanvas
-          src={currentImage.url}
-          className={styles.media}
-        />
+        <ChromaKeyCanvas src={currentImage.url} className={styles.media} />
       </div>
     </Link>
   );

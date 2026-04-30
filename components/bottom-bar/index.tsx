@@ -5,7 +5,7 @@ import gsap from "gsap";
 import type { Product } from "lib/shopify/types";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import React, { useRef } from "react";
 import styles from "./index.module.css";
 
 gsap.registerPlugin(useGSAP);
@@ -19,7 +19,7 @@ type Props = {
   onClose?: () => void;
 };
 
-export function BottomBar({
+export const BottomBar = React.memo(function BottomBar({
   count,
   discoverHref = "/indexes/products",
   selectedProduct,
@@ -31,25 +31,40 @@ export function BottomBar({
 
   useGSAP(
     () => {
+      // Establish initial hidden state so GSAP fully owns visibility (no inline-style conflicts)
+      gsap.set(".expanded_panel", { autoAlpha: 0 });
+
       if (!selectedProduct) return;
 
       if (isExpanded) {
-        gsap.to(".collapsed_group", { autoAlpha: 0, y: 10, duration: 0.3, ease: "power2.out" });
+        gsap.to(".collapsed_group", {
+          autoAlpha: 0,
+          y: 10,
+          duration: 0.3,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
         gsap.fromTo(
           ".expanded_panel",
           { autoAlpha: 0, y: 10 },
-          { autoAlpha: 1, y: 0, duration: 0.4, delay: 0.1, ease: "power2.out" }
+          { autoAlpha: 1, y: 0, duration: 0.4, delay: 0.1, ease: "power2.out" },
         );
       } else {
-        gsap.to(".expanded_panel", { autoAlpha: 0, y: 10, duration: 0.3, ease: "power2.out" });
+        gsap.to(".expanded_panel", {
+          autoAlpha: 0,
+          y: 10,
+          duration: 0.3,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
         gsap.fromTo(
           ".collapsed_group",
           { autoAlpha: 0, y: 10 },
-          { autoAlpha: 1, y: 0, duration: 0.4, delay: 0.1, ease: "power2.out" }
+          { autoAlpha: 1, y: 0, duration: 0.4, delay: 0.1, ease: "power2.out" },
         );
       }
     },
-    { scope: containerRef, dependencies: [isExpanded, selectedProduct] }
+    { scope: containerRef, dependencies: [isExpanded, selectedProduct] },
   );
 
   const productsToShow = selectedProduct
@@ -75,13 +90,7 @@ export function BottomBar({
       {/* Detail view chips */}
       {selectedProduct && (
         <>
-          <div
-            className={`collapsed_group ${styles.group}`}
-            style={{
-              opacity: isExpanded ? 0 : 1,
-              visibility: isExpanded ? "hidden" : "visible",
-            }}
-          >
+          <div className={`collapsed_group ${styles.group}`}>
             {productsToShow.map((p) => (
               <div key={p.id} className={styles.wrapper}>
                 {p.featuredImage && (
@@ -96,20 +105,17 @@ export function BottomBar({
                   </div>
                 )}
                 <span className={styles.count}>{p.title.toUpperCase()}</span>
-                <Link href={`/products/${p.handle}`} className={styles.discover}>
+                <Link
+                  href={`/products/${p.handle}`}
+                  className={styles.discover}
+                >
                   VIEW
                 </Link>
               </div>
             ))}
           </div>
 
-          <div
-            className={`expanded_panel ${styles.expandedPanel}`}
-            style={{
-              opacity: isExpanded ? 1 : 0,
-              visibility: isExpanded ? "visible" : "hidden",
-            }}
-          >
+          <div className={`expanded_panel ${styles.expandedPanel}`}>
             <div className={styles.expandedCards}>
               {productsToShow.map((p) => {
                 const price = p.priceRange?.minVariantPrice;
@@ -156,4 +162,4 @@ export function BottomBar({
       )}
     </div>
   );
-}
+});

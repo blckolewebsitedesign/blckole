@@ -25,7 +25,6 @@ export function ProductOption({ name, values }: Props) {
     params.set(name.toLowerCase(), value);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
-
   return (
     <div className={styles.wrapper}>
       <span className={styles.label}>{name}</span>

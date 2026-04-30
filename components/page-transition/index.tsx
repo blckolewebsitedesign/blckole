@@ -23,10 +23,10 @@ export function PageTransition({ children }: Props) {
           duration: 0.4,
           ease: "power2.out",
           clearProps: "opacity",
-        }
+        },
       );
     },
-    { scope: containerRef, dependencies: [pathname], revertOnUpdate: true }
+    { scope: containerRef, dependencies: [pathname], revertOnUpdate: true },
   );
 
   return (

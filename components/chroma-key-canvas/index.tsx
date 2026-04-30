@@ -1,5 +1,6 @@
 "use client";
 
+import { getPreloadedVideoSrc } from "lib/video-preload";
 import { useEffect, useRef, useState } from "react";
 
 const VS = `
@@ -39,7 +40,11 @@ const FS = `
   }
 `;
 
-function compileShader(gl: WebGLRenderingContext, type: number, source: string) {
+function compileShader(
+  gl: WebGLRenderingContext,
+  type: number,
+  source: string,
+) {
   const shader = gl.createShader(type);
   if (!shader) return null;
   gl.shaderSource(shader, source);
@@ -75,13 +80,17 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
     canvas.style.height = "100%";
     canvas.style.objectFit = "contain";
     canvas.style.objectPosition = "bottom center";
-    
+
     if (className) canvas.className = className;
-    
+
     container.appendChild(canvas);
 
     let animationFrameId: number;
     let mediaElement: HTMLVideoElement | HTMLImageElement;
+    // Video element kept on the outer scope (separate from mediaElement) so
+    // cleanup can pause/release it even while we're displaying the poster.
+    let video: HTMLVideoElement | null = null;
+    let videoFirstFrameReady = false;
     let gl: WebGLRenderingContext | null = null;
     let program: WebGLProgram | null = null;
     let texture: WebGLTexture | null = null;
@@ -92,10 +101,10 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
 
     const cleanup = () => {
       cancelAnimationFrame(animationFrameId);
-      if (mediaElement instanceof HTMLVideoElement) {
-        mediaElement.pause();
-        mediaElement.removeAttribute("src");
-        mediaElement.load();
+      if (video) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
       }
       if (gl) {
         if (texture) gl.deleteTexture(texture);
@@ -104,8 +113,8 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         if (fs) gl.deleteShader(fs);
         if (positionBuffer) gl.deleteBuffer(positionBuffer);
         if (texCoordBuffer) gl.deleteBuffer(texCoordBuffer);
-        
-        const loseContext = gl.getExtension('WEBGL_lose_context');
+
+        const loseContext = gl.getExtension("WEBGL_lose_context");
         if (loseContext) {
           loseContext.loseContext();
         }
@@ -116,7 +125,16 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
     };
 
     try {
-      gl = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true });
+      gl = canvas.getContext("webgl", {
+        premultipliedAlpha: true,
+        alpha: true,
+        // Keep the last-drawn frame across composites so the canvas never
+        // goes transparent between draws (e.g., the 1-frame gap after the
+        // IntersectionObserver resumes rAF). Default false would briefly
+        // clear the canvas while a paused video has not yet advanced
+        // currentTime — the visible blank flicker on scroll-in.
+        preserveDrawingBuffer: true,
+      });
       if (!gl) {
         setUseFallback(true);
         return cleanup;
@@ -127,10 +145,10 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         setUseFallback(true);
         return cleanup;
       }
-      
+
       vs = compileShader(gl, gl.VERTEX_SHADER, VS);
       fs = compileShader(gl, gl.FRAGMENT_SHADER, FS);
-      
+
       if (!vs || !fs) {
         setUseFallback(true);
         return cleanup;
@@ -139,13 +157,13 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       gl.attachShader(program, vs);
       gl.attachShader(program, fs);
       gl.linkProgram(program);
-      
+
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         console.warn("Program link error", gl.getProgramInfoLog(program));
         setUseFallback(true);
         return cleanup;
       }
-      
+
       gl.useProgram(program);
 
       positionBuffer = gl.createBuffer();
@@ -153,14 +171,9 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([
-          -1.0, -1.0,
-           1.0, -1.0,
-          -1.0,  1.0,
-          -1.0,  1.0,
-           1.0, -1.0,
-           1.0,  1.0,
+          -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
         ]),
-        gl.STATIC_DRAW
+        gl.STATIC_DRAW,
       );
 
       texCoordBuffer = gl.createBuffer();
@@ -168,14 +181,9 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([
-          0.0, 0.0,
-          1.0, 0.0,
-          0.0, 1.0,
-          0.0, 1.0,
-          1.0, 0.0,
-          1.0, 1.0,
+          0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
         ]),
-        gl.STATIC_DRAW
+        gl.STATIC_DRAW,
       );
 
       const posLocation = gl.getAttribLocation(program, "a_position");
@@ -201,7 +209,7 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
 
       const render = () => {
         if (!gl || !canvas || !mediaElement) return;
-        
+
         let intrinsicWidth = 0;
         let intrinsicHeight = 0;
         if (mediaElement instanceof HTMLVideoElement) {
@@ -212,24 +220,49 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
           intrinsicHeight = mediaElement.naturalHeight;
         }
 
-        if (intrinsicWidth > 0 && intrinsicHeight > 0 && (canvas.width !== intrinsicWidth || canvas.height !== intrinsicHeight)) {
+        if (
+          intrinsicWidth > 0 &&
+          intrinsicHeight > 0 &&
+          (canvas.width !== intrinsicWidth || canvas.height !== intrinsicHeight)
+        ) {
           canvas.width = intrinsicWidth;
           canvas.height = intrinsicHeight;
           gl.viewport(0, 0, canvas.width, canvas.height);
         }
 
-        if (mediaElement instanceof HTMLVideoElement && mediaElement.readyState >= 2) {
+        if (
+          mediaElement instanceof HTMLVideoElement &&
+          mediaElement.readyState >= 2
+        ) {
           // Skip frame if video time hasn't advanced (saves GPU work)
           const currentTime = mediaElement.currentTime;
           if (currentTime !== lastVideoTimeRef.current) {
             lastVideoTimeRef.current = currentTime;
             gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mediaElement);
+            gl.texImage2D(
+              gl.TEXTURE_2D,
+              0,
+              gl.RGBA,
+              gl.RGBA,
+              gl.UNSIGNED_BYTE,
+              mediaElement,
+            );
             gl.drawArrays(gl.TRIANGLES, 0, 6);
           }
-        } else if (mediaElement instanceof HTMLImageElement && mediaElement.complete && mediaElement.naturalWidth > 0) {
+        } else if (
+          mediaElement instanceof HTMLImageElement &&
+          mediaElement.complete &&
+          mediaElement.naturalWidth > 0
+        ) {
           gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mediaElement);
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            mediaElement,
+          );
           gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
 
@@ -239,9 +272,11 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       };
 
       if (isVideo) {
-        const video = document.createElement("video");
+        video = document.createElement("video");
         video.crossOrigin = "anonymous";
-        video.src = src;
+        // Use the in-memory blob URL when available — bypasses the network
+        // round-trip on swap and eliminates the cold-mount blank flicker.
+        video.src = getPreloadedVideoSrc(src) ?? src;
         video.loop = true;
         video.muted = true;
         video.playsInline = true;
@@ -249,24 +284,60 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         video.preload = "auto";
         // Decode at normal speed — avoids GPU spike on first frame
         video.playbackRate = 1;
-        if (poster) video.poster = poster;
-        video.play().catch(() => {});
+        // Set mediaElement = video synchronously so the rAF loop stays alive
+        // even before the poster or first video frame is ready.
         mediaElement = video;
 
+        // Paint the poster through the same chroma-key shader until the
+        // video has actually decoded its first frame. Closes the
+        // ~50–150 ms decode gap that remains after blob preload.
+        if (poster) {
+          const posterImg = new Image();
+          posterImg.crossOrigin = "anonymous";
+          posterImg.src = poster;
+          posterImg.onload = () => {
+            if (!videoFirstFrameReady) mediaElement = posterImg;
+          };
+        }
+
+        type RVFCVideo = HTMLVideoElement & {
+          requestVideoFrameCallback?: (cb: () => void) => number;
+        };
+        const v = video as RVFCVideo;
+        const markReady = () => {
+          videoFirstFrameReady = true;
+          if (video) mediaElement = video;
+        };
+        if (typeof v.requestVideoFrameCallback === "function") {
+          v.requestVideoFrameCallback(markReady);
+        } else {
+          video.addEventListener("loadeddata", markReady, { once: true });
+        }
+
+        video.play().catch(() => {});
+
+        // Capture a non-null local for the IntersectionObserver closure.
+        const videoLocal = video;
         // Pause rendering when off-screen to save GPU/CPU
         const observer = new IntersectionObserver(
           (entries) => {
             for (const entry of entries) {
               if (entry.isIntersecting) {
-                video.play().catch(() => {});
+                videoLocal.play().catch(() => {});
+                // Force the next render() to re-upload + redraw the
+                // current frame, even if currentTime hasn't advanced
+                // since pause. Without this, the first tick after
+                // resume hits the "skip draw" branch and the canvas
+                // stays blank for one composite.
+                lastVideoTimeRef.current = -1;
                 animationFrameId = requestAnimationFrame(render);
               } else {
-                video.pause();
+                videoLocal.pause();
                 cancelAnimationFrame(animationFrameId);
               }
             }
           },
-          { threshold: 0.05 }
+          { threshold: 0.05 },
         );
         observer.observe(canvas);
 
@@ -295,7 +366,12 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
           src={src}
           poster={poster}
           className={className}
-          style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "bottom center",
+          }}
           autoPlay
           loop
           muted
@@ -308,10 +384,21 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         src={src}
         alt=""
         className={className}
-        style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          objectPosition: "bottom center",
+        }}
       />
     );
   }
 
-  return <div ref={containerRef} className={className} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
 }

@@ -37,8 +37,6 @@
   line-height: 1;
 }
 
-
-
 /* Nav row */
 .navRow {
   display: flex;
@@ -122,8 +120,6 @@
   cursor: pointer;
   background: var(--color-inner-background);
 }
-
-
 
 @media (max-width: 900px) {
   .panel {

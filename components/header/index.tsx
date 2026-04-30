@@ -1,5 +1,6 @@
 "use client";
 
+import { TextShuffle } from "components/text-shuffle";
 import Link from "next/link";
 import styles from "./index.module.css";
 
@@ -32,11 +33,10 @@ export function Header({
       <div className={styles.panel}>
         {/* Logo row */}
         <div className={styles.logoRow}>
-          <Link
-            href="/"
-            className={styles.logoLink}
-          >
-            <span className={styles.logoText}>BLCKOLE</span>
+          <Link href="/" className={styles.logoLink}>
+            <span className={styles.logoText}>
+              <TextShuffle text="BLCKOLE" triggerOnHover />
+            </span>
           </Link>
         </div>
 
@@ -57,7 +57,6 @@ export function Header({
           </button>
         </div>
       </div>
-
     </>
   );
 }

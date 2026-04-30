@@ -22,7 +22,7 @@ export function SiteShell({ navItems, collectionLabel, children }: Props) {
   const [cartOpen, setCartOpen] = useState(false);
   const { cart } = useCart();
   const cartCount = cart?.totalQuantity ?? 0;
-
+  console.log("site-shell rendering......");
   return (
     <>
       <Header

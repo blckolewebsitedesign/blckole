@@ -73,11 +73,7 @@
   width: 160rem;
   aspect-ratio: 1 / 2.5;
   cursor: pointer;
-  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.figureSlot:hover {
-  transform: scale(1.05);
+  will-change: transform, opacity;
 }
 
 /* ── Detail view ── */
@@ -151,7 +147,9 @@
   cursor: pointer;
   border: 1px solid var(--color-divider);
   opacity: 0.8;
-  transition: opacity 0.2s, border-color 0.2s;
+  transition:
+    opacity 0.2s,
+    border-color 0.2s;
   overflow: hidden;
 }
 
@@ -170,7 +168,7 @@
   cursor: default;
 }
 
-/* ── Mobile (Bécane circular arc) ── */
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .titleOverlay {
     bottom: 120rem;
@@ -182,9 +180,17 @@
     font-size: 42rem;
   }
 
-  /* Figure slots are fixed by JS on mobile */
+  /* Mobile: GSAP positions slots via x/y transforms from this CSS anchor */
+  .figuresRow {
+    display: block;
+  }
+
   .figureSlot {
+    position: absolute;
     width: 100rem;
+    left: 50%;
+    top: 45%;
+    margin: 0;
   }
 
   .detailSlide {

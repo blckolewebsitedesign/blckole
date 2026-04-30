@@ -23,6 +23,7 @@ export function ProductGallery({ images, title }: Props) {
   if (!images.length) return null;
 
   const [first, ...rest] = images;
+  console.log("product gallery rendering......", images.length);
 
   return (
     <>

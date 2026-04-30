@@ -61,7 +61,6 @@ export function TextShuffle({ text, className, triggerOnHover }: Props) {
     cleanupRef.current?.();
     cleanupRef.current = scramble(ref.current, text, 0.4);
   }
-
   return (
     <span
       className={`${styles.wrapper}${className ? ` ${className}` : ""}`}

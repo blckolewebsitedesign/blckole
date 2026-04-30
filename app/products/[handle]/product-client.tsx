@@ -44,7 +44,18 @@ function pad(n: number) {
 
 export function ProductPageClient({ product }: Props) {
   console.log("PRODUCT OPTIONS:", JSON.stringify(product.options));
-  console.log("REAL OPTIONS:", JSON.stringify(product.options.filter(opt => !(opt.values.length === 1 && opt.values[0]?.toLowerCase() === "default title"))));
+  console.log(
+    "REAL OPTIONS:",
+    JSON.stringify(
+      product.options.filter(
+        (opt) =>
+          !(
+            opt.values.length === 1 &&
+            opt.values[0]?.toLowerCase() === "default title"
+          ),
+      ),
+    ),
+  );
 
   const { addCartItem } = useCart();
   const [message, formAction, isPending] = useActionState(addItem, null);
@@ -170,9 +181,11 @@ export function ProductPageClient({ product }: Props) {
           <div className={styles.titleRow}>
             <h1 className={styles.title}>{product.title}</h1>
             <p className={styles.price}>{priceDisplay}</p>
-            <button 
+            <button
               className={styles.mobileDetailsTrigger}
-              onClick={() => setOpenSection(openSection === "DETAILS" ? null : "DETAILS")}
+              onClick={() =>
+                setOpenSection(openSection === "DETAILS" ? null : "DETAILS")
+              }
             >
               DETAILS {openSection === "DETAILS" ? "—" : "+"}
             </button>
@@ -217,7 +230,11 @@ export function ProductPageClient({ product }: Props) {
                 <span className={styles.optionLabelRow}>
                   {option.name.toUpperCase()}
                 </span>
-                <div className={isColor ? styles.optionListColor : styles.optionListSize}>
+                <div
+                  className={
+                    isColor ? styles.optionListColor : styles.optionListSize
+                  }
+                >
                   {option.values.map((val) => {
                     const active = selectedOptions[option.name] === val;
                     const selectOption = () =>
@@ -240,7 +257,9 @@ export function ProductPageClient({ product }: Props) {
                             className={styles.colorDot}
                             style={{ background: bg }}
                           />
-                          <span className={styles.colorName}>{val.toUpperCase()}</span>
+                          <span className={styles.colorName}>
+                            {val.toUpperCase()}
+                          </span>
                         </button>
                       );
                     }

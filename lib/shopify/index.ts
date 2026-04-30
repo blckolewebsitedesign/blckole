@@ -197,11 +197,11 @@ const reshapeMedia = (
         sources: v.sources ?? [],
         previewImage: v.previewImage
           ? {
-            url: v.previewImage.url,
-            altText: v.previewImage.altText ?? "",
-            width: v.previewImage.width,
-            height: v.previewImage.height,
-          }
+              url: v.previewImage.url,
+              altText: v.previewImage.altText ?? "",
+              width: v.previewImage.width,
+              height: v.previewImage.height,
+            }
           : undefined,
       };
     }
