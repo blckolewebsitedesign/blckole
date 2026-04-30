@@ -9,10 +9,10 @@ import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Product, ProductMedia } from "lib/shopify/types";
 import { preloadVideos } from "lib/video-preload";
-
-type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
+
+type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, ScrollToPlugin);
 
@@ -149,9 +149,6 @@ export const ScrollStage = React.memo(function ScrollStage({
           });
           return;
         }
-      });
-      return;
-    }
 
         // Mobile: CSS sets position:absolute; left:50%; top:45%.
         // GSAP offsets each slot from that anchor using x/y transforms only — no layout props.
@@ -187,26 +184,14 @@ export const ScrollStage = React.memo(function ScrollStage({
             });
           }
         });
-      } else {
-        gsap.set(slot, {
-          position: "absolute",
-          left: x,
-          top: y,
-          margin: 0,
-          zIndex: 10 - Math.abs(offset)
-        });
-      }
-    });
-  });
+      };
 
-  useGSAP(() => {
-    window.addEventListener("resize", updateLayout);
-    return () => window.removeEventListener("resize", updateLayout);
-  }, { scope: stageRef, dependencies: [updateLayout] });
-
-  useEffect(() => {
-    updateLayout();
-  }, [mobileGridIndex, isDetail, total, updateLayout]);
+      updateLayout();
+      window.addEventListener("resize", updateLayout);
+      return () => window.removeEventListener("resize", updateLayout);
+    },
+    { scope: stageRef, dependencies: [total, isDetail, mobileGridIndex] },
+  );
 
   // — Escape to deselect
   useEffect(() => {
@@ -388,14 +373,8 @@ export const ScrollStage = React.memo(function ScrollStage({
   }, [isDetail, selectedIndex, total, onSelect, mobileGridIndex]);
 
   // — Figures row opacity and Flying Thumbnail
+  const prevDetailRef = useRef(isDetail);
   const prevSelectedIndexRef = useRef(selectedIndex);
-
-  useEffect(() => {
-    if (selectedIndex !== null) {
-      prevSelectedIndexRef.current = selectedIndex;
-    }
-  }, [selectedIndex]);
-
   useGSAP(
     () => {
       if (!rowRef.current) return;
@@ -411,8 +390,7 @@ export const ScrollStage = React.memo(function ScrollStage({
         prevSelectedIndexRef.current = selectedIndex;
       }
 
-      if (isDetail) {
-        const lastIndex = selectedIndex;
+      if (justEntered) {
         slotRefs.current.forEach((slot, i) => {
           if (!slot) return;
           if (i === lastIndex) {
@@ -465,8 +443,7 @@ export const ScrollStage = React.memo(function ScrollStage({
           }
         });
         rowRef.current.style.pointerEvents = "none";
-      } else if (prevSelectedIndexRef.current !== null) {
-        const lastIndex = prevSelectedIndexRef.current;
+      } else if (justExited) {
         slotRefs.current.forEach((slot, i) => {
           if (!slot) return;
           const isMobile = window.innerWidth <= 768;
@@ -529,7 +506,7 @@ export const ScrollStage = React.memo(function ScrollStage({
         rowRef.current.style.pointerEvents = "none";
       }
     },
-    { scope: stageRef, dependencies: [isDetail] },
+    { scope: stageRef, dependencies: [isDetail, mobileGridIndex] },
   );
 
   // — Title overlay fade
