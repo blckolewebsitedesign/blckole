@@ -60,7 +60,6 @@ export function RotatingFigure({
   }
 
   useEffect(() => {
-
     if (listenToGlobalFrame) {
       return subscribeToFrame(setGlobalFrame);
     }
@@ -118,7 +117,6 @@ export function RotatingFigure({
     const mp4 =
       videoMedia.sources.find((s) => s.mimeType === "video/mp4") ??
       videoMedia.sources[0];
-
 
     if (mp4) {
       if (onClick) {

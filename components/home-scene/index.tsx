@@ -8,6 +8,7 @@ import { ScrollStage } from "components/scroll-stage";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Product } from "lib/shopify/types";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./index.module.css";
 
@@ -17,78 +18,91 @@ const EMPTY_MAP: Record<string, Product[]> = {};
 type Props = {
   products: Product[];
   recommendationsMap?: Record<string, Product[]>;
-  initialHandle?: string;
   featuredProducts: Product[];
 };
 
 export function HomeScene({
   products,
   recommendationsMap = EMPTY_MAP,
-  initialHandle,
   featuredProducts,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(() => {
-    if (initialHandle) {
-      const idx = products.findIndex((p) => p.handle === initialHandle);
-      return idx !== -1 ? idx : null;
-    }
-    return null;
-  });
-  const [isExpanded, setIsExpanded] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const handleSelect = useCallback(
-    (index: number | null) => {
-      setSelectedIndex(index);
-      setIsExpanded(false);
-
-      if (index !== null && products[index]) {
-        History.prototype.pushState.apply(window.history, [
-          null,
-          "",
-          `/looks/${products[index].handle}`,
-        ]);
-      } else {
-        History.prototype.pushState.apply(window.history, [null, "", `/`]);
-      }
+  const indexFromPathname = useCallback(
+    (path: string | null): number | null => {
+      if (!path?.startsWith("/looks/")) return null;
+      const handle = path.slice("/looks/".length);
+      const idx = products.findIndex((p) => p.handle === handle);
+      return idx === -1 ? null : idx;
     },
     [products],
   );
 
-  // Prevent page scroll when in detail view
+  // selectedIndex is local state seeded from the URL. Click handlers update
+  // it optimistically so the GSAP tween fires in the same frame; the
+  // router.push/replace below merely syncs the URL afterwards. A useEffect
+  // pulls the URL back into state on external changes (back/forward, deep
+  // links) so URL stays the source of truth on navigation events.
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(() =>
+    indexFromPathname(pathname),
+  );
+  const [isExpanded, setIsExpanded] = useState(false);
+
   useEffect(() => {
-    if (selectedIndex !== null) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    setSelectedIndex(indexFromPathname(pathname));
+  }, [pathname, indexFromPathname]);
+
+  // Collapse the bottom panel whenever the look changes.
+  useEffect(() => {
+    setIsExpanded(false);
   }, [selectedIndex]);
 
-  // Handle browser back/forward
+  // Warm the RSC payload for every look so router.replace is instant.
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      if (path === "/") {
-        setSelectedIndex(null);
-        setIsExpanded(false);
-      } else if (path.startsWith("/looks/")) {
-        const handle = path.replace("/looks/", "");
-        const idx = products.findIndex((p) => p.handle === handle);
-        if (idx !== -1) {
-          setSelectedIndex(idx);
-          setIsExpanded(false);
-        }
+    products.forEach((p) => router.prefetch(`/looks/${p.handle}`));
+  }, [products, router]);
+
+  const handleSelect = useCallback(
+    (index: number | null) => {
+      setSelectedIndex(index);
+      const target =
+        index !== null && products[index]
+          ? `/looks/${products[index].handle}`
+          : "/";
+      if (target === pathname) return;
+
+      // push only when entering detail from listing; replace for closing back to "/"
+      // For look-to-look in-scene navigation, bypass Next.js router entirely to 
+      // avoid server data fetching delays that cause jumpy/laggy scrubbing.
+      if (pathname === "/" && target !== "/") {
+        router.push(target, { scroll: false });
+      } else if (target === "/") {
+        router.replace(target, { scroll: false });
+      } else {
+        window.history.replaceState(null, "", target);
       }
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [products]);
+    },
+    [products, pathname, router],
+  );
+
+  // When entering detail view, scroll to the position matching the selected model.
+  // ScrollTrigger maps scrollY to a continuous model index: index = scrollY / innerHeight
+  const prevSelectedRef = useRef<number | null>(null);
+  useEffect(() => {
+    const justEntered = selectedIndex !== null && prevSelectedRef.current === null;
+    prevSelectedRef.current = selectedIndex;
+    if (justEntered) {
+      // Use rAF to ensure the scroll proxy div is mounted first
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: selectedIndex * window.innerHeight, behavior: 'instant' as ScrollBehavior });
+      });
+    }
+  }, [selectedIndex]);
 
   // GSAP: main fades out as the scrollable content glides up over it
   useGSAP(
@@ -129,7 +143,12 @@ export function HomeScene({
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       {/* Gives page scrollable height so the 3D models are shown fully before scrolling */}
-      <div className={styles.heroSpacer} />
+      <div className={styles.heroSpacer} style={{ display: selectedIndex !== null ? 'none' : 'block' }} />
+
+      {/* Detail View Scrolling Proxy */}
+      {selectedIndex !== null && (
+        <div id="detail-scroll-proxy" style={{ height: `${products.length * 100}vh`, width: '100%' }} />
+      )}
 
       <div ref={mainRef} className={styles.mainFixed}>
         <ScrollStage
@@ -148,10 +167,12 @@ export function HomeScene({
         onClose={() => setIsExpanded(false)}
       />
 
-      <div ref={contentRef} className={styles.scrollableContent}>
-        <FeaturedProducts products={featuredProducts} />
-        <Footer />
-      </div>
+      {selectedIndex === null && (
+        <div ref={contentRef} className={styles.scrollableContent}>
+          <FeaturedProducts products={featuredProducts} />
+          <Footer />
+        </div>
+      )}
     </div>
   );
 }

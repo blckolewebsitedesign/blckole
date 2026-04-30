@@ -5,14 +5,13 @@ import {
   getProducts,
 } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
+import type { ReactNode } from "react";
 
-export const metadata = {
-  description:
-    "Born on the road, made for the city. Technical, protective and unapologetically feminine.",
-  openGraph: { type: "website" },
-};
-
-export default async function HomePage() {
+export default async function BrowserLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const products = await getCollectionProducts({
     collection: "hidden-homepage-featured-items",
   })
@@ -33,10 +32,13 @@ export default async function HomePage() {
   const featuredProducts = await getProducts({}).catch(() => []);
 
   return (
-    <HomeScene
-      products={products}
-      recommendationsMap={recommendationsMap}
-      featuredProducts={featuredProducts}
-    />
+    <>
+      <HomeScene
+        products={products}
+        recommendationsMap={recommendationsMap}
+        featuredProducts={featuredProducts}
+      />
+      {children}
+    </>
   );
 }

@@ -5,11 +5,13 @@ import { ProductDetailPanel } from "components/product-detail-panel";
 import { RotatingFigure } from "components/rotating-figure";
 import { TextShuffle } from "components/text-shuffle";
 import gsap from "gsap";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Product } from "lib/shopify/types";
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
 
-gsap.registerPlugin(useGSAP);
+gsap.registerPlugin(useGSAP, ScrollTrigger, ScrollToPlugin);
 
 type Props = {
   products: Product[];
@@ -45,7 +47,6 @@ export const ScrollStage = React.memo(function ScrollStage({
   const detailSlidesRefs = useRef<(HTMLDivElement | null)[]>([]);
   const firstDetailRenderRef = useRef(true);
 
-  const [transformOrigin, setTransformOrigin] = useState("50% 80%");
   const [detailMounted, setDetailMounted] = useState(isDetail);
   const [titleMounted, setTitleMounted] = useState(!isDetail);
 
@@ -143,29 +144,110 @@ export const ScrollStage = React.memo(function ScrollStage({
     return () => window.removeEventListener("keydown", handler);
   }, [isDetail, onSelect]);
 
-  // — Wheel to navigate in detail mode
+  // — Stable refs so the ScrollTrigger created below survives renders
+  const onSelectRef = useRef(onSelect);
   useEffect(() => {
-    if (!isDetail || selectedIndex === null) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (navCooldown.current) return;
-      const delta =
-        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      if (Math.abs(delta) < 30) return;
-      const dir = delta > 0 ? 1 : -1;
-      const nextIndex = selectedIndex + dir;
-      if (nextIndex >= 0 && nextIndex < total) {
-        navCooldown.current = true;
-        setTransformOrigin(dir > 0 ? "88% 50%" : "12% 50%");
-        onSelect(nextIndex);
-        setTimeout(() => {
-          navCooldown.current = false;
-        }, 600);
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
+
+  const selectedIndexRef = useRef(selectedIndex);
+  useEffect(() => {
+    selectedIndexRef.current = selectedIndex;
+  }, [selectedIndex]);
+
+  // Paints every slide from a continuous float rawIndex (0..count-1).
+  // Pure transform writes — no React state, no React reads.
+  const paintSlides = useRef((rawIndex: number) => {
+    const isMobile = window.innerWidth <= 768;
+    const spacing = isMobile ? 50 : 35; // vw between adjacent models
+    let painted = 0;
+    detailSlidesRefs.current.forEach((slide, i) => {
+      if (!slide) return;
+      painted++;
+      const diff = i - rawIndex;
+      const abs = Math.abs(diff);
+      const scale = Math.max(1 - abs * 0.15, 0.6);
+
+      let opacity = 0;
+      if (abs < 0.1) {
+        opacity = 1;
+      } else if (abs < 1.5) {
+        opacity = Math.max(1 - abs * 0.85, 0.15);
+        if (abs > 1) {
+          opacity = 0.15 - ((abs - 1) * 0.3);
+        }
       }
+      if (abs >= 1.5) opacity = 0;
+
+      gsap.set(slide, { x: `${diff * spacing}vw`, scale, autoAlpha: Math.max(opacity, 0) });
+    });
+    return painted;
+  }).current;
+
+  // — ScrollTrigger: created when detail mode is entered, killed when exited.
+  // Uses a ref guard inside the rAF to prevent double-creation from Strict Mode.
+  const stRef = useRef<ScrollTrigger | null>(null);
+
+  useEffect(() => {
+    if (!isDetail || !detailMounted) {
+      // Leaving detail mode — kill ScrollTrigger
+      if (stRef.current) {
+        stRef.current.kill();
+        stRef.current = null;
+      }
+      return;
+    }
+
+    const proxy = document.getElementById("detail-scroll-proxy");
+    if (!proxy) return;
+    const count = products.length;
+    if (count <= 1) return;
+
+    // Double-rAF ensures DOM is settled and slide refs populated
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        // Guard: skip if already created (handles Strict Mode double-invoke)
+        if (stRef.current) return;
+
+        ScrollTrigger.refresh();
+        stRef.current = ScrollTrigger.create({
+          trigger: proxy,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+          snap: {
+            snapTo: 1 / (count - 1),
+            duration: { min: 0.2, max: 0.5 },
+            ease: "power3.out",
+            inertia: false,
+            delay: 0,
+            onComplete: (self) => {
+              const idx = Math.round(self.progress * (count - 1));
+              if (idx !== selectedIndexRef.current && idx >= 0 && idx < count) {
+                onSelectRef.current(idx);
+              }
+            },
+          },
+          onUpdate: (self) => {
+            paintSlides(self.progress * (count - 1));
+          },
+        });
+
+        // Initial paint at the current model position
+        paintSlides(selectedIndexRef.current ?? 0);
+        console.log('[ST] Created. slides:', detailSlidesRefs.current.filter(Boolean).length);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      // NOTE: we do NOT kill stRef.current here — only kill when isDetail becomes false.
+      // This prevents the "kill → recreate" cycle during in-scene re-renders.
     };
-    window.addEventListener("wheel", onWheel, { passive: false });
-    return () => window.removeEventListener("wheel", onWheel);
-  }, [isDetail, selectedIndex, total, onSelect]);
+  }, [isDetail, detailMounted, products.length, paintSlides]);
 
   // — Touch swipe for mobile
   useEffect(() => {
@@ -189,11 +271,10 @@ export const ScrollStage = React.memo(function ScrollStage({
           const nextIndex = selectedIndex + dir;
           if (nextIndex >= 0 && nextIndex < total) {
             navCooldown.current = true;
-            setTransformOrigin(dir > 0 ? "88% 50%" : "12% 50%");
             onSelect(nextIndex);
             setTimeout(() => {
               navCooldown.current = false;
-            }, 600);
+            }, 350);
           }
         } else if (!isDetail && window.innerWidth <= 768) {
           const nextIndex = mobileGridIndex + dir;
@@ -251,8 +332,6 @@ export const ScrollStage = React.memo(function ScrollStage({
             const srCX = rect.left + rect.width / 2;
             const srCY = rect.top + rect.height / 2;
 
-            // Use current GSAP x/y as base so the delta is correct regardless of
-            // whether the slot was already offset by mobile-grid transforms.
             const currentX = (gsap.getProperty(slot, "x") as number) || 0;
             const currentY = (gsap.getProperty(slot, "y") as number) || 0;
             const targetX = currentX + (drCX - srCX);
@@ -295,7 +374,6 @@ export const ScrollStage = React.memo(function ScrollStage({
           const offset = i - mobileGridIndex;
 
           if (i === lastIndex) {
-            // Animate selected slot back from flying-thumbnail position to its grid slot
             const gridX = isMobile ? offset * (window.innerWidth * 0.35) : 0;
             const gridY = isMobile ? -Math.abs(offset) * 15 : 0;
             gsap.set(slot, { autoAlpha: 1 });
@@ -346,7 +424,6 @@ export const ScrollStage = React.memo(function ScrollStage({
         });
         rowRef.current.style.pointerEvents = "auto";
       } else if (isDetail && firstDetailRenderRef.current) {
-        // Direct deep-link visit: hide all slots immediately
         slotRefs.current.forEach((slot) => {
           if (slot) gsap.set(slot, { autoAlpha: 0, scale: 0.95 });
         });
@@ -380,7 +457,9 @@ export const ScrollStage = React.memo(function ScrollStage({
     { scope: stageRef, dependencies: [isDetail] },
   );
 
-  // — Detail view animation (extremely smooth)
+  // — Detail view mount/unmount & entrance positioning
+  // paintSlides is the SINGLE source of truth for slide positions.
+  // No separate entrance animation that could fight with ScrollTrigger.
   useGSAP(
     () => {
       if (isDetail && !detailMounted) {
@@ -403,119 +482,40 @@ export const ScrollStage = React.memo(function ScrollStage({
         return;
       }
 
-      const mm = gsap.matchMedia(stageRef);
+      // Position slides using paintSlides (single source of truth)
+      // so there's no mismatch when ScrollTrigger takes over
+      if (!firstDetailRenderRef.current) return;
 
-      mm.add(
+      // Start all slides hidden, then fade the detail view container in
+      const idx = selectedIndex ?? 0;
+      paintSlides(idx);
+
+      // Initially hide all slides, then fade them in together
+      detailSlidesRefs.current.forEach((slide) => {
+        if (slide) gsap.set(slide, { autoAlpha: 0 });
+      });
+
+      // Fade in the detail view after the flying thumbnail animation
+      gsap.fromTo(
+        detailViewRef.current,
+        { autoAlpha: 0 },
         {
-          isDesktop: "(min-width: 769px)",
-          isMobile: "(max-width: 768px)",
-        },
-        (context) => {
-          const { isMobile } = context.conditions as {
-            isMobile: boolean;
-            isDesktop: boolean;
-          };
-
-          products.forEach((_, i) => {
-            const slide = detailSlidesRefs.current[i];
-            if (!slide) return;
-
-            const isActive = i === selectedIndex;
-            const isPrev = i === selectedIndex! - 1;
-            const isNext = i === selectedIndex! + 1;
-            const isFarPrev = i === selectedIndex! - 2;
-            const isFarNext = i === selectedIndex! + 2;
-            const isOutPrev = i < selectedIndex! - 2;
-
-            let targetX = "0vw";
-            let targetOpacity = 0;
-            let targetScale = 0.8;
-
-            if (isActive) {
-              targetX = "0vw";
-              targetOpacity = 1;
-              targetScale = 1;
-            } else if (isPrev) {
-              targetX = isMobile ? "-45vw" : "-28vw";
-              targetOpacity = isMobile ? 0.1 : 0.25;
-              targetScale = 0.8;
-            } else if (isNext) {
-              targetX = isMobile ? "45vw" : "28vw";
-              targetOpacity = isMobile ? 0.1 : 0.25;
-              targetScale = 0.8;
-            } else if (isFarPrev) {
-              targetX = isMobile ? "-80vw" : "-48vw";
-              targetOpacity = isMobile ? 0 : 0.08;
-              targetScale = 0.6;
-            } else if (isFarNext) {
-              targetX = isMobile ? "80vw" : "48vw";
-              targetOpacity = isMobile ? 0 : 0.08;
-              targetScale = 0.6;
-            } else if (isOutPrev) {
-              targetX = isMobile ? "-100vw" : "-80vw";
-              targetOpacity = 0;
-              targetScale = 0.5;
-            } else {
-              targetX = isMobile ? "100vw" : "80vw";
-              targetOpacity = 0;
-              targetScale = 0.5;
-            }
-
-            if (firstDetailRenderRef.current) {
-              if (isActive) {
-                // Flying thumbnail covers the slot; wait for it to fade, then crossfade in
-                gsap.set(slide, {
-                  scale: targetScale,
-                  x: targetX,
-                  y: 0,
-                  autoAlpha: 0,
-                });
-                gsap.to(slide, {
-                  autoAlpha: targetOpacity,
-                  duration: 0.2,
-                  delay: 0.6,
-                  ease: "none",
-                });
-              } else if (isPrev || isNext || isFarPrev || isFarNext) {
-                gsap.set(slide, {
-                  autoAlpha: 0,
-                  x: targetX,
-                  scale: targetScale,
-                });
-                gsap.to(slide, {
-                  autoAlpha: targetOpacity,
-                  duration: 0.8,
-                  ease: "power2.out",
-                  delay: 0.4,
-                });
-              } else {
-                gsap.set(slide, {
-                  autoAlpha: 0,
-                  x: targetX,
-                  scale: targetScale,
-                });
-              }
-            } else {
-              gsap.to(slide, {
-                x: targetX,
-                autoAlpha: targetOpacity,
-                scale: targetScale,
-                duration: 0.8,
-                ease: "power3.inOut",
-                overwrite: "auto",
-              });
-            }
-          });
-
-          firstDetailRenderRef.current = false;
+          autoAlpha: 1,
+          duration: 0.3,
+          delay: 0.5,
+          ease: "power2.out",
+          onComplete: () => {
+            // Now paint slides with proper opacity
+            paintSlides(idx);
+          },
         },
       );
 
-      return () => mm.revert();
+      firstDetailRenderRef.current = false;
     },
     {
       scope: stageRef,
-      dependencies: [isDetail, selectedIndex, transformOrigin, detailMounted],
+      dependencies: [isDetail, detailMounted],
     },
   );
 
@@ -523,15 +523,15 @@ export const ScrollStage = React.memo(function ScrollStage({
     if (i === selectedIndex) return;
     onSelect(i);
   }
-console.log("scroll-stage rendering......");
+  console.log("scroll-stage rendering......");
   return (
     <div
       ref={stageRef}
       className={styles.stage}
       onClick={() => isDetail && onSelect(null)}
     >
-      {/* Title overlay */}
-      {titleMounted && (
+      {/* Title overlay — hidden in detail mode */}
+      {titleMounted && !isDetail && (
         <div ref={titleOverlayRef} className={styles.titleOverlay}>
           <span className={styles.breadcrumb}>
             COLLECTION {pad(1)} / {pad(1)}
@@ -569,10 +569,7 @@ console.log("scroll-stage rendering......");
                 <div className={styles.jumpThumb}>
                   <RotatingFigure
                     product={prevProduct}
-                    onClick={() => {
-                      setTransformOrigin("12% 50%");
-                      onSelect(selectedIndex! - 1);
-                    }}
+                    onClick={() => onSelect(selectedIndex! - 1)}
                   />
                 </div>
               )}
@@ -586,10 +583,7 @@ console.log("scroll-stage rendering......");
                 <div className={styles.jumpThumb}>
                   <RotatingFigure
                     product={nextProduct}
-                    onClick={() => {
-                      setTransformOrigin("88% 50%");
-                      onSelect(selectedIndex! + 1);
-                    }}
+                    onClick={() => onSelect(selectedIndex! + 1)}
                   />
                 </div>
               )}
@@ -599,12 +593,7 @@ console.log("scroll-stage rendering......");
           {/* Main Stage Track */}
           {products.map((p, i) => {
             const isActive = i === selectedIndex;
-            const isPrev = i === selectedIndex! - 1;
-            const isNext = i === selectedIndex! + 1;
-            const isFarPrev = i === selectedIndex! - 2;
-            const isFarNext = i === selectedIndex! + 2;
-            const isVisible =
-              isActive || isPrev || isNext || isFarPrev || isFarNext;
+            const isNearby = Math.abs(i - (selectedIndex ?? 0)) <= 2;
 
             return (
               <div
@@ -612,24 +601,18 @@ console.log("scroll-stage rendering......");
                 ref={(el) => {
                   detailSlidesRefs.current[i] = el;
                 }}
-                className={`${styles.detailSlide} ${isActive ? styles.detailSlideActive : isVisible ? styles.detailSlideAdjacent : ""}`}
+                className={`${styles.detailSlide} ${isActive ? styles.detailSlideActive : styles.detailSlideAdjacent}`}
               >
-                {isVisible && (
+                {isNearby && (
                   <RotatingFigure
                     product={p}
                     listenToGlobalFrame={isActive}
                     priority={isActive}
                     onClick={() => {
-                      if (isFarPrev) {
-                        onSelect(selectedIndex! - 2);
-                      } else if (isPrev) {
-                        onSelect(selectedIndex! - 1);
-                      } else if (isNext) {
-                        onSelect(selectedIndex! + 1);
-                      } else if (isFarNext) {
-                        onSelect(selectedIndex! + 2);
-                      } else if (isActive) {
+                      if (isActive) {
                         onModelClick?.();
+                      } else {
+                        onSelect(i);
                       }
                     }}
                   />
@@ -640,8 +623,8 @@ console.log("scroll-stage rendering......");
         </div>
       )}
 
-      {/* Figures row */}
-      <div ref={rowRef} className={styles.figuresRow}>
+      {/* Figures row — hidden via display:none in detail mode as primary mechanism */}
+      <div ref={rowRef} className={styles.figuresRow} style={{ display: isDetail ? 'none' : undefined }}>
         {products.map((product, i) => (
           <div
             key={product.id}
