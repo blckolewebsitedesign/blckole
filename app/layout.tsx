@@ -1,6 +1,7 @@
 import { CartProvider } from "components/cart/cart-context";
 import { SiteShell } from "components/site-shell";
-import { getCart, getCollections, getPages, getProducts } from "lib/shopify";
+import { CustomCursor } from "components/custom-cursor";
+import { getCart, getPages } from "lib/shopify";
 import { baseUrl } from "lib/utils";
 import { ReactNode } from "react";
 import "./globals.css";
@@ -23,26 +24,21 @@ export default async function RootLayout({
 }) {
   const cart = getCart();
 
-  const [products, pages, collections] = await Promise.all([
-    getProducts({}).catch(() => []),
-    getPages().catch(() => []),
-    getCollections().catch(() => []),
-  ]);
-
+  const pages = await getPages().catch(() => []);
   const storyCount = pages.filter((p) => p.handle.startsWith("story-")).length;
 
-  const navItems = [
-    { title: "ALL", href: "/indexes/products", count: products.length },
-    ...(storyCount > 0
-      ? [{ title: "STORIES", href: "/story", count: storyCount }]
-      : []),
+  const leftNavItems = [
+    { title: "EXPERIENCE", href: "/" },
+    { title: "SHOP", href: "/indexes/products" },
   ];
 
-  // e.g. "COLLECTION 01 / 01"
-  const collectionLabel =
-    collections.length > 0
-      ? `COLLECTION 01 / ${String(collections.length).padStart(2, "0")}`
-      : "COLLECTION";
+  const rightNavItems = [
+    {
+      title: "STORY",
+      href: "/story",
+      ...(storyCount > 0 ? { count: storyCount } : {}),
+    },
+  ];
 
   return (
     <html lang="en">
@@ -54,13 +50,19 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;700;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500&display=swap"
           rel="stylesheet"
         />
       </head>
       <body>
         <CartProvider cartPromise={cart}>
-          <SiteShell navItems={navItems} collectionLabel={collectionLabel}>
+          <CustomCursor />
+          <SiteShell
+            leftNavItems={leftNavItems}
+            rightNavItems={rightNavItems}
+            logoSrc="/logo.svg"
+            locales={["EN", "IN"]}
+          >
             {children}
           </SiteShell>
         </CartProvider>

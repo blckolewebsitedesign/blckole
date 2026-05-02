@@ -1,217 +1,278 @@
 .stage {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   background: var(--color-background);
   overflow: hidden;
+  display: flex;
 }
 
-/* ── Title overlay ── */
-.titleOverlay {
-  position: absolute;
-  top: calc(var(--grid-margin) * 5.5);
-  left: var(--grid-margin);
-  z-index: 10;
+/* ── 40% Left Panel ── */
+.leftPanel {
+  width: 40%;
+  height: 100%;
+  padding: 0 4vw 0 var(--grid-margin);
   display: flex;
   flex-direction: column;
-  gap: 4rem;
-  pointer-events: none;
-}
-
-.breadcrumb {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-off-black);
-}
-
-.collectionTitle {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: clamp(32rem, 5vw, 64rem);
-  font-weight: 900;
-  font-stretch: expanded;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  line-height: 0.9;
-  color: var(--color-off-black);
-}
-
-.productsMeta {
-  display: flex;
-  align-items: baseline;
-  gap: 8rem;
-}
-
-.productsLabel {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-medium-grey);
-}
-
-.productsCount {
-  font-size: var(--font-size-tiny);
-  font-weight: 700;
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-off-black);
-}
-
-/* ── Figures grid/arc ── */
-.figuresRow {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  overflow: hidden;
-  padding: 0 var(--grid-margin);
-  will-change: opacity, transform;
+  align-items: flex-start;
+  z-index: 10;
 }
 
-.figureSlot {
-  flex: 0 0 auto;
-  width: 160rem;
-  aspect-ratio: 1 / 2.5;
-  cursor: pointer;
-  will-change: transform, opacity;
+.textContent {
+  width: 100%;
+  max-width: 460rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24rem;
+  /* Lift the block up so it aligns roughly with the character's torso, not
+     the floor. Matches the mockup framing. */
+  padding-top: 80rem;
 }
 
-/* ── Detail view ── */
-.detailView {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  will-change: opacity, transform;
+.heroHeadline {
+  font-family:
+    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-size: clamp(72rem, 8vw, 120rem) !important;
+  font-weight: 500 !important;
+  font-style: italic !important;
+  line-height: 1 !important;
+  color: var(--color-off-black) !important;
+  text-transform: none !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
 }
 
-.detailSlide {
-  position: absolute;
-  top: 10%;
-  bottom: 20%;
-  left: 30%;
-  right: 30%;
-  z-index: 1;
-  will-change: transform, opacity;
-  pointer-events: none;
-  opacity: 0;
+.heroBody {
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif !important;
+  font-size: 15rem !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  color: #b4b4b4 !important;
+  max-width: 440rem;
+  margin: 0;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
 }
 
-.detailSlideActive {
-  pointer-events: auto;
-  z-index: 5;
-}
-
-.detailSlideAdjacent {
-  pointer-events: auto;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.detailSlideAdjacent:hover {
-  opacity: 0.35 !important;
-}
-
-/* ── Quick Jump Bar (Top Right) ── */
-.quickJump {
-  position: absolute;
-  top: calc(var(--grid-margin) * 3.5);
-  right: var(--grid-margin);
-  z-index: 30;
+.heroLinks {
   display: flex;
   align-items: center;
-  gap: 12rem;
-  background: var(--color-background);
-  border: var(--border-size) solid var(--color-divider);
-  padding: 4rem 10rem;
-  pointer-events: auto;
+  gap: 16rem;
+  margin-top: 4rem;
 }
 
-.quickJumpCounter {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
+.heroLinkBtn {
+  font-family: var(--font-family);
+  font-size: 11rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  background: transparent;
+  padding: 14rem 22rem;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  transition: all var(--transition-base);
+}
+
+.heroLinkBtn:hover {
+  border-color: var(--color-off-black);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.heroInstruction {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
   text-transform: uppercase;
   color: var(--color-medium-grey);
+  letter-spacing: 0.18em;
+  margin: 16rem 0 0;
 }
 
-.quickJumpThumbs {
-  display: flex;
-  gap: 4rem;
-}
-
-.jumpThumb {
+/* ── 60% Right Panel ── */
+.rightPanel {
+  width: 60%;
+  height: 100%;
   position: relative;
-  width: 24rem;
-  aspect-ratio: 1 / 1.4;
-  background: var(--color-background);
-  cursor: pointer;
-  border: 1px solid var(--color-divider);
-  opacity: 0.8;
-  transition:
-    opacity 0.2s,
-    border-color 0.2s;
-  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  /* Leave room at the bottom for the thumbnail strip + reflection */
+  padding: 60rem 0 220rem;
 }
 
-.jumpThumb :global(button) {
+.mainCharacterWrapper {
+  /* Constrain so character + reflection fit above the thumbnail strip. */
+  width: min(34vw, 520rem);
+  height: calc(100vh - 60rem - 220rem);
+  position: relative;
+}
+
+.mainCharacter {
   width: 100%;
   height: 100%;
+  position: relative;
+  z-index: 2;
+  -webkit-box-reflect: below -8rem
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) 55%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
 }
 
-.jumpThumb:hover {
+.floorGlow {
+  position: absolute;
+  bottom: -3%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 14%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Bottom Thumbnail List ── */
+.thumbnailListWrapper {
+  position: absolute;
+  bottom: 30rem;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.thumbnailList {
+  display: flex;
+  align-items: flex-end;
+  gap: 20rem;
+  pointer-events: auto;
+}
+
+.thumbnailSlot {
+  width: 80rem;
+  height: 140rem;
+  cursor: pointer;
+  position: relative;
+  opacity: 0.45;
+  transition:
+    opacity 0.4s var(--ease-out-expo),
+    transform 0.4s var(--ease-out-expo);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.thumbnailSlot:hover {
+  opacity: 0.85;
+  transform: translateY(-5rem);
+}
+
+.thumbnailSlotActive {
+  opacity: 1;
+  transform: translateY(-8rem);
+}
+
+.thumbnailFigure {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-box-reflect: below 0
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) 60%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
+}
+
+.activeBar {
+  position: absolute;
+  bottom: -10rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36rem;
+  height: 2rem;
+  background: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out-expo);
+  box-shadow: 0 0 8rem 1rem rgba(255, 0, 0, 0.45);
+}
+
+.thumbnailSlotActive .activeBar {
   opacity: 1;
 }
 
-.jumpThumbActive {
-  opacity: 1;
-  border-color: var(--color-off-black);
-  cursor: default;
-}
-
-/* ── Mobile ── */
-@media (max-width: 768px) {
-  .titleOverlay {
-    bottom: 120rem;
-    left: 16rem;
-    right: 16rem;
+/* ── Mobile Responsive ── */
+@media (max-width: 900px) {
+  .stage {
+    flex-direction: column;
   }
-
-  .collectionTitle {
+  .leftPanel {
+    width: 100%;
+    height: 38%;
+    justify-content: flex-end;
+    padding: 0 var(--grid-margin) 20rem;
+  }
+  .textContent {
+    padding-top: 0;
+    gap: 16rem;
+  }
+  .rightPanel {
+    width: 100%;
+    height: 62%;
+    padding: 20rem 0 160rem;
+  }
+  .mainCharacterWrapper {
+    width: 280rem;
+    height: calc(62vh - 20rem - 160rem);
+    max-height: 360rem;
+  }
+  .heroHeadline {
     font-size: 42rem;
   }
-
-  /* Mobile: GSAP positions slots via x/y transforms from this CSS anchor */
-  .figuresRow {
-    display: block;
+  .heroBody {
+    display: none;
   }
-
-  .figureSlot {
-    position: absolute;
-    width: 100rem;
-    left: 50%;
-    top: 45%;
-    margin: 0;
+  .thumbnailListWrapper {
+    bottom: 20rem;
+    justify-content: flex-start;
   }
-
-  .detailSlide {
-    top: 5%;
-    bottom: 25%;
-    left: 5%;
-    right: 5%;
+  .thumbnailList {
+    gap: 10rem;
+    overflow-x: auto;
+    padding: 0 var(--grid-margin);
+    width: 100%;
+    justify-content: flex-start;
   }
-
-  .quickJump {
-    top: 16rem;
-    right: 16rem;
-    padding: 2rem 6rem;
-    gap: 8rem;
-  }
-
-  .quickJumpCounter {
-    font-size: 8rem;
-  }
-
-  .jumpThumb {
-    width: 18rem;
+  .thumbnailSlot {
+    width: 60rem;
+    height: 110rem;
+    flex-shrink: 0;
   }
 }

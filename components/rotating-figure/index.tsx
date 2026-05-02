@@ -21,6 +21,8 @@ export const dispatchFrame = (frame: number) => {
   frameListeners.forEach((l) => l(frame));
 };
 
+type Quality = "high" | "thumb";
+
 type Props = {
   product: Product;
   priority?: boolean;
@@ -28,6 +30,10 @@ type Props = {
   externalFrame?: number;
   listenToGlobalFrame?: boolean;
   noWebGL?: boolean;
+  paused?: boolean;
+  quality?: Quality;
+  /** When true, render only the visual (no Link/button wrapper). For embedding inside another interactive element. */
+  noLink?: boolean;
 };
 
 type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
@@ -41,6 +47,9 @@ export function RotatingFigure({
   externalFrame,
   listenToGlobalFrame,
   noWebGL,
+  paused,
+  quality = "high",
+  noLink,
 }: Props) {
   const rawVideo = product.media?.find((m) => m.mediaContentType === "VIDEO");
   const videoMedia = rawVideo as VideoMedia | undefined;
@@ -69,6 +78,7 @@ export function RotatingFigure({
 
   useEffect(() => {
     if (
+      paused ||
       externalFrame !== undefined ||
       listenToGlobalFrame ||
       videoMedia ||
@@ -82,10 +92,11 @@ export function RotatingFigure({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [externalFrame, listenToGlobalFrame, videoMedia, images.length]);
+  }, [paused, externalFrame, listenToGlobalFrame, videoMedia, images.length]);
 
   function onMouseEnter() {
     if (
+      paused ||
       externalFrame !== undefined ||
       listenToGlobalFrame ||
       videoMedia ||
@@ -101,6 +112,7 @@ export function RotatingFigure({
 
   function onMouseLeave() {
     if (
+      paused ||
       externalFrame !== undefined ||
       listenToGlobalFrame ||
       videoMedia ||
@@ -114,119 +126,106 @@ export function RotatingFigure({
     );
   }
 
-  // ── Video product ────────────────────────────────────────────────
-  if (videoMedia?.sources?.length) {
-    const mp4 =
-      videoMedia.sources.find((s) => s.mimeType === "video/mp4") ??
-      videoMedia.sources[0];
+  // ── Pick the media node (video or current image) ──────────────────
+  const mp4 = videoMedia?.sources?.length
+    ? (videoMedia.sources.find((s) => s.mimeType === "video/mp4") ??
+      videoMedia.sources[0])
+    : null;
 
-    if (mp4) {
-      if (onClick) {
-        return (
-          <button
-            className={styles.wrapper}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick();
-            }}
-            aria-label={product.title}
-          >
-            <div className={styles.mediaWrap}>
-              {noWebGL ? (
-                <video
-                  src={mp4.url}
-                  className={styles.media}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
-                />
-              ) : (
-                <ChromaKeyCanvas
-                  src={mp4.url}
-                  isVideo={true}
-                  poster={videoMedia.previewImage?.url}
-                  className={styles.media}
-                />
-              )}
-            </div>
-          </button>
-        );
-      }
-      return (
-        <Link
-          href={`/products/${product.handle}`}
-          className={styles.wrapper}
-          aria-label={product.title}
-        >
-          <div className={styles.mediaWrap}>
-            {noWebGL ? (
-              <video
-                src={mp4.url}
-                className={styles.media}
-                autoPlay
-                loop
-                muted
-                playsInline
-                style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
-              />
-            ) : (
-              <ChromaKeyCanvas
-                src={mp4.url}
-                isVideo={true}
-                poster={videoMedia.previewImage?.url}
-                className={styles.media}
-              />
-            )}
-          </div>
-        </Link>
-      );
-    }
+  let mediaNode: React.ReactNode = null;
+  if (mp4) {
+    mediaNode = noWebGL ? (
+      <video
+        src={mp4.url}
+        className={styles.media}
+        autoPlay={!paused}
+        loop
+        muted
+        playsInline
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          objectPosition: "bottom center",
+        }}
+      />
+    ) : (
+      <ChromaKeyCanvas
+        src={mp4.url}
+        isVideo={true}
+        poster={videoMedia?.previewImage?.url}
+        className={styles.media}
+        paused={paused}
+        quality={quality}
+      />
+    );
+  } else {
+    const currentImage = images[displayFrame] ?? images[0];
+    if (!currentImage) return null;
+    mediaNode = noWebGL ? (
+      <img
+        src={currentImage.url}
+        alt=""
+        className={styles.media}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          objectPosition: "bottom center",
+        }}
+      />
+    ) : (
+      <ChromaKeyCanvas
+        src={currentImage.url}
+        className={styles.media}
+        paused={paused}
+        quality={quality}
+      />
+    );
   }
 
-  // ── Image product ────────────────────────────────────────────────
-  const currentImage = images[displayFrame] ?? images[0];
-  if (!currentImage) return null;
+  // ── Visual-only (no wrapping link/button) ─────────────────────────
+  if (noLink) {
+    return (
+      <span
+        className={styles.wrapper}
+        onMouseEnter={mp4 ? undefined : onMouseEnter}
+        onMouseLeave={mp4 ? undefined : onMouseLeave}
+      >
+        <span className={styles.mediaWrap}>{mediaNode}</span>
+      </span>
+    );
+  }
 
+  // ── Button (onClick provided) ─────────────────────────────────────
   if (onClick) {
     return (
       <button
+        type="button"
         className={styles.wrapper}
         onClick={(e) => {
           e.stopPropagation();
           onClick();
         }}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
+        onMouseEnter={mp4 ? undefined : onMouseEnter}
+        onMouseLeave={mp4 ? undefined : onMouseLeave}
         aria-label={product.title}
       >
-        <div className={styles.mediaWrap}>
-          {noWebGL ? (
-            <img src={currentImage.url} alt="" className={styles.media} style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }} />
-          ) : (
-            <ChromaKeyCanvas src={currentImage.url} className={styles.media} />
-          )}
-        </div>
+        <div className={styles.mediaWrap}>{mediaNode}</div>
       </button>
     );
   }
 
+  // ── Link (default) ────────────────────────────────────────────────
   return (
     <Link
       href={`/products/${product.handle}`}
       className={styles.wrapper}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={mp4 ? undefined : onMouseEnter}
+      onMouseLeave={mp4 ? undefined : onMouseLeave}
       aria-label={product.title}
     >
-      <div className={styles.mediaWrap}>
-        {noWebGL ? (
-          <img src={currentImage.url} alt="" className={styles.media} style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }} />
-        ) : (
-          <ChromaKeyCanvas src={currentImage.url} className={styles.media} />
-        )}
-      </div>
+      <div className={styles.mediaWrap}>{mediaNode}</div>
     </Link>
   );
 }

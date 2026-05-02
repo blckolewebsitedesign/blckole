@@ -1,11 +1,11 @@
 .wrapper {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
   color: inherit;
-  background: var(--color-inner-background);
-  border-radius: var(--border-radius);
-  overflow: hidden;
+  background: transparent;
+  gap: 16rem;
 }
 
 .wrapper:hover .image {
@@ -14,9 +14,9 @@
 
 .media {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 3 / 4; /* Towering vertical aspect ratio */
   overflow: hidden;
-  background: var(--color-divider);
+  background: transparent;
 }
 
 .image {
@@ -28,37 +28,39 @@
 
 .number {
   position: absolute;
-  top: var(--gap);
-  left: var(--gap);
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
+  top: 10rem;
+  left: 10rem;
+  font-family: var(--font-family-mono);
+  font-size: 12rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-off-black);
   background: var(--color-background);
-  border-radius: var(--inner-border-radius);
-  padding: 2rem 4rem;
+  padding: 4rem 8rem;
   line-height: 1;
+  z-index: 10;
 }
 
 .info {
-  padding: var(--gap-s) var(--gap);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 4rem;
 }
 
 .title {
-  font-size: var(--font-size-tiny);
-  font-weight: 500;
+  font-family: var(--font-family-serif);
+  font-size: 26rem; /* Massive typography */
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-base);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+  color: var(--color-off-black);
 }
 
 .price {
-  font-size: var(--font-size-tiny);
+  font-family: var(--font-family-mono);
+  font-size: 14rem;
+  font-weight: 700;
   color: var(--color-medium-grey);
-  letter-spacing: var(--letter-spacing-base);
+  letter-spacing: 0.1em;
 }

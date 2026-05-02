@@ -1,143 +1,89 @@
-.group {
+.bottomBarWrapper {
   position: fixed;
-  bottom: var(--grid-margin);
-  left: var(--grid-margin);
-  z-index: var(--z-bars);
-  display: flex;
-  gap: 8rem;
-  flex-wrap: wrap;
-}
-
-.wrapper {
-  background: var(--color-inner-background);
-  border: var(--border-size) solid var(--color-divider);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6rem 10rem;
-  min-width: 180rem;
-  gap: 16rem;
-  pointer-events: auto;
-}
-
-.productThumb {
-  position: relative;
-  width: 24rem;
-  aspect-ratio: 1;
-  background: var(--color-background);
-  flex-shrink: 0;
-}
-
-.count {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-off-black);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.discover {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-medium-grey);
-  text-decoration: none;
-  transition: color var(--transition-base);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-}
-
-.discover:hover {
-  color: var(--color-off-black);
-}
-
-/* ── Expanded panel (Shop the Look) ── */
-.expandedPanel {
-  position: fixed;
-  bottom: var(--grid-margin);
-  left: var(--grid-margin);
-  z-index: var(--z-bars);
-  background: var(--color-inner-background);
-  border: var(--border-size) solid var(--color-divider);
-  padding: 16rem;
-  display: flex;
-  flex-direction: column;
-  gap: 16rem;
-  width: auto;
-  max-width: calc(100vw - var(--grid-margin) * 2);
-}
-
-.expandedCards {
-  display: flex;
-  gap: 16rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.expandedCards::-webkit-scrollbar {
-  display: none;
-}
-
-.productCard {
-  flex: 0 0 auto;
-  width: 200rem;
-  display: flex;
-  flex-direction: column;
-  gap: 8rem;
-}
-
-.cardInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-}
-
-.cardImageLink {
-  position: relative;
+  bottom: 0;
+  left: 0;
   width: 100%;
-  aspect-ratio: 1;
-  background: var(--color-background);
-  display: block;
+  z-index: var(--z-bars);
+  transform: translateY(100%);
+  opacity: 0;
+  visibility: hidden;
 }
 
-.cardImage {
-  object-fit: cover;
-}
-
-.expandedFooter {
+.bottomBar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: var(--border-size) solid var(--color-divider);
-  padding-top: 12rem;
+  width: 100%;
+  padding: 20rem var(--grid-margin);
+  background: var(--color-background);
+  border-top: 1px solid var(--color-divider);
+  font-family: var(--font-family-mono);
+  text-transform: uppercase;
 }
 
-/* ── Mobile ── */
-@media (max-width: 768px) {
-  .group {
-    bottom: 12rem;
-    left: 12rem;
-    right: 12rem;
-    gap: 6rem;
-  }
+.leftCol {
+  display: flex;
+  gap: 30rem;
+  align-items: baseline;
+}
 
-  .wrapper {
-    min-width: 0;
-    flex: 1 1 auto;
-    padding: 8rem 12rem;
-  }
+.productTitle {
+  font-family: var(--font-family-serif);
+  font-size: 28rem;
+  font-weight: 700;
+  color: var(--color-off-black);
+  letter-spacing: 0.02em;
+}
 
-  .expandedPanel {
-    bottom: 12rem;
-    left: 12rem;
-    right: 12rem;
+.productPrice {
+  font-size: 14rem;
+  font-weight: 700;
+  color: var(--color-medium-grey);
+  letter-spacing: 0.1em;
+}
+
+.rightCol {
+  display: flex;
+  align-items: center;
+}
+
+.addToBagBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rem 32rem;
+  background: var(--color-off-black);
+  color: var(--color-white);
+  font-size: 14rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  transition: all var(--transition-base);
+  border: 1px solid var(--color-off-black);
+}
+
+.addToBagBtn:hover {
+  background: var(--color-accent);
+  color: var(--color-off-black); /* Red background with inverted text */
+  border-color: var(--color-accent);
+}
+
+@media (max-width: 900px) {
+  .bottomBar {
+    padding: 15rem var(--grid-margin);
+    flex-direction: column;
+    gap: 15rem;
+    align-items: stretch;
+  }
+  .leftCol {
+    justify-content: space-between;
+    gap: 10rem;
+  }
+  .productTitle {
+    font-size: 20rem;
+  }
+  .addToBagBtn {
+    width: 100%;
+    text-align: center;
   }
 }
