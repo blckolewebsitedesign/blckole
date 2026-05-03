@@ -5,6 +5,13 @@
   z-index: 1;
 }
 
+@media (max-width: 768px) {
+  .mainFixed {
+    height: auto;
+    min-height: 100svh;
+  }
+}
+
 .scrollableContent {
   position: relative;
   z-index: 2;

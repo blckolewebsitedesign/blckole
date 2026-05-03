@@ -3,7 +3,7 @@
 import { ChromaKeyCanvas } from "components/chroma-key-canvas";
 import type { Product, ProductMedia } from "lib/shopify/types";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { preload } from "react-dom";
 import styles from "./index.module.css";
 
@@ -40,7 +40,7 @@ type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
 
 const FRAME_MS = 900;
 
-export function RotatingFigure({
+function RotatingFigureImpl({
   product,
   priority = false,
   onClick,
@@ -229,3 +229,22 @@ export function RotatingFigure({
     </Link>
   );
 }
+
+// Memoized so a parent re-render (e.g. ScrollStage updating its layer
+// state) never tears down the WebGL canvas/video pipeline inside.
+// We compare the props that actually affect what gets mounted; reference
+// equality on functions like onClick is OK because callers should pass
+// stable callbacks (useCallback).
+export const RotatingFigure = memo(RotatingFigureImpl, (prev, next) => {
+  return (
+    prev.product.id === next.product.id &&
+    prev.priority === next.priority &&
+    prev.externalFrame === next.externalFrame &&
+    prev.listenToGlobalFrame === next.listenToGlobalFrame &&
+    prev.noWebGL === next.noWebGL &&
+    prev.paused === next.paused &&
+    prev.quality === next.quality &&
+    prev.noLink === next.noLink &&
+    prev.onClick === next.onClick
+  );
+});

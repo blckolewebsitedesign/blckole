@@ -3,7 +3,7 @@
 import { RotatingFigure } from "components/rotating-figure";
 import type { Product, ProductMedia } from "lib/shopify/types";
 import { preloadVideos } from "lib/video-preload";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
 
 type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
@@ -25,6 +25,14 @@ export const ScrollStage = React.memo(function ScrollStage({
 
   const activeIndex = selectedIndex !== null ? selectedIndex : 0;
   const activeProduct = products[activeIndex];
+
+  // Stable callback so RotatingFigure's memoization (which compares onClick
+  // by reference) doesn't bail every render. Without this, every parent
+  // tick gives RotatingFigure a brand-new function ref → re-render →
+  // possible cascading effects in ChromaKeyCanvas.
+  const handleModelClick = useCallback(() => {
+    onModelClick?.();
+  }, [onModelClick]);
 
   // Preload videos for active and neighbours so swaps are instant.
   useEffect(() => {
@@ -53,6 +61,31 @@ export const ScrollStage = React.memo(function ScrollStage({
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onSelect]);
+
+  // ── Two-layer crossfade for the main character ──
+  // Keeps the previous character on screen while the new one's
+  // ChromaKeyCanvas mounts/decodes underneath, then fades between them.
+  // No more wrapper-level remount → no blank flash.
+  const [characterLayers, setCharacterLayers] = useState<Product[]>(() =>
+    activeProduct ? [activeProduct] : [],
+  );
+  const prevActiveIdRef = useRef<string | null>(activeProduct?.id ?? null);
+
+  useEffect(() => {
+    if (!activeProduct) return;
+    if (prevActiveIdRef.current === activeProduct.id) return;
+    prevActiveIdRef.current = activeProduct.id;
+    setCharacterLayers((cur) => {
+      const last = cur[cur.length - 1];
+      if (last && last.id === activeProduct.id) return cur;
+      // Keep at most the previous layer + the new one
+      return [...cur.slice(-1), activeProduct];
+    });
+    const t = setTimeout(() => {
+      setCharacterLayers((cur) => cur.slice(-1));
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [activeProduct]);
 
   if (total === 0 || !activeProduct) return null;
 
@@ -90,12 +123,24 @@ export const ScrollStage = React.memo(function ScrollStage({
         <div className={styles.mainCharacterWrapper}>
           <div className={styles.floorGlow} aria-hidden="true" />
           <div className={styles.mainCharacter}>
-            <RotatingFigure
-              product={activeProduct}
-              listenToGlobalFrame={true}
-              priority={true}
-              onClick={() => onModelClick?.()}
-            />
+            {characterLayers.map((p, i, arr) => {
+              const isLatest = i === arr.length - 1;
+              return (
+                <div
+                  key={p.id}
+                  className={`${styles.charLayer} ${
+                    isLatest ? styles.charLayerIn : styles.charLayerOut
+                  }`}
+                >
+                  <RotatingFigure
+                    product={p}
+                    listenToGlobalFrame={isLatest}
+                    priority={true}
+                    onClick={handleModelClick}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

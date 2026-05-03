@@ -395,7 +395,11 @@ export function ChromaKeyCanvas({
     }
 
     return cleanup;
-  }, [src, isVideo, poster, className]);
+    // Intentionally omit `className` — it's only applied once at mount and
+    // changing it must NOT tear down the GL context. Including it here
+    // (along with any non-stable callback prop in the future) was the
+    // hidden trigger for full canvas rebuilds on parent re-renders.
+  }, [src, isVideo, poster]);
 
   if (useFallback) {
     if (isVideo) {

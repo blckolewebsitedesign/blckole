@@ -132,6 +132,66 @@
     );
 }
 
+/* Two-layer crossfade. Both layers occupy the same box; the outgoing
+   one holds at full opacity for the first ~35% of the animation so the
+   incoming canvas has time to mount its WebGL context and decode the
+   first video frame before being faded in. */
+.charLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  will-change: opacity, transform;
+}
+
+.charLayerIn {
+  animation: charLayerIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.charLayerOut {
+  animation: charLayerOut 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 1;
+}
+
+@keyframes charLayerIn {
+  0% {
+    opacity: 0;
+    transform: translateY(18rem) scale(0.985);
+  }
+  35% {
+    opacity: 0;
+    transform: translateY(12rem) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes charLayerOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8rem) scale(1.005);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .charLayerIn,
+  .charLayerOut {
+    animation: none;
+  }
+  .charLayerOut {
+    opacity: 0;
+  }
+}
+
 .floorGlow {
   position: absolute;
   bottom: -3%;
@@ -175,8 +235,8 @@
   position: relative;
   opacity: 0.45;
   transition:
-    opacity 0.4s var(--ease-out-expo),
-    transform 0.4s var(--ease-out-expo);
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -228,51 +288,129 @@
   opacity: 1;
 }
 
-/* ── Mobile Responsive ── */
-@media (max-width: 900px) {
+/* ── Tablet (≤1024px) ── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .leftPanel {
+    width: 45%;
+    padding: 0 3vw 0 var(--grid-margin);
+  }
+  .rightPanel {
+    width: 55%;
+  }
+  .heroHeadline {
+    font-size: clamp(56rem, 7.5vw, 88rem) !important;
+  }
+  .heroBody {
+    font-size: 13rem !important;
+  }
+  .mainCharacterWrapper {
+    width: min(40vw, 460rem);
+  }
+}
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
   .stage {
     flex-direction: column;
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
   }
   .leftPanel {
     width: 100%;
-    height: 38%;
-    justify-content: flex-end;
-    padding: 0 var(--grid-margin) 20rem;
+    height: auto;
+    /* leave space for the fixed header at top */
+    padding: 88rem var(--grid-margin) 24rem;
+    justify-content: flex-start;
   }
   .textContent {
     padding-top: 0;
-    gap: 16rem;
-  }
-  .rightPanel {
-    width: 100%;
-    height: 62%;
-    padding: 20rem 0 160rem;
-  }
-  .mainCharacterWrapper {
-    width: 280rem;
-    height: calc(62vh - 20rem - 160rem);
-    max-height: 360rem;
+    gap: 18rem;
+    max-width: 100%;
   }
   .heroHeadline {
-    font-size: 42rem;
+    font-size: clamp(44rem, 13vw, 68rem) !important;
+    line-height: 1.05 !important;
   }
-  .heroBody {
+  .heroHeadline br {
     display: none;
   }
+  .heroBody {
+    display: block !important;
+    font-size: 13rem !important;
+    line-height: 1.55 !important;
+    max-width: 100%;
+  }
+  .heroLinks {
+    flex-wrap: wrap;
+    gap: 10rem;
+    margin-top: 8rem;
+  }
+  .heroLinkBtn {
+    padding: 12rem 18rem;
+    font-size: 10rem;
+    flex: 1 1 auto;
+    text-align: center;
+    min-width: 140rem;
+  }
+  .heroInstruction {
+    font-size: 9rem;
+    margin-top: 12rem;
+  }
+
+  .rightPanel {
+    width: 100%;
+    height: auto;
+    padding: 12rem 0 180rem;
+  }
+  .mainCharacterWrapper {
+    width: min(78vw, 360rem);
+    height: 56vh;
+    max-height: 460rem;
+  }
+  .floorGlow {
+    width: 90%;
+  }
+
   .thumbnailListWrapper {
-    bottom: 20rem;
+    bottom: 24rem;
     justify-content: flex-start;
+    /* allow horizontal scroll without bleeding into the layout */
+    pointer-events: auto;
   }
   .thumbnailList {
     gap: 10rem;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     padding: 0 var(--grid-margin);
     width: 100%;
     justify-content: flex-start;
   }
+  .thumbnailList::-webkit-scrollbar {
+    display: none;
+  }
   .thumbnailSlot {
-    width: 60rem;
-    height: 110rem;
+    width: 56rem;
+    height: 100rem;
     flex-shrink: 0;
+  }
+  .activeBar {
+    bottom: -8rem;
+    width: 28rem;
+  }
+}
+
+/* ── Small phones (≤420px) ── */
+@media (max-width: 420px) {
+  .leftPanel {
+    padding: 80rem 20rem 20rem;
+  }
+  .heroHeadline {
+    font-size: clamp(38rem, 13vw, 56rem) !important;
+  }
+  .mainCharacterWrapper {
+    width: 84vw;
+    height: 50vh;
   }
 }

@@ -5,7 +5,7 @@ import { Footer } from "components/footer";
 import { ScrollStage } from "components/scroll-stage";
 import type { Product } from "lib/shopify/types";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
 
 type Props = {
@@ -40,8 +40,11 @@ export function HomeScene({ products, featuredProducts }: Props) {
     products.forEach((p) => router.prefetch(`/looks/${p.handle}`));
   }, [products, router]);
 
+  const lastUserInteractionRef = useRef(0);
+
   const handleSelect = useCallback(
     (index: number | null) => {
+      lastUserInteractionRef.current = Date.now();
       setSelectedIndex(index);
       const target =
         index !== null && products[index]
@@ -59,6 +62,29 @@ export function HomeScene({ products, featuredProducts }: Props) {
     },
     [products, pathname, router],
   );
+
+  // Auto-advance through characters one by one. Pauses for 12s after any
+  // user interaction so manual browsing isn't fought by the carousel.
+  const AUTO_ADVANCE_MS = 5500;
+  const PAUSE_AFTER_INTERACTION_MS = 12000;
+
+  useEffect(() => {
+    if (products.length === 0) return;
+    const id = setInterval(() => {
+      if (
+        Date.now() - lastUserInteractionRef.current <
+        PAUSE_AFTER_INTERACTION_MS
+      ) {
+        return;
+      }
+      // Visual-only update. Do NOT touch the URL — pathname changes
+      // cascade through usePathname() consumers (PageTransition, etc.)
+      // and have caused full-tree remounts that nuke WebGL contexts.
+      // The URL only updates when the user actually clicks a thumbnail.
+      setSelectedIndex((cur) => ((cur ?? -1) + 1) % products.length);
+    }, AUTO_ADVANCE_MS);
+    return () => clearInterval(id);
+  }, [products]);
 
   return (
     <div style={{ position: "relative" }}>
