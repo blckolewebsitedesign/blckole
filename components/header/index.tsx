@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LocaleSwitcher } from "./locale-switcher";
 import styles from "./index.module.css";
+import { LocaleSwitcher } from "./locale-switcher";
 
 type NavItem = {
   title: string;
@@ -40,7 +40,7 @@ export function Header({
   rightNavItems = [],
   cartCount = 0,
   onCartClick,
-  logoSrc = "/logo.svg",
+  logoSrc = "/blckole-1.png",
   logoAlt = "BLCKHOLE",
   locales = ["EN", "IN"],
 }: Props) {

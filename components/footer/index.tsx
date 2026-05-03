@@ -1,45 +1,54 @@
 import Link from "next/link";
 import styles from "./index.module.css";
 
-const { COMPANY_NAME, SITE_NAME } = process.env;
+const LEGAL = [
+  { label: "SHIPPING", href: "/page/shipping-policy" },
+  { label: "PRIVACY", href: "/page/privacy-policy" },
+  { label: "TERMS", href: "/page/terms-of-service" },
+  { label: "CONTACT", href: "/page/contact" },
+];
+
+const SOCIAL = [
+  { label: "INSTAGRAM", href: "https://instagram.com/blckole" },
+  { label: "TIKTOK", href: "https://www.tiktok.com/@blckole" },
+  { label: "PRESS", href: "/page/press" },
+];
+
+const YEAR = new Date().getFullYear();
 
 export function Footer() {
   return (
-    <footer className={styles.wrapper}>
-      <p className={styles.manifesto}>
-        Born on the road, made for the city. Technical, protective and
-        unapologetically feminine, our pieces give women the confidence to move
-        freely. A call to carve your own path, with no compromise and no
-        concession.
-      </p>
-
-      <div className={styles.links}>
-        <div className={styles.leftLinks}>
-          <Link href="/page/terms-of-service" className={styles.link}>
-            Terms of Service
-          </Link>
-          <Link href="/page/shipping-policy" className={styles.link}>
-            Shipping Policy
-          </Link>
-          <Link href="/page/size-guide" className={styles.link}>
-            Size Guide
-          </Link>
-        </div>
-
-        <div className={styles.rightLinks}>
-          <a href="mailto:hello@blckole.com" className={styles.link}>
-            hello@blckole.com
-          </a>
-          <a
-            href="https://instagram.com/blckole"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.link}
-          >
-            Instagram
-          </a>
-        </div>
+    <footer className={styles.footer}>
+      <div className={styles.lockup}>
+        <img src="/blckole-1.png" alt="BLCKHOLE" className={styles.logo} />
       </div>
+      <p className={styles.tag}>You always find your way back</p>
+
+      <nav className={styles.legal} aria-label="Legal">
+        {LEGAL.map((l) => (
+          <Link key={l.label} href={l.href} className={styles.link}>
+            {l.label}
+          </Link>
+        ))}
+      </nav>
+
+      <nav className={styles.social} aria-label="Social">
+        {SOCIAL.map((l) => (
+          <a
+            key={l.label}
+            href={l.href}
+            className={styles.link}
+            target={l.href.startsWith("http") ? "_blank" : undefined}
+            rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
+          >
+            {l.label}
+          </a>
+        ))}
+      </nav>
+
+      <p className={styles.copyright}>
+        © {YEAR} BLCKHOLE STUDIO · ALL RIGHTS RESERVED
+      </p>
     </footer>
   );
 }

@@ -1,6 +1,6 @@
 import { CartProvider } from "components/cart/cart-context";
-import { SiteShell } from "components/site-shell";
 import { CustomCursor } from "components/custom-cursor";
+import { SiteShell } from "components/site-shell";
 import { getCart, getPages } from "lib/shopify";
 import { baseUrl } from "lib/utils";
 import { ReactNode } from "react";
@@ -60,7 +60,7 @@ export default async function RootLayout({
           <SiteShell
             leftNavItems={leftNavItems}
             rightNavItems={rightNavItems}
-            logoSrc="/logo.svg"
+            logoSrc="/blckole-1.png"
             locales={["EN", "IN"]}
           >
             {children}

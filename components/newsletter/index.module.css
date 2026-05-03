@@ -1,0 +1,122 @@
+.section {
+  background: var(--color-background);
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  padding: 80rem var(--grid-margin);
+}
+
+.inner {
+  max-width: 1280rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 60rem;
+  flex-wrap: wrap;
+}
+
+.copy {
+  flex: 1 1 460rem;
+  min-width: 280rem;
+}
+
+.eyebrow {
+  font-family: var(--font-family);
+  font-size: 11rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-medium-grey);
+  display: block;
+  margin-bottom: 16rem;
+}
+
+.title {
+  font-family: var(--font-family-serif);
+  font-size: clamp(34rem, 4vw, 52rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--color-off-black);
+  letter-spacing: -0.01em;
+}
+
+.dek {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13rem;
+  line-height: 1.6;
+  color: var(--color-medium-grey);
+  margin: 16rem 0 0;
+}
+
+.form {
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 360rem;
+  min-width: 280rem;
+  max-width: 480rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.input {
+  flex: 1 1 auto;
+  padding: 16rem 18rem;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-family);
+  font-size: 12rem;
+  letter-spacing: 0.05em;
+  color: var(--color-off-black);
+}
+
+.input::placeholder {
+  color: var(--color-medium-grey);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11rem;
+}
+
+.btn {
+  flex: 0 0 auto;
+  padding: 0 22rem;
+  background: var(--color-off-black);
+  color: var(--color-white);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 11rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition: background var(--transition-base);
+}
+
+.btn:hover {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+.thanks {
+  font-family: var(--font-family);
+  font-size: 12rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 18rem 22rem;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 28rem;
+  }
+  .form {
+    width: 100%;
+    max-width: none;
+  }
+}

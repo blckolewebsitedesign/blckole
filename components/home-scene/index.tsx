@@ -1,8 +1,12 @@
 "use client";
 
-import { FeaturedProducts } from "components/featured-products";
 import { Footer } from "components/footer";
+import { Manifesto } from "components/manifesto";
+import { Newsletter } from "components/newsletter";
+import { RestockingCollection } from "components/restocking-collection";
 import { ScrollStage } from "components/scroll-stage";
+import { StudioSpotlight } from "components/studio-spotlight";
+import { TrustBar } from "components/trust-bar";
 import type { Product } from "lib/shopify/types";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -68,6 +72,8 @@ export function HomeScene({ products, featuredProducts }: Props) {
   const AUTO_ADVANCE_MS = 5500;
   const PAUSE_AFTER_INTERACTION_MS = 12000;
 
+  console.log("products", products);
+
   useEffect(() => {
     if (products.length === 0) return;
     const id = setInterval(() => {
@@ -99,7 +105,11 @@ export function HomeScene({ products, featuredProducts }: Props) {
 
       {/* Normal scrollable content below the stage */}
       <div className={styles.scrollableContent}>
-        <FeaturedProducts products={featuredProducts} />
+        <TrustBar />
+        <StudioSpotlight products={featuredProducts} />
+        <RestockingCollection products={featuredProducts} />
+        <Newsletter />
+        <Manifesto />
         <Footer />
       </div>
     </div>
