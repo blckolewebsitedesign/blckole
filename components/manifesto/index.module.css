@@ -1,72 +1,76 @@
 .section {
   background: var(--color-background);
-  padding: 120rem var(--grid-margin);
+  padding: 100rem var(--grid-margin);
 }
 
 .inner {
   max-width: 1280rem;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 80rem;
-  align-items: center;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 60rem;
+  align-items: start;
 }
 
 .quote {
   font-family: var(--font-family-serif);
-  font-size: clamp(64rem, 9vw, 132rem);
+  font-size: clamp(32rem, 4vw, 56rem);
   font-weight: 500;
   font-style: italic;
-  line-height: 0.95;
-  letter-spacing: -0.015em;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
   color: var(--color-off-black);
+  /* Vertical cherry-red line on the left, matching the reference. */
+  padding-left: 28rem;
+  border-left: 1px solid var(--color-accent);
 }
 
 .right {
   display: flex;
   flex-direction: column;
-  gap: 32rem;
+  gap: 28rem;
   max-width: 460rem;
 }
 
 .body {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 14rem;
+  font-weight: 300;
   line-height: 1.7;
-  color: #cfcfcf;
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
 }
 
 .pill {
   display: inline-block;
-  font-family: var(--font-family);
+  font-family: var(--font-family-mono);
   font-size: 9rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  background: var(--color-off-black);
-  color: var(--color-white);
-  padding: 4rem 8rem;
-  margin-right: 12rem;
+  background: var(--color-accent);
+  color: var(--color-off-black);
+  padding: 3rem 8rem;
+  margin-right: 8rem;
   vertical-align: middle;
   line-height: 1;
 }
 
 .meta {
-  font-family: var(--font-family);
+  font-family: var(--font-family-mono);
   font-size: 10rem;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: var(--color-medium-grey);
+  color: rgba(255, 255, 255, 0.42);
   margin: 0;
 }
 
 @media (max-width: 900px) {
   .section {
-    padding: 80rem var(--grid-margin);
+    padding: 70rem var(--grid-margin);
   }
   .inner {
     grid-template-columns: 1fr;
-    gap: 40rem;
+    gap: 32rem;
   }
 }

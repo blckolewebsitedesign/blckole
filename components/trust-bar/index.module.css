@@ -37,8 +37,8 @@
 }
 
 .key {
-  color: var(--color-off-black);
-  font-weight: 700;
+  color: var(--color-accent-bright);
+  font-weight: 500;
 }
 
 .value {

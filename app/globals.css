@@ -14,7 +14,10 @@ html {
   --color-overlay: hsla(0, 0%, 4%, 0.8);
   --color-background: var(--color-white);
   --color-inner-background: var(--color-white);
-  --color-accent: #ff0000;
+  /* Brand cherry — deep wine red used for accents, lines, and pills.
+     Bright variant is for hover/focus states. */
+  --color-accent: #891824;
+  --color-accent-bright: #b81f30;
 
   /* Spacing */
   --gap: 10rem;
@@ -34,8 +37,12 @@ html {
   );
 
   /* Typography */
-  --font-family: "Space Mono", monospace;
-  --font-family-serif: "Playfair Display", serif;
+  --font-family: "JetBrains Mono", "Space Mono", ui-monospace, monospace;
+  --font-family-mono: "JetBrains Mono", "Space Mono", ui-monospace, monospace;
+  --font-family-sans:
+    "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-family-serif:
+    "Cormorant Garamond", "Playfair Display", "Times New Roman", serif;
   --font-size-body: 12rem;
   --font-size-small: 10rem;
   --font-size-tiny: 8rem;

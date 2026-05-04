@@ -3,6 +3,8 @@
 import { Footer } from "components/footer";
 import { Manifesto } from "components/manifesto";
 import { Newsletter } from "components/newsletter";
+import { PressQuote } from "components/press-quote";
+import { Principles } from "components/principles";
 import { RestockingCollection } from "components/restocking-collection";
 import { ScrollStage } from "components/scroll-stage";
 import { StudioSpotlight } from "components/studio-spotlight";
@@ -107,8 +109,10 @@ export function HomeScene({ products, featuredProducts }: Props) {
       <div className={styles.scrollableContent}>
         <TrustBar />
         <StudioSpotlight products={featuredProducts} />
+        <PressQuote />
         <RestockingCollection products={featuredProducts} />
         <Newsletter />
+        <Principles />
         <Manifesto />
         <Footer />
       </div>

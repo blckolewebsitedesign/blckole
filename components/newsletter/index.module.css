@@ -43,7 +43,7 @@
 }
 
 .dek {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 13rem;
   line-height: 1.6;
   color: var(--color-medium-grey);
@@ -81,21 +81,20 @@
 .btn {
   flex: 0 0 auto;
   padding: 0 22rem;
-  background: var(--color-off-black);
-  color: var(--color-white);
+  background: var(--color-accent);
+  color: var(--color-off-black);
   border: none;
   cursor: pointer;
-  font-family: var(--font-family);
+  font-family: var(--font-family-mono);
   font-size: 11rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  font-weight: 500;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   transition: background var(--transition-base);
 }
 
 .btn:hover {
-  background: var(--color-accent);
-  color: #ffffff;
+  background: var(--color-accent-bright);
 }
 
 .thanks {
