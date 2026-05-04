@@ -1,73 +1,91 @@
-.wrapper {
-  position: relative;
-  background: var(--color-off-white);
-  min-height: 70dvh;
+.footer {
+  background: #000000;
+  border-top: 1px solid #1f1f1f;
+  padding: 120rem var(--grid-margin) 60rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: calc(var(--grid-margin) * 1) var(--grid-margin) var(--grid-margin);
-}
-
-.manifesto {
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: clamp(28rem, 5vw, 60rem);
-  font-weight: 900;
-  font-stretch: expanded;
-  text-transform: uppercase;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
   text-align: center;
-  color: var(--color-off-black);
-  max-width: 900rem;
+  gap: 36rem;
+  color: #ffffff;
 }
 
-/* Bottom links row — pinned to bottom */
-.links {
-  position: absolute;
-  bottom: var(--grid-margin);
-  left: var(--grid-margin);
-  right: var(--grid-margin);
+.lockup {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12rem;
+}
+
+.logo {
+  height: clamp(120rem, 18vw, 220rem);
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.tag {
+  font-family: var(--font-family-serif);
+  font-size: clamp(22rem, 2.8vw, 36rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.2;
+  color: #ffffff;
+  margin: 0;
+  max-width: 640rem;
+}
+
+.legal,
+.social {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: var(--gap);
-}
-
-.leftLinks {
-  display: flex;
-  align-items: center;
-  gap: 20rem;
-}
-
-.rightLinks {
-  display: flex;
-  align-items: center;
-  gap: 20rem;
+  gap: 28rem 36rem;
 }
 
 .link {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
+  font-family: var(--font-family);
+  font-size: 11rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--color-off-black);
+  color: #ffffff;
   text-decoration: none;
   transition: color var(--transition-base);
-  white-space: nowrap;
 }
 
 .link:hover {
-  color: var(--color-medium-grey);
+  color: var(--color-accent);
 }
 
-@media (max-width: 900px) {
-  .manifesto {
-    font-size: clamp(24rem, 6vw, 40rem);
-  }
+.social .link {
+  color: #b4b4b4;
+}
 
-  .links {
-    flex-direction: column;
-    align-items: flex-start;
+.social .link:hover {
+  color: #ffffff;
+}
+
+.copyright {
+  font-family: var(--font-family);
+  font-size: 9rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #888888;
+  margin: 24rem 0 0;
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 80rem var(--grid-margin) 40rem;
+    gap: 28rem;
+  }
+  .logo {
+    height: clamp(100rem, 28vw, 160rem);
+  }
+  .legal,
+  .social {
+    gap: 18rem 24rem;
   }
 }

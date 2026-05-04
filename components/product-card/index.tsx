@@ -14,10 +14,10 @@ type Props = {
 };
 
 function formatPrice(amount: string, currency: string) {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
@@ -25,9 +25,9 @@ export function ProductCard({ product, index, priority = false }: Props) {
   const ref = useRef<HTMLAnchorElement>(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
 
-  const num = (index + 1).toString().padStart(2, "0");
   const image = product.featuredImage || product.images[0];
   const price = product.priceRange.minVariantPrice;
+  const category = product.productType;
 
   return (
     <motion.div
@@ -44,24 +44,29 @@ export function ProductCard({ product, index, priority = false }: Props) {
         className={styles.wrapper}
         ref={ref}
       >
-        <div className={styles.media}>
+        <div className={styles.frame}>
           {image ? (
             <Image
               src={image.url}
               alt={image.altText ?? product.title}
               fill
-              sizes="(max-width: 900px) 50vw, 25vw"
+              sizes="(max-width: 480px) 100vw, (max-width: 860px) 50vw, (max-width: 1100px) 33vw, 25vw"
               className={styles.image}
               priority={priority}
             />
           ) : null}
-          <span className={styles.number}>{num}</span>
         </div>
+
         <div className={styles.info}>
-          <span className={styles.title}>{product.title}</span>
-          <span className={styles.price}>
-            {formatPrice(price.amount, price.currencyCode)}
-          </span>
+          {category ? (
+            <span className={styles.category}>{category}</span>
+          ) : null}
+          <div className={styles.titleRow}>
+            <span className={styles.title}>{product.title}</span>
+            <span className={styles.price}>
+              {formatPrice(price.amount, price.currencyCode)}
+            </span>
+          </div>
         </div>
       </Link>
     </motion.div>

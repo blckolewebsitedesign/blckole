@@ -24,14 +24,14 @@ const FS = `
 
     // Find the max of Red and Blue
     float maxRB = max(color.r, color.b);
-    
+
     // Difference between Green and the max of R/B
     float difference = color.g - maxRB;
-    
+
     // Calculate alpha based on how "green" the pixel is.
     // Tweak the 0.05 and 0.20 to change the hardness of the key.
     float alpha = 1.0 - smoothstep(0.05, 0.20, difference);
-    
+
     // Despill: Remove the green tint from the edges of the subject
     color.g = min(color.g, maxRB * 1.1);
 
@@ -57,22 +57,56 @@ function compileShader(
   return shader;
 }
 
+type Quality = "high" | "thumb";
+
 type Props = {
   src: string;
   isVideo?: boolean;
   className?: string;
   poster?: string;
+  paused?: boolean;
+  quality?: Quality;
 };
 
-export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
+export function ChromaKeyCanvas({
+  src,
+  isVideo,
+  className,
+  poster,
+  paused,
+  quality = "high",
+}: Props) {
   const lastVideoTimeRef = useRef<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
+  const pausedRef = useRef<boolean>(!!paused);
+  const qualityRef = useRef<Quality>(quality);
   const [useFallback, setUseFallback] = useState(false);
+
+  // Keep refs in sync without tearing down GL context.
+  useEffect(() => {
+    pausedRef.current = !!paused;
+    const video = videoElRef.current;
+    if (!video) return;
+    if (paused) {
+      video.pause();
+    } else {
+      void video.play().catch(() => {});
+    }
+  }, [paused]);
+
+  useEffect(() => {
+    qualityRef.current = quality;
+  }, [quality]);
 
   useEffect(() => {
     lastVideoTimeRef.current = -1;
     const container = containerRef.current;
     if (!container) return;
+
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
     const canvas = document.createElement("canvas");
     canvas.style.display = "block";
@@ -87,8 +121,6 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
 
     let animationFrameId: number;
     let mediaElement: HTMLVideoElement | HTMLImageElement;
-    // Video element kept on the outer scope (separate from mediaElement) so
-    // cleanup can pause/release it even while we're displaying the poster.
     let video: HTMLVideoElement | null = null;
     let videoFirstFrameReady = false;
     let gl: WebGLRenderingContext | null = null;
@@ -109,6 +141,7 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
           video.parentNode.removeChild(video);
         }
       }
+      videoElRef.current = null;
       if (gl) {
         if (texture) gl.deleteTexture(texture);
         if (program) gl.deleteProgram(program);
@@ -131,11 +164,6 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       gl = canvas.getContext("webgl", {
         premultipliedAlpha: true,
         alpha: true,
-        // Keep the last-drawn frame across composites so the canvas never
-        // goes transparent between draws (e.g., the 1-frame gap after the
-        // IntersectionObserver resumes rAF). Default false would briefly
-        // clear the canvas while a paused video has not yet advanced
-        // currentTime — the visible blank flicker on scroll-in.
         preserveDrawingBuffer: true,
       });
       if (!gl) {
@@ -223,13 +251,19 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
           intrinsicHeight = mediaElement.naturalHeight;
         }
 
+        // Apply quality scaling. Thumb halves both dimensions, slashing the
+        // texImage2D cost — meaningful when 10+ thumbnails are on screen.
+        const qScale = qualityRef.current === "thumb" ? 0.5 : 1;
+        const targetW = Math.max(1, Math.round(intrinsicWidth * qScale));
+        const targetH = Math.max(1, Math.round(intrinsicHeight * qScale));
+
         if (
           intrinsicWidth > 0 &&
           intrinsicHeight > 0 &&
-          (canvas.width !== intrinsicWidth || canvas.height !== intrinsicHeight)
+          (canvas.width !== targetW || canvas.height !== targetH)
         ) {
-          canvas.width = intrinsicWidth;
-          canvas.height = intrinsicHeight;
+          canvas.width = targetW;
+          canvas.height = targetH;
           gl.viewport(0, 0, canvas.width, canvas.height);
         }
 
@@ -237,7 +271,8 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
           mediaElement instanceof HTMLVideoElement &&
           mediaElement.readyState >= 2
         ) {
-          // Skip frame if video time hasn't advanced (saves GPU work)
+          // Skip frame if video time hasn't advanced (saves GPU work).
+          // While paused this also stops the GPU work entirely.
           const currentTime = mediaElement.currentTime;
           if (currentTime !== lastVideoTimeRef.current) {
             lastVideoTimeRef.current = currentTime;
@@ -269,7 +304,10 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
           gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
 
-        if (isVideo) {
+        // Reduced-motion: render the first frame then stop the rAF loop.
+        // When paused, video.pause() freezes currentTime and the dedupe
+        // check above skips texImage2D/drawArrays — so the loop stays cheap.
+        if (isVideo && !reduceMotion) {
           animationFrameId = requestAnimationFrame(render);
         }
       };
@@ -277,8 +315,6 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
       if (isVideo) {
         video = document.createElement("video");
         video.crossOrigin = "anonymous";
-        // Use the in-memory blob URL when available — bypasses the network
-        // round-trip on swap and eliminates the cold-mount blank flicker.
         video.src = getPreloadedVideoSrc(src) ?? src;
         video.loop = true;
         video.muted = true;
@@ -289,7 +325,7 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         video.setAttribute("muted", "");
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
-        
+
         // Mobile Safari strongly prefers the <video> to be in the DOM to autoplay
         video.style.position = "absolute";
         video.style.width = "1px";
@@ -298,25 +334,22 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
         video.style.pointerEvents = "none";
         document.body.appendChild(video);
 
-        // iOS Safari sometimes fails to decode large blob URLs. Fallback to raw CDN URL if it errors.
         video.onerror = () => {
           if (video && video.src.startsWith("blob:")) {
-            console.warn("Blob video failed on iOS, falling back to network src:", src);
+            console.warn(
+              "Blob video failed on iOS, falling back to network src:",
+              src,
+            );
             video.src = src;
             video.load();
             video.play().catch(() => {});
           }
         };
 
-        // Decode at normal speed — avoids GPU spike on first frame
         video.playbackRate = 1;
-        // Set mediaElement = video synchronously so the rAF loop stays alive
-        // even before the poster or first video frame is ready.
         mediaElement = video;
+        videoElRef.current = video;
 
-        // Paint the poster through the same chroma-key shader until the
-        // video has actually decoded its first frame. Closes the
-        // ~50–150 ms decode gap that remains after blob preload.
         if (poster) {
           const posterImg = new Image();
           posterImg.crossOrigin = "anonymous";
@@ -340,13 +373,11 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
           video.addEventListener("loadeddata", markReady, { once: true });
         }
 
-        video.play().catch(() => {});
-
-        // On iOS Safari, IntersectionObserver can incorrectly report isIntersecting: false
-        // when inside complex GSAP-controlled absolute positioned containers with opacity.
-        // For now, we will let the video play. Since we limit active videos to <5,
-        // battery impact is minimal.
-        // (Removed IntersectionObserver to fix mobile blank issue)
+        if (pausedRef.current) {
+          video.pause();
+        } else {
+          video.play().catch(() => {});
+        }
 
         animationFrameId = requestAnimationFrame(render);
       } else {
@@ -364,7 +395,11 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
     }
 
     return cleanup;
-  }, [src, isVideo, poster, className]);
+    // Intentionally omit `className` — it's only applied once at mount and
+    // changing it must NOT tear down the GL context. Including it here
+    // (along with any non-stable callback prop in the future) was the
+    // hidden trigger for full canvas rebuilds on parent re-renders.
+  }, [src, isVideo, poster]);
 
   if (useFallback) {
     if (isVideo) {
@@ -379,7 +414,7 @@ export function ChromaKeyCanvas({ src, isVideo, className, poster }: Props) {
             objectFit: "contain",
             objectPosition: "bottom center",
           }}
-          autoPlay
+          autoPlay={!paused}
           loop
           muted
           playsInline

@@ -1,8 +1,8 @@
 "use client";
 
-import { TextShuffle } from "components/text-shuffle";
 import Link from "next/link";
 import styles from "./index.module.css";
+import { LocaleSwitcher } from "./locale-switcher";
 
 type NavItem = {
   title: string;
@@ -11,52 +11,68 @@ type NavItem = {
 };
 
 type Props = {
-  navItems?: NavItem[];
+  leftNavItems?: NavItem[];
+  rightNavItems?: NavItem[];
   cartCount?: number;
   onCartClick?: () => void;
-  collectionLabel?: string;
+  logoSrc?: string;
+  logoAlt?: string;
+  locales?: string[];
 };
 
 function fmt(n: number) {
   return n.toString().padStart(2, "0");
 }
 
+function NavLink({ item }: { item: NavItem }) {
+  return (
+    <Link href={item.href} className={styles.navLink}>
+      {item.title}
+      {item.count !== undefined && (
+        <span className={styles.navCount}>{fmt(item.count)}</span>
+      )}
+    </Link>
+  );
+}
+
 export function Header({
-  navItems = [],
+  leftNavItems = [],
+  rightNavItems = [],
   cartCount = 0,
   onCartClick,
-  collectionLabel,
+  logoSrc = "/logo-lockup-white.png",
+  logoAlt = "BLCKHOLE",
+  locales = ["EN", "IN"],
 }: Props) {
   return (
-    <>
-      {/* ── Small panel: top-left ─────────────────────── */}
-      <div className={styles.panel}>
-        {/* Logo row */}
-        <div className={styles.logoRow}>
-          <Link href="/" className={styles.logoLink}>
-            <span className={styles.logoText}>
-              <TextShuffle text="BLCKOLE" triggerOnHover />
-            </span>
-          </Link>
-        </div>
+    <header className={styles.header}>
+      <nav className={styles.zoneLeft} aria-label="Primary">
+        {leftNavItems.map((item) => (
+          <NavLink key={item.href} item={item} />
+        ))}
+      </nav>
 
-        {/* Nav row */}
-        <div className={styles.navRow}>
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className={styles.navLink}>
-              {item.title}
-              {item.count !== undefined && (
-                <span className={styles.navCount}>{fmt(item.count)}</span>
-              )}
-            </Link>
+      <Link href="/" className={styles.logoLink} aria-label={logoAlt}>
+        <img src={logoSrc} alt={logoAlt} className={styles.logoImg} />
+      </Link>
+
+      <div className={styles.zoneRight}>
+        <nav aria-label="Secondary" className={styles.zoneRightNav}>
+          {rightNavItems.map((item) => (
+            <NavLink key={item.href} item={item} />
           ))}
-
-          <button className={styles.cartBtn} onClick={onCartClick}>
-            CART
-            <span className={styles.navCount}>{fmt(cartCount)}</span>
-          </button>
-        </div>
+        </nav>
+        <LocaleSwitcher locales={locales} />
+        <button
+          type="button"
+          className={styles.cartBtn}
+          onClick={onCartClick}
+          aria-label="Open cart"
+        >
+          CART
+          <span className={styles.navCount}>{fmt(cartCount)}</span>
+        </button>
       </div>
-    </>
+    </header>
   );
 }

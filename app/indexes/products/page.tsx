@@ -1,12 +1,11 @@
 import { Footer } from "components/footer";
-import { PageInfo } from "components/page-info";
-import { ProductCard } from "components/product-card";
 import { getProducts } from "lib/shopify";
 import styles from "./page.module.css";
+import { ShopGrid } from "./shop-grid";
 
 export const metadata = {
-  title: "All Products",
-  description: "Browse the full collection.",
+  title: "Shop",
+  description: "The full line — denim, tops, and layers.",
 };
 
 export default async function ProductsIndexPage() {
@@ -14,20 +13,18 @@ export default async function ProductsIndexPage() {
 
   return (
     <>
-      <PageInfo title="All" count={products.length} />
+      <main className={styles.page}>
+        <header className={styles.hero}>
+          <p className={styles.eyebrow}>Shop</p>
+          <h1 className={styles.headline}>The full line</h1>
+          <p className={styles.dek}>
+            Denim, tops, and layers — built to hold attention without asking for
+            it.
+          </p>
+        </header>
 
-      <div className={styles.wrapper}>
-        <div className={styles.grid}>
-          {products.map((product, i) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              index={i}
-              priority={i < 8}
-            />
-          ))}
-        </div>
-      </div>
+        <ShopGrid products={products} />
+      </main>
 
       <Footer />
     </>
