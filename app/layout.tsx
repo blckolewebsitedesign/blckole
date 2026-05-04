@@ -60,7 +60,7 @@ export default async function RootLayout({
           <SiteShell
             leftNavItems={leftNavItems}
             rightNavItems={rightNavItems}
-            logoSrc="/blckole-1.png"
+            logoSrc="/logo-lockup-white.png"
             locales={["EN", "IN"]}
           >
             {children}

@@ -4,63 +4,89 @@
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  background: transparent;
-  gap: 16rem;
+  gap: 14rem;
 }
 
-.wrapper:hover .image {
-  transform: scale(1.03);
-}
-
-.media {
+/* ── Image frame: dark card with vignette holding the white-bg
+       product photo, centered with breathing room. ───────────── */
+.frame {
   position: relative;
-  aspect-ratio: 3 / 4; /* Towering vertical aspect ratio */
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(0, 0, 0, 0) 60%
+    ),
+    linear-gradient(180deg, #0c0c0c 0%, #050505 100%);
+  transition: border-color var(--transition-base);
+}
+
+.wrapper:hover .frame {
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  padding: 18%;
   transition: transform 0.6s var(--ease-out-expo);
 }
 
-.number {
-  position: absolute;
-  top: 10rem;
-  left: 10rem;
-  font-family: var(--font-family-mono);
-  font-size: 12rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-off-black);
-  background: var(--color-background);
-  padding: 4rem 8rem;
-  line-height: 1;
-  z-index: 10;
+.wrapper:hover .image {
+  transform: scale(1.04);
 }
 
+/* ── Info row ──────────────────────────────────────────────────── */
 .info {
   display: flex;
   flex-direction: column;
-  gap: 4rem;
+  gap: 8rem;
+}
+
+.category {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright);
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14rem;
 }
 
 .title {
-  font-family: var(--font-family-serif);
-  font-size: 26rem; /* Massive typography */
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: var(--color-off-black);
+  font-family:
+    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-size: 20rem !important;
+  font-weight: 500 !important;
+  font-style: italic !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.005em !important;
+  color: var(--color-off-black) !important;
+  text-transform: none !important;
+  margin: 0 !important;
 }
 
 .price {
   font-family: var(--font-family-mono);
-  font-size: 14rem;
-  font-weight: 700;
-  color: var(--color-medium-grey);
-  letter-spacing: 0.1em;
+  font-size: 12rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.78);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 22rem !important;
+  }
 }

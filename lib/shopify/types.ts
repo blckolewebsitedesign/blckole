@@ -158,6 +158,7 @@ export type ShopifyProduct = {
   media: Connection<ShopifyProductMedia>;
   seo: SEO;
   tags: string[];
+  productType: string;
   updatedAt: string;
 };
 

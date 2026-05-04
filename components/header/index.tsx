@@ -40,7 +40,7 @@ export function Header({
   rightNavItems = [],
   cartCount = 0,
   onCartClick,
-  logoSrc = "/blckole-1.png",
+  logoSrc = "/logo-lockup-white.png",
   logoAlt = "BLCKHOLE",
   locales = ["EN", "IN"],
 }: Props) {

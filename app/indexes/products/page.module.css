@@ -1,21 +1,124 @@
-.wrapper {
-  padding: calc(var(--header-height) + var(--grid-margin) * 2)
-    var(--grid-margin) var(--grid-margin);
+.page {
+  background: var(--color-background);
+  color: var(--color-off-black);
+  padding: 140rem var(--grid-margin) 80rem;
+  max-width: 1480rem;
+  margin: 0 auto;
 }
 
+/* ── Hero ──────────────────────────────────────────────────────── */
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 14rem;
+  max-width: 560rem;
+  margin: 0 0 56rem;
+}
+
+.eyebrow {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright);
+  margin: 0;
+}
+
+.headline {
+  font-family:
+    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-size: clamp(48rem, 7vw, 96rem) !important;
+  font-weight: 500 !important;
+  font-style: italic !important;
+  line-height: 1 !important;
+  color: var(--color-off-black) !important;
+  text-transform: none !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.dek {
+  font-family: var(--font-family-sans);
+  font-size: 14rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 8rem 0 0;
+  max-width: 420rem;
+}
+
+/* ── Filter chips ──────────────────────────────────────────────── */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rem;
+  margin: 0 0 48rem;
+}
+
+.chip {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 12rem 18rem;
+  cursor: pointer;
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base);
+}
+
+.chip:hover {
+  color: var(--color-off-black);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.chipActive {
+  color: var(--color-accent-bright);
+  border-color: var(--color-accent-bright);
+}
+
+.chipActive:hover {
+  color: var(--color-accent-bright);
+  border-color: var(--color-accent-bright);
+}
+
+/* ── Grid ──────────────────────────────────────────────────────── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 60rem; /* Increased gap for luxury breathing room */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32rem 24rem;
 }
 
-@media (max-width: 900px) {
-  .wrapper {
-    padding-top: calc(var(--header-height) + var(--grid-margin));
-  }
-
+@media (max-width: 1100px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--gap);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .page {
+    padding: 110rem var(--grid-margin) 60rem;
+  }
+  .hero {
+    margin-bottom: 36rem;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24rem 16rem;
+  }
+  .chips {
+    margin-bottom: 32rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
   }
 }
