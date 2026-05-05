@@ -297,3 +297,22 @@ export type ShopifyProductsOperation = {
     sortKey?: string;
   };
 };
+
+export type ShopPolicy = {
+  id: string;
+  title: string;
+  handle: string;
+  body: string;
+  url: string;
+} | null;
+
+export type ShopifyShopPoliciesOperation = {
+  data: {
+    shop: {
+      privacyPolicy: ShopPolicy;
+      refundPolicy: ShopPolicy;
+      termsOfService: ShopPolicy;
+      shippingPolicy: ShopPolicy;
+    };
+  };
+};

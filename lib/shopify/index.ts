@@ -26,6 +26,7 @@ import {
 } from "./queries/collection";
 import { getMenuQuery } from "./queries/menu";
 import { getPageQuery, getPagesQuery } from "./queries/page";
+import { getShopPoliciesQuery } from "./queries/policy";
 import {
   getProductQuery,
   getProductRecommendationsQuery,
@@ -57,7 +58,9 @@ import {
   ShopifyProductRecommendationsOperation,
   ShopifyProductsOperation,
   ShopifyRemoveFromCartOperation,
+  ShopifyShopPoliciesOperation,
   ShopifyUpdateCartOperation,
+  ShopPolicy,
 } from "./types";
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
@@ -531,6 +534,22 @@ export async function getProducts({
   });
 
   return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+}
+
+export async function getShopPolicies(): Promise<{
+  privacyPolicy: ShopPolicy;
+  refundPolicy: ShopPolicy;
+  termsOfService: ShopPolicy;
+  shippingPolicy: ShopPolicy;
+}> {
+  "use cache";
+  cacheLife("days");
+
+  const res = await shopifyFetch<ShopifyShopPoliciesOperation>({
+    query: getShopPoliciesQuery,
+  });
+
+  return res.body.data.shop;
 }
 
 // This is called from `app/api/revalidate.ts` so providers can control revalidation logic.

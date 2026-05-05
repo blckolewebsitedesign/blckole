@@ -1,0 +1,133 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-background);
+  color: var(--color-off-black);
+  padding: 120rem var(--grid-margin) 80rem;
+}
+
+.container {
+  max-width: 780rem;
+  margin: 0 auto;
+}
+
+.heading {
+  font-family: var(--font-family-sans);
+  font-size: clamp(32rem, 5vw, 56rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 48rem;
+  color: #ffffff;
+}
+
+.empty {
+  font-family: var(--font-family-mono);
+  font-size: 13rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: none;
+}
+
+/* ── Policy body HTML content ──────────────────────────────────── */
+.body {
+  font-family: var(--font-family-sans);
+  font-size: 15rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.78);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.body h1,
+.body h2,
+.body h3,
+.body h4 {
+  font-family: var(--font-family-sans);
+  font-weight: 600;
+  color: #ffffff;
+  margin-top: 36rem;
+  margin-bottom: 14rem;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.body h1 {
+  font-size: 28rem;
+}
+.body h2 {
+  font-size: 22rem;
+}
+.body h3 {
+  font-size: 18rem;
+}
+.body h4 {
+  font-size: 16rem;
+}
+
+.body p {
+  margin-bottom: 18rem;
+}
+
+.body ul,
+.body ol {
+  padding-left: 24rem;
+  margin-bottom: 18rem;
+}
+
+.body li {
+  margin-bottom: 8rem;
+}
+
+.body a {
+  color: var(--color-accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 2rem;
+  transition: color var(--transition-base);
+}
+
+.body a:hover {
+  color: #ffffff;
+}
+
+.body strong,
+.body b {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24rem;
+}
+
+.body th,
+.body td {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10rem 14rem;
+  text-align: left;
+  font-size: 13rem;
+}
+
+.body th {
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .page {
+    padding: 100rem 20rem 60rem;
+  }
+  .heading {
+    margin-bottom: 32rem;
+  }
+  .body {
+    font-size: 14rem;
+  }
+}
