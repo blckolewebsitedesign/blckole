@@ -5,7 +5,7 @@ import { useCart } from "components/cart/cart-context";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Product, ProductVariant } from "lib/shopify/types";
 import Image from "next/image";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import styles from "./product-client.module.css";
 
 const SWATCH_COLORS: Record<string, string> = {
@@ -19,6 +19,7 @@ const SWATCH_COLORS: Record<string, string> = {
   RED: "#c0392b",
   BLEU: "#2980b9",
   BLUE: "#2980b9",
+  "VOID BLUE": "#1a2a4a",
   VERT: "#27ae60",
   GREEN: "#27ae60",
   ROSE: "#e91e8c",
@@ -30,33 +31,22 @@ const SWATCH_COLORS: Record<string, string> = {
   ECRU: "#f5f0e1",
   MARINE: "#1a2a4a",
   NAVY: "#1a2a4a",
+  CRIMSON: "#891824",
 };
-
-const HIDDEN_TAG = "nextjs-frontend-hidden";
 
 type Props = {
   product: Product;
 };
 
-function pad(n: number) {
-  return String(n).padStart(2, "0");
+function formatPrice(amount: string, currency: string) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(amount));
 }
 
 export function ProductPageClient({ product }: Props) {
-  console.log("PRODUCT OPTIONS:", JSON.stringify(product.options));
-  console.log(
-    "REAL OPTIONS:",
-    JSON.stringify(
-      product.options.filter(
-        (opt) =>
-          !(
-            opt.values.length === 1 &&
-            opt.values[0]?.toLowerCase() === "default title"
-          ),
-      ),
-    ),
-  );
-
   const { addCartItem } = useCart();
   const [message, formAction, isPending] = useActionState(addItem, null);
 
@@ -68,67 +58,20 @@ export function ProductPageClient({ product }: Props) {
   const [imageIndex, setImageIndex] = useState(0);
   const [openSection, setOpenSection] = useState<string | null>(null);
 
-  const rightPanelRef = useRef<HTMLDivElement>(null);
-  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const imageIndexRef = useRef(0);
-  const wheelCooldown = useRef(false);
-
-  const images = product.images;
-  const total = images.length;
-
-  useEffect(() => {
-    imageIndexRef.current = imageIndex;
-  }, [imageIndex]);
-
-  useEffect(() => {
-    const panel = rightPanelRef.current;
-    if (!panel) return;
-    const apply = () => {
-      const h = panel.clientHeight;
-      slideRefs.current.forEach((slide) => {
-        if (slide) slide.style.height = `${h}px`;
-      });
-    };
-    apply();
-    const ro = new ResizeObserver(apply);
-    ro.observe(panel);
-    return () => ro.disconnect();
-  }, [total]);
-
-  useEffect(() => {
-    const panel = rightPanelRef.current;
-    if (!panel || total <= 1) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idx = slideRefs.current.findIndex((s) => s === entry.target);
-            if (idx !== -1) setImageIndex(idx);
-          }
-        });
-      },
-      { root: panel, threshold: 0.5 },
-    );
-    slideRefs.current.forEach((s) => s && io.observe(s));
-    return () => io.disconnect();
-  }, [total]);
-
-  function scrollToImage(i: number) {
-    const panel = rightPanelRef.current;
-    const slide = slideRefs.current[i];
-    if (!panel || !slide) return;
-    panel.scrollTo({ top: slide.offsetTop, behavior: "smooth" });
-    setImageIndex(i);
-  }
+  // Filmstrip convention: when there are 2+ images the LAST image is a
+  // 36-frame sprite for the homepage's 360° rotation. Strip it from the
+  // gallery so it doesn't pollute the product photo set.
+  const galleryImages =
+    product.images.length > 1 ? product.images.slice(0, -1) : product.images;
+  const total = galleryImages.length;
 
   const matchingVariant = product.variants.find((v: ProductVariant) =>
     v.selectedOptions.every((opt) => selectedOptions[opt.name] === opt.value),
   );
 
   const price = product.priceRange.minVariantPrice;
-  const priceDisplay = `${Math.round(parseFloat(price.amount))} ${price.currencyCode}`;
-
-  const category = product.tags.find((t) => t !== HIDDEN_TAG);
+  const priceDisplay = formatPrice(price.amount, price.currencyCode);
+  const category = product.productType?.trim() || product.tags[0] || "";
 
   const realOptions = product.options.filter(
     (opt) =>
@@ -138,213 +81,231 @@ export function ProductPageClient({ product }: Props) {
       ),
   );
 
-  const sections: { key: string; content: React.ReactNode }[] = [
+  const detailsHtml = product.descriptionHtml || "";
+  const description = product.description || "";
+
+  function selectOption(name: string, val: string) {
+    setSelectedOptions((prev) => ({ ...prev, [name]: val }));
+  }
+
+  function nextImage() {
+    if (total === 0) return;
+    setImageIndex((i) => (i + 1) % total);
+  }
+
+  function prevImage() {
+    if (total === 0) return;
+    setImageIndex((i) => (i - 1 + total) % total);
+  }
+
+  const addItemAction = formAction.bind(null, matchingVariant?.id);
+  const activeImage = galleryImages[imageIndex];
+
+  const sections: { key: string; label: string; content: React.ReactNode }[] = [
     {
       key: "DETAILS",
-      content: product.descriptionHtml ? (
+      label: "Details",
+      content: detailsHtml ? (
         <div
           className={styles.accordionHtml}
-          dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+          dangerouslySetInnerHTML={{ __html: detailsHtml }}
         />
       ) : (
-        <p className={styles.accordionText}>No details available.</p>
-      ),
-    },
-    {
-      key: "MATERIALS",
-      content: (
-        <p className={styles.accordionText}>
-          See product label for full material composition.
-        </p>
+        <p className={styles.accordionText}>{description}</p>
       ),
     },
     {
       key: "SHIPPING",
+      label: "Shipping & Returns",
       content: (
         <p className={styles.accordionText}>
-          Fast, tracked and secure worldwide shipping.
+          Fast, tracked, secure worldwide shipping. 14-day returns &amp; easy
+          exchange.
+        </p>
+      ),
+    },
+    {
+      key: "SIZE_GUIDE",
+      label: "Size Guide",
+      content: (
+        <p className={styles.accordionText}>
+          Refer to the product label for full sizing. Most pieces run a relaxed,
+          oversized fit.
         </p>
       ),
     },
   ];
 
-  const addItemAction = formAction.bind(null, matchingVariant?.id);
-
   return (
-    <div className={styles.container}>
-      <div className={styles.body}>
-        <div className={styles.leftPanel}>
-          {category && (
-            <span className={styles.category}>{category.toUpperCase()}</span>
-          )}
+    <div className={styles.body}>
+      {/* ── Left column (info) ───────────────────────────────── */}
+      <div className={styles.leftCol}>
+        {category ? <span className={styles.category}>{category}</span> : null}
 
-          <div className={styles.titleRow}>
-            <h1 className={styles.title}>{product.title}</h1>
-            <p className={styles.price}>{priceDisplay}</p>
-            <button
-              className={styles.mobileDetailsTrigger}
-              onClick={() =>
-                setOpenSection(openSection === "DETAILS" ? null : "DETAILS")
-              }
-            >
-              DETAILS {openSection === "DETAILS" ? "—" : "+"}
-            </button>
-          </div>
+        <h1 className={styles.title}>{product.title}</h1>
 
-          {total > 1 && (
-            <div className={styles.thumbnailSection}>
-              <div className={styles.thumbnailHeader}>
-                <span className={styles.imageCounter}>
-                  {pad(imageIndex + 1)} / {pad(total)}
-                </span>
-              </div>
-              <div className={styles.thumbnails}>
-                {images.map((img, i) => (
-                  <button
-                    key={img.url}
-                    className={`${styles.thumb} ${i === imageIndex ? styles.thumbActive : ""}`}
-                    onClick={() => scrollToImage(i)}
-                    aria-label={`Image ${i + 1}`}
-                  >
-                    <Image
-                      src={img.url}
-                      alt={img.altText ?? product.title}
-                      fill
-                      sizes="48px"
-                      className={styles.thumbImg}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className={styles.priceRow}>
+          <span className={styles.price}>{priceDisplay}</span>
+          <span className={styles.priceTax}>MRP incl. of all taxes</span>
+        </div>
 
-          {realOptions.map((option) => {
-            const isColor =
-              option.name.toLowerCase().includes("color") ||
-              option.name.toLowerCase().includes("couleur") ||
-              option.name.toLowerCase().includes("colour");
+        {description ? (
+          <p className={styles.description}>{description}</p>
+        ) : null}
 
-            return (
-              <div key={option.id} className={styles.optionSectionRow}>
-                <span className={styles.optionLabelRow}>
-                  {option.name.toUpperCase()}
-                </span>
-                <div
-                  className={
-                    isColor ? styles.optionListColor : styles.optionListSize
-                  }
-                >
-                  {option.values.map((val) => {
-                    const active = selectedOptions[option.name] === val;
-                    const selectOption = () =>
-                      setSelectedOptions((prev) => ({
-                        ...prev,
-                        [option.name]: val,
-                      }));
-
-                    if (isColor) {
-                      const bg = SWATCH_COLORS[val.toUpperCase()] ?? "#b2b2b2";
-                      return (
-                        <button
-                          key={val}
-                          className={`${styles.colorRow} ${active ? styles.colorRowActive : ""}`}
-                          onClick={selectOption}
-                          aria-label={val}
-                          aria-pressed={active}
-                        >
-                          <span
-                            className={styles.colorDot}
-                            style={{ background: bg }}
-                          />
-                          <span className={styles.colorName}>
-                            {val.toUpperCase()}
-                          </span>
-                        </button>
-                      );
-                    }
-
+        {realOptions.map((option) => {
+          const isColor = /colou?r/i.test(option.name);
+          return (
+            <div key={option.id} className={styles.optionGroup}>
+              <span className={styles.optionLabel}>
+                {option.name.toUpperCase()}
+              </span>
+              <div
+                className={
+                  isColor ? styles.optionListColor : styles.optionListSize
+                }
+              >
+                {option.values.map((val) => {
+                  const active = selectedOptions[option.name] === val;
+                  if (isColor) {
+                    const bg = SWATCH_COLORS[val.toUpperCase()] ?? "#b2b2b2";
                     return (
                       <button
                         key={val}
-                        className={`${styles.sizeText} ${active ? styles.sizeTextActive : ""}`}
-                        onClick={selectOption}
+                        type="button"
+                        onClick={() => selectOption(option.name, val)}
+                        className={`${styles.colorChip} ${active ? styles.colorChipActive : ""}`}
                         aria-pressed={active}
                       >
-                        {val}
+                        <span
+                          className={styles.colorDot}
+                          style={{ background: bg }}
+                          aria-hidden="true"
+                        />
+                        <span className={styles.colorName}>
+                          {val.toUpperCase()}
+                        </span>
                       </button>
                     );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-
-          <div className={styles.accordions}>
-            {sections.map(({ key, content }) => (
-              <div key={key} className={styles.accordionItem}>
-                <button
-                  className={styles.accordionTrigger}
-                  onClick={() =>
-                    setOpenSection((prev) => (prev === key ? null : key))
                   }
-                  aria-expanded={openSection === key}
-                >
-                  <span>{key}</span>
-                  <span className={styles.accordionIcon}>
-                    {openSection === key ? "—" : "+"}
-                  </span>
-                </button>
-                <AnimatePresence initial={false}>
-                  {openSection === key && (
-                    <motion.div
-                      key="content"
-                      className={styles.accordionContent}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.22, ease: "easeInOut" }}
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => selectOption(option.name, val)}
+                      className={`${styles.sizeChip} ${active ? styles.sizeChipActive : ""}`}
+                      aria-pressed={active}
                     >
-                      {content}
-                      <button
-                        className={styles.closeSection}
-                        onClick={() => setOpenSection(null)}
-                      >
-                        CLOSE
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      {val}
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          );
+        })}
+
+        <div className={styles.utilityRow}>
+          <button
+            type="button"
+            className={styles.utilityLink}
+            onClick={() =>
+              setOpenSection((p) => (p === "SIZE_GUIDE" ? null : "SIZE_GUIDE"))
+            }
+          >
+            <svg
+              className={styles.utilityIcon}
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M11.3 2.7l2 2L4.5 13.5l-2.7.7.7-2.7 8.8-8.8z"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Size guide
+          </button>
+          <button
+            type="button"
+            className={styles.utilityLink}
+            onClick={() =>
+              setOpenSection((p) => (p === "SHIPPING" ? null : "SHIPPING"))
+            }
+          >
+            <svg
+              className={styles.utilityIcon}
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <rect
+                x="1"
+                y="4"
+                width="9"
+                height="7"
+                stroke="currentColor"
+                strokeWidth="1.2"
+              />
+              <path
+                d="M10 6h3l2 2v3h-5z"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinejoin="round"
+              />
+              <circle
+                cx="4"
+                cy="12"
+                r="1.4"
+                stroke="currentColor"
+                strokeWidth="1.2"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="1.4"
+                stroke="currentColor"
+                strokeWidth="1.2"
+              />
+            </svg>
+            Shipping &amp; returns
+          </button>
         </div>
 
-        <div className={styles.rightWrapper}>
-          <div className={styles.rightPanel} ref={rightPanelRef}>
-            {images.map((img, i) => (
-              <div
-                key={img.url}
-                ref={(el) => {
-                  slideRefs.current[i] = el;
-                }}
-                className={styles.imageSlide}
+        <div className={styles.accordions}>
+          {sections.map(({ key, label, content }) => (
+            <div key={key} className={styles.accordionItem}>
+              <button
+                className={styles.accordionTrigger}
+                onClick={() => setOpenSection((p) => (p === key ? null : key))}
+                aria-expanded={openSection === key}
+                type="button"
               >
-                <Image
-                  src={img.url}
-                  alt={img.altText ?? product.title}
-                  fill
-                  sizes="62vw"
-                  className={styles.rightImage}
-                  priority={i === 0}
-                />
-              </div>
-            ))}
-          </div>
+                <span>{label}</span>
+                <span className={styles.accordionIcon} aria-hidden="true">
+                  {openSection === key ? "−" : "+"}
+                </span>
+              </button>
+              <AnimatePresence initial={false}>
+                {openSection === key && (
+                  <motion.div
+                    key="content"
+                    className={styles.accordionContent}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: "easeInOut" }}
+                  >
+                    {content}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
         </div>
-      </div>
 
-      <div className={styles.bottomBar}>
         <form
           className={styles.cartForm}
           action={async () => {
@@ -354,7 +315,7 @@ export function ProductPageClient({ product }: Props) {
         >
           <button
             type="submit"
-            className={styles.addToCartBtn}
+            className={styles.addToBag}
             disabled={
               !matchingVariant?.availableForSale ||
               isPending ||
@@ -363,22 +324,102 @@ export function ProductPageClient({ product }: Props) {
           >
             <span>
               {isPending
-                ? "ADDING..."
+                ? "Adding…"
                 : !matchingVariant
-                  ? "SELECT OPTIONS"
+                  ? "Select options"
                   : !matchingVariant.availableForSale
-                    ? "SOLD OUT"
-                    : "ADD TO CART"}
+                    ? "Sold out"
+                    : "Add to bag"}
             </span>
-            <span>{priceDisplay}</span>
+            <span className={styles.addToBagPrice}>· {priceDisplay}</span>
           </button>
         </form>
 
-        {message && (
+        <p className={styles.returns}>
+          <svg
+            className={styles.returnsIcon}
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M8 1.5L2.5 3.7v4.6c0 3 2.4 5.6 5.5 6.2 3.1-.6 5.5-3.2 5.5-6.2V3.7L8 1.5z"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+          </svg>
+          14-day returns &amp; easy exchange
+        </p>
+
+        {message ? (
           <p className={styles.errorMsg} aria-live="polite" role="status">
             {message}
           </p>
-        )}
+        ) : null}
+      </div>
+
+      {/* ── Right column (gallery) ───────────────────────────── */}
+      <div className={styles.rightCol}>
+        <div className={styles.galleryGrid}>
+          <div className={styles.mainImageWrap}>
+            {activeImage ? (
+              <Image
+                src={activeImage.url}
+                alt={activeImage.altText ?? product.title}
+                fill
+                sizes="(max-width: 860px) 100vw, 50vw"
+                className={styles.mainImage}
+                priority
+              />
+            ) : null}
+
+            {total > 1 ? (
+              <div className={styles.navButtons}>
+                <button
+                  type="button"
+                  className={styles.navButton}
+                  onClick={prevImage}
+                  aria-label="Previous image"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className={styles.navButton}
+                  onClick={nextImage}
+                  aria-label="Next image"
+                >
+                  ›
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          {total > 1 ? (
+            <ul className={styles.thumbRail} aria-label="Product images">
+              {galleryImages.map((img, i) => (
+                <li key={img.url}>
+                  <button
+                    type="button"
+                    className={`${styles.thumb} ${i === imageIndex ? styles.thumbActive : ""}`}
+                    onClick={() => setImageIndex(i)}
+                    aria-label={`Image ${i + 1}`}
+                    aria-pressed={i === imageIndex}
+                  >
+                    <Image
+                      src={img.url}
+                      alt={img.altText ?? product.title}
+                      fill
+                      sizes="80px"
+                      className={styles.thumbImg}
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       </div>
     </div>
   );

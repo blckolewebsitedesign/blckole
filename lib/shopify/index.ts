@@ -496,6 +496,7 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
 
 export async function getProductRecommendations(
   productId: string,
+  intent: "RELATED" | "COMPLEMENTARY" = "RELATED",
 ): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);
@@ -505,6 +506,7 @@ export async function getProductRecommendations(
     query: getProductRecommendationsQuery,
     variables: {
       productId,
+      intent,
     },
   });
 

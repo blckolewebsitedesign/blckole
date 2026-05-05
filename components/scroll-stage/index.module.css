@@ -208,70 +208,77 @@
 }
 
 .charLayerInLeft {
-  animation: charSlideInLeft 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: charSlideInLeft 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .charLayerInRight {
-  animation: charSlideInRight 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: charSlideInRight 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .charLayerOutLeft {
-  animation: charSlideOutLeft 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: charSlideOutLeft 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
   z-index: 1;
 }
 
 .charLayerOutRight {
-  animation: charSlideOutRight 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: charSlideOutRight 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
   z-index: 1;
 }
 
+/* Position-based slide. Opacity holds at 0 for ~25% (≈140ms) to give
+   the new ChromaKeyCanvas time to mount its WebGL context, then fades
+   in over the rest of the slide so the layer never appears blank
+   on-screen. The outgoing layer fades + slides simultaneously so the
+   two characters don't strobe past each other. */
 @keyframes charSlideInLeft {
   0% {
     opacity: 0;
-    transform: translateX(-40%) scale(0.96);
+    transform: translate3d(-55%, 0, 0);
   }
-  30% {
+  25% {
     opacity: 0;
+    transform: translate3d(-45%, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes charSlideInRight {
   0% {
     opacity: 0;
-    transform: translateX(40%) scale(0.96);
+    transform: translate3d(55%, 0, 0);
   }
-  30% {
+  25% {
     opacity: 0;
+    transform: translate3d(45%, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes charSlideOutLeft {
   0% {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
   100% {
     opacity: 0;
-    transform: translateX(-30%) scale(0.96);
+    transform: translate3d(-45%, 0, 0);
   }
 }
 
 @keyframes charSlideOutRight {
   0% {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
   100% {
     opacity: 0;
-    transform: translateX(30%) scale(0.96);
+    transform: translate3d(45%, 0, 0);
   }
 }
 

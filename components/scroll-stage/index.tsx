@@ -146,6 +146,62 @@ export const ScrollStage = React.memo(function ScrollStage({
     };
   }, [onSelect]);
 
+  // Wheel navigation in detail mode only. Uses a velocity accumulator
+  // so trackpad momentum bursts feel natural — small deltas pile up
+  // until they cross a threshold (one switch), then the accumulator
+  // empties. A short reset gap (~180ms) treats lulls as a new intent.
+  // A switch lock just shorter than the slide animation prevents
+  // overlapping transitions while still allowing chained scrolls.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+
+    const SWITCH_THRESHOLD = 90;
+    const RESET_GAP_MS = 180;
+    const SWITCH_LOCK_MS = 380;
+    let accumulator = 0;
+    let lastWheelAt = 0;
+    let switchLockUntil = 0;
+
+    const onWheel = (e: WheelEvent) => {
+      if (!detailOpenRef.current) return;
+      const target = e.target as HTMLElement | null;
+      // Allow native scroll inside the LookInfo content (cards / pills).
+      if (target?.closest("[data-no-swipe]")) return;
+
+      const dx = e.deltaX;
+      const dy = e.deltaY;
+      const dominant = Math.abs(dy) > Math.abs(dx) ? dy : dx;
+      if (Math.abs(dominant) < 1) return;
+
+      e.preventDefault();
+
+      const now = Date.now();
+      if (now - lastWheelAt > RESET_GAP_MS) {
+        accumulator = 0;
+      }
+      lastWheelAt = now;
+      accumulator += dominant;
+
+      if (now < switchLockUntil) return;
+      if (Math.abs(accumulator) < SWITCH_THRESHOLD) return;
+
+      switchLockUntil = now + SWITCH_LOCK_MS;
+      const dir = accumulator > 0 ? 1 : -1;
+      accumulator = 0;
+
+      const t = totalRef.current;
+      if (t === 0) return;
+      const next = (indexRef.current + dir + t) % t;
+      onSelect(next, { open: false, userInitiated: true });
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [onSelect]);
+
   // ── Two-layer slide for the main character ──
   const [characterLayers, setCharacterLayers] = useState<LayerEntry[]>(() =>
     activeProduct ? [{ product: activeProduct, dir: 0 }] : [],
@@ -174,7 +230,7 @@ export const ScrollStage = React.memo(function ScrollStage({
     });
     const t = setTimeout(() => {
       setCharacterLayers((cur) => cur.slice(-1));
-    }, 900);
+    }, 550);
     return () => clearTimeout(t);
   }, [activeProduct, safeIndex, total]);
 

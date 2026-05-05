@@ -278,12 +278,15 @@ export type ShopifyProductOperation = {
   };
 };
 
+export type ProductRecommendationIntent = "RELATED" | "COMPLEMENTARY";
+
 export type ShopifyProductRecommendationsOperation = {
   data: {
     productRecommendations: ShopifyProduct[];
   };
   variables: {
     productId: string;
+    intent?: ProductRecommendationIntent;
   };
 };
 

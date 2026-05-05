@@ -1,240 +1,210 @@
-/* ── Container ── */
-.container {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-background);
-  height: calc(
-    100vh - 80px
-  ); /* Approximate height remaining after global header */
-  overflow: hidden;
-  position: relative;
-}
-
+/* ── Body grid ─────────────────────────────────────────────────── */
 .body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: 60rem;
+  align-items: start;
 }
 
-/* ── Left panel — fixed, no borders ── */
-.leftPanel {
-  width: 38%;
-  overflow-y: auto;
-  scrollbar-width: none;
-  padding: calc(var(--grid-margin) * 4) var(--grid-margin) 100rem;
+/* ── Left column (info) ────────────────────────────────────────── */
+.leftCol {
   display: flex;
   flex-direction: column;
-  gap: 20rem;
-  position: relative;
-}
-
-.leftPanel::-webkit-scrollbar {
-  display: none;
-}
-
-.closeBtn {
-  position: absolute;
-  top: var(--grid-margin);
-  right: var(--grid-margin);
-  font-size: 20rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-off-black);
-  padding: 4rem;
-  line-height: 1;
+  gap: 22rem;
+  min-width: 0;
 }
 
 .category {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-medium-grey);
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-}
-
-.titleRow {
-  display: flex;
-  align-items: baseline;
-  gap: 16rem;
-  margin-bottom: 24rem;
+  color: var(--color-accent-bright);
 }
 
 .title {
-  font-family: "Barlow", sans-serif;
-  font-size: 28rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: var(--color-off-black);
-  text-transform: uppercase;
-  margin: 0;
-  flex: 1;
+  font-family:
+    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-size: clamp(38rem, 4vw, 56rem) !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.005em !important;
+  color: var(--color-off-black) !important;
+  margin: 0 !important;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 16rem;
+  flex-wrap: wrap;
 }
 
 .price {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-off-black);
-  font-weight: 700;
-  margin: 0;
-}
-
-.mobileDetailsTrigger {
-  display: none;
-}
-
-.thumbnailHeader {
-  width: 100rem;
-  flex-shrink: 0;
-  display: flex;
-}
-
-.thumbnailSection {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  margin-bottom: 24rem;
-}
-
-.imageCounter {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  font-weight: 700;
+  font-family: var(--font-family-mono);
+  font-size: 18rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   color: var(--color-off-black);
 }
 
-.thumbnails {
-  display: flex;
-  gap: 4rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.thumbnails::-webkit-scrollbar {
-  display: none;
-}
-
-.thumb {
-  position: relative;
-  flex-shrink: 0;
-  width: 44rem;
-  height: 62rem;
-  background: var(--color-divider);
-  padding: 0;
-  cursor: pointer;
-  overflow: hidden;
-  opacity: 0.45;
-  transition: opacity 0.15s;
-}
-
-.thumb:hover {
-  opacity: 0.75;
-}
-
-.thumbActive {
-  opacity: 1;
-}
-
-.thumbImg {
-  object-fit: cover;
-  object-position: center top;
-}
-
-/* ── Options ── */
-.optionSectionRow {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  margin-bottom: 24rem;
-}
-
-.optionLabelRow {
-  width: 100rem; /* Fixed width to align the values nicely */
-  font-size: var(--font-size-tiny);
-  font-weight: 700;
-  letter-spacing: var(--letter-spacing-base);
+.priceTax {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-off-black);
+  color: var(--color-medium-grey);
 }
 
-.optionListColor {
-  display: flex;
-  flex-direction: column;
-  gap: 8rem;
+.description {
+  font-family: var(--font-family-sans);
+  font-size: 14rem;
+  font-weight: 300;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.optionListSize {
-  display: flex;
-  flex-direction: column;
-  gap: 6rem;
-}
-
-.colorRow {
+/* ── Option groups ─────────────────────────────────────────────── */
+.optionGroup {
   display: flex;
   align-items: center;
-  gap: 8rem;
-  background: none;
-  border: none;
-  padding: 0;
+  gap: 24rem;
+  flex-wrap: wrap;
+  margin-top: 4rem;
+}
+
+.optionLabel {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-medium-grey);
+  flex: 0 0 56rem;
+}
+
+.optionListColor,
+.optionListSize {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rem;
+}
+
+.colorChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  padding: 10rem 16rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.15s;
+  transition:
+    border-color var(--transition-base),
+    color var(--transition-base);
 }
 
-.colorRow:hover {
-  opacity: 0.8;
+.colorChip:hover {
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
-.colorRowActive {
-  opacity: 1;
+.colorChipActive {
+  border-color: var(--color-accent-bright);
+  color: var(--color-accent-bright);
 }
 
 .colorDot {
-  width: 6rem;
-  height: 6rem;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.sizeChip {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--color-off-black);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 10rem 14rem;
+  min-width: 44rem;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    color var(--transition-base);
+}
+
+.sizeChip:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.sizeChipActive {
+  border-color: var(--color-accent-bright);
+  color: var(--color-accent-bright);
+}
+
+/* ── Utility links (size guide / shipping) ─────────────────────── */
+.utilityRow {
+  display: flex;
+  align-items: center;
+  gap: 24rem;
+  flex-wrap: wrap;
+  padding-bottom: 4rem;
+}
+
+.utilityLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--transition-base);
+}
+
+.utilityLink:hover {
+  color: var(--color-off-black);
+}
+
+.utilityIcon {
+  width: 14rem;
+  height: 14rem;
   flex-shrink: 0;
 }
 
-.colorName {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-off-black);
-  text-transform: uppercase;
-}
-
-.sizeText {
-  background: none;
-  border: none;
-  padding: 0;
-  text-align: left;
-  cursor: pointer;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-off-black);
-  text-transform: uppercase;
-  opacity: 0.5;
-  transition: opacity 0.15s;
-}
-
-.sizeText:hover {
-  opacity: 0.8;
-}
-
-.sizeTextActive {
-  opacity: 1;
-  font-weight: 700;
-}
-
-/* ── Accordions — no border lines ── */
+/* ── Accordion ─────────────────────────────────────────────────── */
 .accordions {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .accordionItem {
-  display: flex;
-  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .accordionTrigger {
@@ -242,275 +212,298 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: none;
+  padding: 18rem 0;
+  background: transparent;
   border: none;
-  padding: 10rem 0;
   cursor: pointer;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--color-off-black);
+  transition: color var(--transition-base);
+}
+
+.accordionTrigger:hover {
+  color: var(--color-accent-bright);
 }
 
 .accordionIcon {
+  font-family: var(--font-family-mono);
   font-size: 14rem;
-  line-height: 1;
+  color: var(--color-medium-grey);
 }
 
 .accordionContent {
   overflow: hidden;
-  padding-bottom: 12rem;
-  display: flex;
-  flex-direction: column;
-  gap: 8rem;
 }
 
 .accordionText {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-off-black);
-  margin: 0;
+  font-family: var(--font-family-sans);
+  font-size: 13rem;
+  font-weight: 300;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0 0 18rem;
 }
 
 .accordionHtml {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-off-black);
+  font-family: var(--font-family-sans);
+  font-size: 13rem;
+  font-weight: 300;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
+  padding: 0 0 18rem;
 }
 
-.closeSection {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: var(--color-medium-grey);
+.accordionHtml :global(ul) {
+  list-style: none;
   padding: 0;
-}
-
-/* ── Right side wrapper — counter stays pinned, panel scrolls inside ── */
-.rightWrapper {
-  flex: 1;
+  margin: 0;
   display: flex;
   flex-direction: column;
+  gap: 6rem;
+}
+
+.accordionHtml :global(ul li) {
   position: relative;
-  min-height: 0;
+  padding-left: 16rem;
 }
 
-/* Counter is outside the scroll container so it never scrolls away */
-.rightCounter {
+.accordionHtml :global(ul li)::before {
+  content: "";
   position: absolute;
-  top: calc(
-    var(--grid-margin) * 2.5
-  ); /* Move below the global header's label */
-  right: var(--grid-margin);
-  z-index: 2;
-  pointer-events: none;
+  left: 0;
+  top: 9rem;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: var(--color-accent-bright);
 }
 
-.counterText {
-  font-size: 14rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+.accordionHtml :global(p) {
+  margin: 0 0 8rem;
+}
+
+.accordionHtml :global(p:last-child) {
+  margin-bottom: 0;
+}
+
+/* ── Add to bag ────────────────────────────────────────────────── */
+.cartForm {
+  margin-top: 8rem;
+}
+
+.addToBag {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rem;
+  font-family: var(--font-family-mono);
+  font-size: 12rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--color-off-black);
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Scroll container — slide heights are set by JS (ResizeObserver) */
-.rightPanel {
-  flex: 1;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scrollbar-width: none;
-  min-height: 0;
-}
-
-.rightPanel::-webkit-scrollbar {
-  display: none;
-}
-
-.imageSlide {
-  position: relative;
-  width: 100%;
-  scroll-snap-align: start;
-}
-
-.rightImage {
-  object-fit: contain;
-  object-position: center center;
-}
-
-/* ── Bottom bar ── */
-.bottomBar {
-  position: absolute;
-  bottom: var(--grid-margin);
-  left: var(--grid-margin);
-  width: calc(38% - var(--grid-margin) * 2);
-  z-index: var(--z-bars);
-}
-
-.cartForm {
-  width: 100%;
-}
-
-.addToCartBtn {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--color-off-black);
-  color: var(--color-background);
+  background: var(--color-accent);
   border: none;
-  padding: 14rem 20rem;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
+  padding: 22rem 28rem;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background var(--transition-base);
 }
 
-.addToCartBtn:disabled {
-  opacity: 0.4;
-  cursor: default;
+.addToBag:hover:not(:disabled) {
+  background: var(--color-accent-bright);
 }
 
-.errorMsg {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  color: #c0392b;
+.addToBag:disabled {
+  background: rgba(184, 31, 48, 0.45);
+  cursor: not-allowed;
+}
+
+.addToBagPrice {
+  font-weight: 500;
+  letter-spacing: 0.22em;
+}
+
+.returns {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-medium-grey);
   margin: 0;
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .container {
-    height: 100svh;
-    padding-top: 80px; /* Header height */
-  }
+.returnsIcon {
+  width: 14rem;
+  height: 14rem;
+  flex-shrink: 0;
+}
 
+.errorMsg {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright);
+  margin: 0;
+}
+
+/* ── Right column (gallery) ────────────────────────────────────── */
+.rightCol {
+  min-width: 0;
+}
+
+.galleryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80rem;
+  gap: 16rem;
+  align-items: start;
+}
+
+.mainImageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #0c0c0c 0%, #050505 100%);
+  overflow: hidden;
+}
+
+.mainImage {
+  object-fit: contain;
+  object-position: center;
+  padding: 4%;
+}
+
+.navButtons {
+  position: absolute;
+  bottom: 18rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10rem;
+  z-index: 2;
+}
+
+.navButton {
+  width: 40rem;
+  height: 40rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family-mono);
+  font-size: 18rem;
+  color: var(--color-off-black);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base);
+  line-height: 1;
+}
+
+.navButton:hover {
+  background: rgba(0, 0, 0, 0.78);
+  border-color: var(--color-accent-bright);
+}
+
+/* ── Thumbnail rail ────────────────────────────────────────────── */
+.thumbRail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10rem;
+  max-height: calc(80rem * 6 + 10rem * 5);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.thumbRail::-webkit-scrollbar {
+  width: 3rem;
+}
+
+.thumbRail::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.thumb {
+  position: relative;
+  width: 80rem;
+  height: 80rem;
+  display: block;
+  background: linear-gradient(180deg, #0c0c0c 0%, #050505 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  padding: 0;
+  transition: border-color var(--transition-base);
+}
+
+.thumb:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.thumbActive {
+  border-color: var(--color-accent-bright);
+}
+
+.thumbImg {
+  object-fit: contain;
+  object-position: center;
+  padding: 6%;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
   .body {
-    flex-direction: column;
-    height: 100%;
+    gap: 40rem;
   }
+}
 
-  /* Image becomes the main background/hero */
-  .rightWrapper {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
+@media (max-width: 860px) {
+  .body {
+    grid-template-columns: 1fr;
+    gap: 32rem;
   }
-
-  .rightPanel {
-    height: 100%;
+  .leftCol {
+    order: 2;
   }
-
-  .imageSlide {
-    height: 100%;
+  .rightCol {
+    order: 1;
   }
-
-  .rightImage {
-    object-fit: cover;
-    object-position: center center;
-  }
-
-  /* Info section becomes a bottom overlay */
-  .leftPanel {
-    position: absolute;
-    bottom: 60rem; /* Above add to cart */
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    background: linear-gradient(
-      to top,
-      rgba(245, 245, 245, 0.95) 0%,
-      rgba(245, 245, 245, 0.8) 60%,
-      transparent 100%
-    );
-    padding: 40rem var(--grid-margin) 20rem;
-    max-height: 50vh;
+  .galleryGrid {
+    grid-template-columns: 1fr;
     gap: 12rem;
-    pointer-events: none;
   }
-
-  .leftPanel > * {
-    pointer-events: auto;
+  .thumbRail {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4rem;
+    -webkit-overflow-scrolling: touch;
   }
-
-  .category {
-    font-size: 10rem;
-    color: var(--color-off-black);
-    font-weight: 700;
+  .thumb {
+    flex-shrink: 0;
+    width: 64rem;
+    height: 64rem;
   }
-
-  .titleRow {
-    margin-bottom: 8rem;
+  .optionGroup {
+    gap: 14rem;
   }
-
-  .title {
-    font-size: 24rem;
-    width: 65%;
-  }
-
-  .mobileDetailsTrigger {
-    display: block;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: 11rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--color-off-black);
-    margin-left: auto;
-  }
-
-  .price {
-    display: none; /* Shown in bottom bar */
-  }
-
-  /* Hide the regular accordions triggers on mobile since we have the top link */
-  .accordions {
-    display: block;
+  .optionLabel {
+    flex-basis: auto;
     width: 100%;
-  }
-
-  .accordionTrigger {
-    display: none; /* Hide triggers on mobile */
-  }
-
-  /* Only show content for active section */
-  .accordionContent {
-    padding: 10rem 0;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-  }
-
-  /* Fixed full-width bottom bar */
-  .bottomBar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 0;
-    z-index: 100;
-  }
-
-  .addToCartBtn {
-    padding: 18rem 20rem;
-    font-size: 13rem;
-    font-weight: 700;
-  }
-
-  .errorMsg {
-    position: fixed;
-    bottom: 70rem;
-    left: 20rem;
-    right: 20rem;
-    background: white;
-    padding: 10rem;
-    border: 1px solid #c0392b;
-    text-align: center;
   }
 }
