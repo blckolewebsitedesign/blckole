@@ -138,7 +138,6 @@ export function ProductDetailPanel({ product, lookIndex, totalLooks }: Props) {
   function selectOption(optId: string, val: string) {
     setSelectedOptions((prev) => ({ ...prev, [optId]: val }));
   }
-  console.log("product detail panel rendering......", lookIndex, totalLooks);
   return (
     <>
       <div
