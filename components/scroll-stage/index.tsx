@@ -1,5 +1,6 @@
 "use client";
 
+import { LookInfo } from "components/look-info";
 import { RotatingFigure } from "components/rotating-figure";
 import type { Product, ProductMedia } from "lib/shopify/types";
 import { preloadVideos } from "lib/video-preload";
@@ -10,31 +11,62 @@ type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
 
 type Props = {
   products: Product[];
-  selectedIndex: number | null;
-  onSelect: (index: number | null) => void;
-  onModelClick?: () => void;
+  recommendationsMap?: Record<string, Product[]>;
+  currentIndex: number;
+  detailOpen: boolean;
+  recsOpen: boolean;
+  onSelect: (
+    index: number,
+    opts?: { open?: boolean; userInitiated?: boolean },
+  ) => void;
+  onClose: () => void;
+  onToggleRecs: () => void;
 };
+
+const SWIPE_MIN_DISTANCE = 50;
+const SWIPE_MAX_DURATION = 600;
+
+type LayerEntry = { product: Product; dir: 0 | -1 | 1 };
 
 export const ScrollStage = React.memo(function ScrollStage({
   products,
-  selectedIndex,
+  recommendationsMap,
+  currentIndex,
+  detailOpen,
+  recsOpen,
   onSelect,
-  onModelClick,
+  onClose,
+  onToggleRecs,
 }: Props) {
   const total = products.length;
 
-  const activeIndex = selectedIndex !== null ? selectedIndex : 0;
-  const activeProduct = products[activeIndex];
+  const safeIndex = Math.max(0, Math.min(total - 1, currentIndex));
+  const activeProduct = products[safeIndex];
+  const activeRecommendations =
+    activeProduct && recommendationsMap
+      ? (recommendationsMap[activeProduct.id] ?? [])
+      : [];
 
-  // Stable callback so RotatingFigure's memoization (which compares onClick
-  // by reference) doesn't bail every render. Without this, every parent
-  // tick gives RotatingFigure a brand-new function ref → re-render →
-  // possible cascading effects in ChromaKeyCanvas.
+  const indexRef = useRef(safeIndex);
+  const totalRef = useRef(total);
+  const detailOpenRef = useRef(detailOpen);
+  useEffect(() => {
+    indexRef.current = safeIndex;
+    totalRef.current = total;
+    detailOpenRef.current = detailOpen;
+  }, [safeIndex, total, detailOpen]);
+
+  // Click on the model:
+  //  - Browse mode: enter detail (info on left, recs sheet up).
+  //  - Detail mode: toggle the recs sheet open/closed.
   const handleModelClick = useCallback(() => {
-    onModelClick?.();
-  }, [onModelClick]);
+    if (detailOpenRef.current) {
+      onToggleRecs();
+    } else {
+      onSelect(indexRef.current, { open: true, userInitiated: true });
+    }
+  }, [onSelect, onToggleRecs]);
 
-  // Preload videos for active and neighbours so swaps are instant.
   useEffect(() => {
     if (total === 0) return;
     const videoUrls: string[] = [];
@@ -50,93 +82,176 @@ export const ScrollStage = React.memo(function ScrollStage({
     if (videoUrls.length === 0) return;
     void preloadVideos(videoUrls, {
       concurrency: 2,
-      priorityIndex: activeIndex,
+      priorityIndex: safeIndex,
     });
-  }, [products, activeIndex, total]);
+  }, [products, safeIndex, total]);
 
+  // Esc closes the detail mode entirely.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onSelect(null);
+      if (e.key === "Escape" && detailOpen) onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  }, [onClose, detailOpen]);
+
+  // Swipe navigation (pointer-based, both modes).
+  const stageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let tracking = false;
+
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-no-swipe]")) return;
+      tracking = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTime = Date.now();
+    };
+
+    const onUp = (e: PointerEvent) => {
+      if (!tracking) return;
+      tracking = false;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const dt = Date.now() - startTime;
+      if (dt > SWIPE_MAX_DURATION) return;
+      if (Math.abs(dx) < SWIPE_MIN_DISTANCE) return;
+      if (Math.abs(dy) > Math.abs(dx)) return;
+
+      const t = totalRef.current;
+      if (t === 0) return;
+      const dir = dx > 0 ? -1 : 1;
+      const next = (indexRef.current + dir + t) % t;
+      onSelect(next, { open: false, userInitiated: true });
+    };
+
+    const onCancel = () => {
+      tracking = false;
+    };
+
+    el.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+    };
   }, [onSelect]);
 
-  // ── Two-layer crossfade for the main character ──
-  // Keeps the previous character on screen while the new one's
-  // ChromaKeyCanvas mounts/decodes underneath, then fades between them.
-  // No more wrapper-level remount → no blank flash.
-  const [characterLayers, setCharacterLayers] = useState<Product[]>(() =>
-    activeProduct ? [activeProduct] : [],
+  // ── Two-layer slide for the main character ──
+  const [characterLayers, setCharacterLayers] = useState<LayerEntry[]>(() =>
+    activeProduct ? [{ product: activeProduct, dir: 0 }] : [],
   );
   const prevActiveIdRef = useRef<string | null>(activeProduct?.id ?? null);
+  const prevIndexRef = useRef<number>(safeIndex);
 
   useEffect(() => {
     if (!activeProduct) return;
     if (prevActiveIdRef.current === activeProduct.id) return;
+
+    const prevIdx = prevIndexRef.current;
+    let dir: 1 | -1 = 1;
+    if (total > 0) {
+      const forward = (safeIndex - prevIdx + total) % total;
+      const backward = (prevIdx - safeIndex + total) % total;
+      dir = forward <= backward ? 1 : -1;
+    }
     prevActiveIdRef.current = activeProduct.id;
+    prevIndexRef.current = safeIndex;
+
     setCharacterLayers((cur) => {
       const last = cur[cur.length - 1];
-      if (last && last.id === activeProduct.id) return cur;
-      // Keep at most the previous layer + the new one
-      return [...cur.slice(-1), activeProduct];
+      if (last && last.product.id === activeProduct.id) return cur;
+      return [...cur.slice(-1), { product: activeProduct, dir }];
     });
     const t = setTimeout(() => {
       setCharacterLayers((cur) => cur.slice(-1));
-    }, 1200);
+    }, 900);
     return () => clearTimeout(t);
-  }, [activeProduct]);
+  }, [activeProduct, safeIndex, total]);
 
   if (total === 0 || !activeProduct) return null;
 
   return (
-    <div className={styles.stage}>
+    <div
+      ref={stageRef}
+      className={styles.stage}
+      data-detail-open={detailOpen ? "true" : "false"}
+      data-recs-open={recsOpen ? "true" : "false"}
+    >
       {/* ── 40% Left Panel ── */}
       <div className={styles.leftPanel}>
-        <div className={styles.textContent}>
-          <h1 className={styles.heroHeadline}>
-            Wear what pulls
-            <br />
-            you back.
-          </h1>
-          <p className={styles.heroBody}>
-            Denim and layers built to hold a room without shouting. Pick a
-            silhouette to see the two-piece capsule — then head to the shop when
-            you are ready to buy.
-          </p>
-          <div className={styles.heroLinks}>
-            <a href="/indexes/products" className={styles.heroLinkBtn}>
-              SHOP ALL PIECES
-            </a>
-            <a href="/story" className={styles.heroLinkBtn}>
-              VIEW LOOKBOOK
-            </a>
+        {detailOpen ? (
+          <LookInfo
+            key={activeProduct.id}
+            product={activeProduct}
+            index={safeIndex}
+            total={total}
+            recommendations={activeRecommendations}
+            expanded={recsOpen}
+            onClose={onClose}
+          />
+        ) : (
+          <div className={styles.textContent}>
+            <h1 className={styles.heroHeadline}>
+              Wear what pulls
+              <br />
+              you back.
+            </h1>
+            <p className={styles.heroBody}>
+              Denim and layers built to hold a room without shouting. Pick a
+              silhouette to see the two-piece capsule — then head to the shop
+              when you are ready to buy.
+            </p>
+            <div className={styles.heroLinks}>
+              <a href="/indexes/products" className={styles.heroLinkBtn}>
+                SHOP ALL PIECES
+              </a>
+              <a href="/story" className={styles.heroLinkBtn}>
+                VIEW LOOKBOOK
+              </a>
+            </div>
+            <p className={styles.heroInstruction}>
+              OR HOVER A FIGURE BELOW · CLICK TO OPEN THE CAPSULE
+            </p>
           </div>
-          <p className={styles.heroInstruction}>
-            OR HOVER A FIGURE BELOW · CLICK TO OPEN THE CAPSULE
-          </p>
-        </div>
+        )}
       </div>
 
-      {/* ── 60% Right Panel ── */}
+      {/* ── 60% Right Panel (character) ── */}
       <div className={styles.rightPanel}>
         <div className={styles.mainCharacterWrapper}>
           <div className={styles.floorGlow} aria-hidden="true" />
           <div className={styles.mainCharacter}>
-            {characterLayers.map((p, i, arr) => {
+            {characterLayers.map((entry, i, arr) => {
               const isLatest = i === arr.length - 1;
+              const cls = isLatest
+                ? entry.dir === -1
+                  ? styles.charLayerInLeft
+                  : entry.dir === 1
+                    ? styles.charLayerInRight
+                    : styles.charLayerInitial
+                : entry.dir === -1
+                  ? styles.charLayerOutRight
+                  : styles.charLayerOutLeft;
               return (
                 <div
-                  key={p.id}
-                  className={`${styles.charLayer} ${
-                    isLatest ? styles.charLayerIn : styles.charLayerOut
-                  }`}
+                  key={entry.product.id}
+                  className={`${styles.charLayer} ${cls}`}
                 >
                   <RotatingFigure
-                    product={p}
+                    product={entry.product}
                     listenToGlobalFrame={isLatest}
                     priority={true}
-                    onClick={handleModelClick}
+                    onClick={isLatest ? handleModelClick : undefined}
                   />
                 </div>
               );
@@ -145,17 +260,17 @@ export const ScrollStage = React.memo(function ScrollStage({
         </div>
       </div>
 
-      {/* ── Bottom Thumbnail List ── */}
+      {/* ── Bottom thumbnail strip (hidden when recs sheet is up) ── */}
       <div className={styles.thumbnailListWrapper}>
         <div className={styles.thumbnailList}>
           {products.map((p, i) => (
             <button
               type="button"
               key={p.id}
-              className={`${styles.thumbnailSlot} ${i === activeIndex ? styles.thumbnailSlotActive : ""}`}
-              onClick={() => onSelect(i)}
+              className={`${styles.thumbnailSlot} ${i === safeIndex ? styles.thumbnailSlotActive : ""}`}
+              onClick={() => onSelect(i, { open: false, userInitiated: true })}
               aria-label={`Select ${p.title}`}
-              aria-pressed={i === activeIndex}
+              aria-pressed={i === safeIndex}
             >
               <span className={styles.thumbnailFigure}>
                 <RotatingFigure
