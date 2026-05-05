@@ -1,11 +1,12 @@
 .panel {
   width: 100%;
   max-width: 460rem;
+  height: 50%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 18rem;
-  padding-top: 0rem;
+  padding-top: 30rem;
   animation: panelIn 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -31,6 +32,7 @@
   display: flex;
   flex-direction: column;
   gap: 14rem;
+  margin-top: 70rem;
 }
 
 .lookCounter {
@@ -125,6 +127,9 @@
   display: flex;
   flex-direction: column;
   gap: 12rem;
+  margin-top: auto;
+  min-height: 120rem;
+  padding-bottom: 32rem;
 }
 
 .itemsCompact {
@@ -329,7 +334,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 12rem 18rem;
   cursor: pointer;
-  margin-top: 6rem;
+  margin-top: 0;
   transition:
     color var(--transition-base),
     border-color var(--transition-base);
@@ -353,6 +358,7 @@
     padding-top: 0;
     gap: 14rem;
     max-width: 100%;
+    height: auto;
   }
   .title {
     font-size: clamp(32rem, 9vw, 48rem) !important;
@@ -360,5 +366,8 @@
   .description {
     font-size: 13rem;
     -webkit-line-clamp: 2;
+  }
+  .items {
+    min-height: auto;
   }
 }

@@ -159,6 +159,8 @@
     bottom: 0;
     width: 40%;
     z-index: 5;
+    justify-content: flex-start;
+    padding-top: 100rem;
     background: linear-gradient(
       90deg,
       var(--color-background) 0%,
