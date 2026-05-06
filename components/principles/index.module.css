@@ -8,20 +8,24 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 32rem;
+  border-top: 1px solid rgba(184, 31, 48, 0.45);
 }
 
 .cell {
   display: flex;
   flex-direction: column;
   gap: 14rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  padding-top: 18rem;
-  transition: border-color var(--transition-base);
+  padding: 32rem 28rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background var(--transition-base);
+}
+
+.cell:last-child {
+  border-right: none;
 }
 
 .cell:hover {
-  border-top-color: var(--color-accent-bright);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .num {
@@ -40,24 +44,30 @@
   font-style: italic;
   line-height: 1.1;
   color: var(--color-off-black);
+  text-transform: none;
 }
 
 .desc {
   font-family: var(--font-family-sans);
   font-size: 12rem;
   line-height: 1.55;
-  color: var(--color-medium-grey);
+  color: rgba(255, 255, 255, 0.42);
+  text-transform: none;
 }
 
 @media (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .cell {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
 }
 
 @media (max-width: 600px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24rem;
   }
 }

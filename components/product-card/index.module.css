@@ -1,22 +1,20 @@
 .wrapper {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: block;
   text-decoration: none;
   color: inherit;
-  gap: 14rem;
 }
 
-/* ── Image frame: dark card with vignette holding the white-bg
-       product photo, centered with breathing room. ───────────── */
+/* ── Frame: full card (image + info) ──────────────────────────── */
 .frame {
   position: relative;
-  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
     radial-gradient(
-      ellipse at center,
+      ellipse at center top,
       rgba(255, 255, 255, 0.03) 0%,
       rgba(0, 0, 0, 0) 60%
     ),
@@ -26,6 +24,14 @@
 
 .wrapper:hover .frame {
   border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Image area ────────────────────────────────────────────────── */
+.imageArea {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
 }
 
 .image {
@@ -39,11 +45,13 @@
   transform: scale(1.04);
 }
 
-/* ── Info row ──────────────────────────────────────────────────── */
+/* ── Info row inside the frame ─────────────────────────────────── */
 .info {
   display: flex;
   flex-direction: column;
   gap: 8rem;
+  padding: 14rem 16rem 16rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .category {
@@ -65,19 +73,24 @@
 .title {
   font-family:
     "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
-  font-size: 20rem !important;
+  font-size: 18rem !important;
   font-weight: 500 !important;
   font-style: italic !important;
-  line-height: 1.1 !important;
+  line-height: 1.15 !important;
   letter-spacing: -0.005em !important;
   color: var(--color-off-black) !important;
   text-transform: none !important;
   margin: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .price {
   font-family: var(--font-family-mono);
-  font-size: 12rem;
+  font-size: 11rem;
   font-weight: 500;
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.78);
@@ -86,7 +99,10 @@
 }
 
 @media (max-width: 480px) {
+  .info {
+    padding: 12rem 14rem 14rem;
+  }
   .title {
-    font-size: 22rem !important;
+    font-size: 16rem !important;
   }
 }

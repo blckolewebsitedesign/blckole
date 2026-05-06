@@ -5,6 +5,10 @@
   background: var(--color-background);
   overflow: hidden;
   display: flex;
+  /* Reserve cursor + touch behaviour for swipe gestures */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* ── 40% Left Panel ── */
@@ -17,6 +21,9 @@
   justify-content: center;
   align-items: flex-start;
   z-index: 10;
+  transition:
+    opacity 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .textContent {
@@ -26,8 +33,6 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 24rem;
-  /* Lift the block up so it aligns roughly with the character's torso, not
-     the floor. Matches the mockup framing. */
   padding-top: 80rem;
 }
 
@@ -109,13 +114,16 @@
   justify-content: center;
   /* Leave room at the bottom for the thumbnail strip + reflection */
   padding: 60rem 0 220rem;
+  transition:
+    width 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .mainCharacterWrapper {
-  /* Constrain so character + reflection fit above the thumbnail strip. */
   width: min(34vw, 520rem);
   height: calc(100vh - 60rem - 220rem);
   position: relative;
+  transition: width 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .mainCharacter {
@@ -132,10 +140,125 @@
     );
 }
 
-/* Two-layer crossfade. Both layers occupy the same box; the outgoing
-   one holds at full opacity for the first ~35% of the animation so the
-   incoming canvas has time to mount its WebGL context and decode the
-   first video frame before being faded in. */
+/* ── Detail-mode overrides ──
+   On desktop, when detail is open the character should sit at the
+   true viewport centre (not at ~70% like the landing page). We do
+   this by letting the right panel absorb the full width — the
+   character is then centred horizontally inside it — and turning the
+   left panel into an absolute overlay on top. A subtle gradient on
+   the left panel fades the LookInfo background into the character
+   zone so the two layers don't fight each other visually.
+
+   The bottom thumbnail strip is hidden ONLY when the recs sheet is
+   open, so the user keeps a navigable rail when recs is collapsed. */
+@media (min-width: 769px) {
+  .stage[data-detail-open="false"] {
+    display: grid;
+    grid-template-columns:
+      minmax(var(--grid-margin), 1fr)
+      repeat(12, minmax(0, 92rem))
+      minmax(var(--grid-margin), 1fr);
+    column-gap: 22rem;
+    align-items: stretch;
+  }
+
+  .stage[data-detail-open="false"] .leftPanel {
+    grid-column: 2 / 7;
+    width: auto;
+    padding: 104rem 0 184rem;
+    justify-content: center;
+  }
+
+  .stage[data-detail-open="false"] .textContent {
+    max-width: 590rem;
+    gap: 22rem;
+    padding-top: 0;
+  }
+
+  .stage[data-detail-open="false"] .heroHeadline {
+    font-size: clamp(70rem, 5.8vw, 104rem) !important;
+    line-height: 0.96 !important;
+    max-width: 9.6ch;
+  }
+
+  .stage[data-detail-open="false"] .heroBody {
+    max-width: 430rem;
+    font-size: 14rem !important;
+  }
+
+  .stage[data-detail-open="false"] .rightPanel {
+    grid-column: 7 / 14;
+    width: auto;
+    padding: 104rem 0 184rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stage[data-detail-open="false"] .mainCharacterWrapper {
+    width: min(30vw, 500rem);
+    height: min(62vh, 620rem);
+  }
+
+  .stage[data-detail-open="false"] .thumbnailListWrapper {
+    left: 50%;
+    bottom: 26rem;
+    width: min(760rem, calc(100vw - (var(--grid-margin) * 2)));
+    transform: translateX(-50%);
+  }
+
+  .stage[data-detail-open="false"] .thumbnailList {
+    width: 100%;
+    justify-content: space-between;
+    gap: 14rem;
+  }
+
+  .stage[data-detail-open="true"] .leftPanel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 40%;
+    z-index: 5;
+    justify-content: flex-start;
+    padding-top: 100rem;
+    background: linear-gradient(
+      90deg,
+      var(--color-background) 0%,
+      var(--color-background) 55%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Re-enable pointer events on the LookInfo content so the back
+     button / text remains interactive, while the gradient strip on
+     the right side of the panel stays click-through to the model. */
+  .stage[data-detail-open="true"] .leftPanel > * {
+    pointer-events: auto;
+  }
+
+  .stage[data-detail-open="true"] .rightPanel {
+    width: 100%;
+  }
+}
+
+.stage[data-recs-open="true"] .thumbnailListWrapper {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20rem);
+}
+
+@media (min-width: 769px) {
+  .stage[data-detail-open="false"][data-recs-open="true"]
+    .thumbnailListWrapper {
+    transform: translateX(-50%) translateY(20rem);
+  }
+}
+
+/* ── Two-layer slide for the main character ──
+   The latest layer slides in from left or right depending on swipe
+   direction. The outgoing one slides the opposite way. Opacity holds
+   for the first 30% so the new ChromaKeyCanvas has time to mount. */
 .charLayer {
   position: absolute;
   inset: 0;
@@ -144,50 +267,97 @@
   will-change: opacity, transform;
 }
 
-.charLayerIn {
-  animation: charLayerIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.charLayerInitial {
+  /* No animation — used for the very first render so the figure is
+     visible without a slide flash. */
+  opacity: 1;
+  transform: translateX(0) scale(1);
 }
 
-.charLayerOut {
-  animation: charLayerOut 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.charLayerInLeft {
+  animation: charSlideInLeft 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.charLayerInRight {
+  animation: charSlideInRight 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.charLayerOutLeft {
+  animation: charSlideOutLeft 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
   z-index: 1;
 }
 
-@keyframes charLayerIn {
+.charLayerOutRight {
+  animation: charSlideOutRight 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 1;
+}
+
+/* Position-based slide. Opacity holds at 0 for ~25% (≈140ms) to give
+   the new ChromaKeyCanvas time to mount its WebGL context, then fades
+   in over the rest of the slide so the layer never appears blank
+   on-screen. The outgoing layer fades + slides simultaneously so the
+   two characters don't strobe past each other. */
+@keyframes charSlideInLeft {
   0% {
     opacity: 0;
-    transform: translateY(18rem) scale(0.985);
+    transform: translate3d(-55%, 0, 0);
   }
-  35% {
+  25% {
     opacity: 0;
-    transform: translateY(12rem) scale(0.99);
+    transform: translate3d(-45%, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 
-@keyframes charLayerOut {
+@keyframes charSlideInRight {
+  0% {
+    opacity: 0;
+    transform: translate3d(55%, 0, 0);
+  }
+  25% {
+    opacity: 0;
+    transform: translate3d(45%, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes charSlideOutLeft {
   0% {
     opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  35% {
-    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
   100% {
     opacity: 0;
-    transform: translateY(-8rem) scale(1.005);
+    transform: translate3d(-45%, 0, 0);
+  }
+}
+
+@keyframes charSlideOutRight {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(45%, 0, 0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .charLayerIn,
-  .charLayerOut {
+  .charLayerInLeft,
+  .charLayerInRight,
+  .charLayerOutLeft,
+  .charLayerOutRight {
     animation: none;
   }
-  .charLayerOut {
+  .charLayerOutLeft,
+  .charLayerOutRight {
     opacity: 0;
   }
 }
@@ -219,6 +389,9 @@
   justify-content: center;
   z-index: 30;
   pointer-events: none;
+  transition:
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .thumbnailList {
@@ -319,7 +492,6 @@
   .leftPanel {
     width: 100%;
     height: auto;
-    /* leave space for the fixed header at top */
     padding: 88rem var(--grid-margin) 24rem;
     justify-content: flex-start;
   }
@@ -375,7 +547,6 @@
   .thumbnailListWrapper {
     bottom: 24rem;
     justify-content: flex-start;
-    /* allow horizontal scroll without bleeding into the layout */
     pointer-events: auto;
   }
   .thumbnailList {
@@ -398,6 +569,11 @@
   .activeBar {
     bottom: -8rem;
     width: 28rem;
+  }
+
+  /* Recs-open mobile: tighten character padding so the sheet has room. */
+  .stage[data-recs-open="true"] .rightPanel {
+    padding: 12rem 0 46vh;
   }
 }
 

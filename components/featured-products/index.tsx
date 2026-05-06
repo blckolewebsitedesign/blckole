@@ -47,7 +47,6 @@ export function FeaturedProducts({ products }: Props) {
     },
     { scope: sectionRef },
   );
-  console.log("featured products rendering......");
 
   if (displayProducts.length === 0) return null;
   return (

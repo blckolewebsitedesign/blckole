@@ -1,0 +1,373 @@
+.panel {
+  width: 100%;
+  max-width: 460rem;
+  height: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18rem;
+  padding-top: 30rem;
+  animation: panelIn 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
+/* ── Head ──────────────────────────────────────────────────────── */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 14rem;
+  margin-top: 70rem;
+}
+
+.lookCounter {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright);
+}
+
+.title {
+  font-family:
+    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-size: clamp(48rem, 5.5vw, 80rem) !important;
+  font-weight: 500 !important;
+  font-style: italic !important;
+  line-height: 1 !important;
+  color: var(--color-off-black) !important;
+  text-transform: none !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* ── Description ───────────────────────────────────────────────── */
+.description {
+  font-family: var(--font-family-sans);
+  font-size: 13rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 440rem;
+}
+
+/* ── Rotation status ───────────────────────────────────────────── */
+.rotation {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+.rotationDot {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: var(--color-accent-bright);
+  animation: rotationPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes rotationPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2rem rgba(184, 31, 48, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 5rem rgba(184, 31, 48, 0.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotationDot {
+    animation: none;
+  }
+}
+
+/* ── Hint ──────────────────────────────────────────────────────── */
+.hint {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+/* ── Items section (pills or cards) ────────────────────────────── */
+.items {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12rem;
+  margin-top: auto;
+  min-height: 120rem;
+  padding-bottom: 32rem;
+}
+
+.itemsCompact {
+  animation: itemsFade 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.itemsExpanded {
+  animation: itemsExpand 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes itemsFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes itemsExpand {
+  from {
+    opacity: 0;
+    transform: translateY(8rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .itemsCompact,
+  .itemsExpanded {
+    animation: none;
+  }
+}
+
+/* Header above the expanded card list */
+.itemsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rem;
+  padding-top: 4rem;
+}
+
+.itemsEyebrow {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+}
+
+.itemsCount {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Pill list (compact view) ──────────────────────────────────── */
+.pillList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  padding: 8rem 14rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pillDot {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: var(--color-accent-bright);
+}
+
+/* ── Card list (expanded view) ─────────────────────────────────── */
+.cardList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rem;
+}
+
+.card {
+  display: flex;
+  width: 100%;
+}
+
+.cardLink {
+  display: grid;
+  grid-template-columns: 56rem 1fr auto;
+  align-items: center;
+  gap: 14rem;
+  width: 100%;
+  padding: 8rem 12rem 8rem 0;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.015);
+  transition:
+    border-color var(--transition-base),
+    transform var(--transition-base);
+}
+
+.cardLink:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateX(2rem);
+}
+
+.cardThumb {
+  position: relative;
+  width: 56rem;
+  height: 56rem;
+  background: linear-gradient(180deg, #0c0c0c 0%, #050505 100%);
+  overflow: hidden;
+}
+
+.cardImage {
+  object-fit: contain;
+  object-position: center;
+  padding: 12%;
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardPrice {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.cardCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright);
+  white-space: nowrap;
+}
+
+/* ── Back button ───────────────────────────────────────────────── */
+.back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 12rem 18rem;
+  cursor: pointer;
+  margin-top: 0;
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.back:hover {
+  color: var(--color-off-black);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── Tablet ────────────────────────────────────────────────────── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .title {
+    font-size: clamp(40rem, 5vw, 64rem) !important;
+  }
+}
+
+/* ── Mobile ────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .panel {
+    padding-top: 0;
+    gap: 14rem;
+    max-width: 100%;
+    height: auto;
+  }
+  .title {
+    font-size: clamp(32rem, 9vw, 48rem) !important;
+  }
+  .description {
+    font-size: 13rem;
+    -webkit-line-clamp: 2;
+  }
+  .items {
+    min-height: auto;
+  }
+}

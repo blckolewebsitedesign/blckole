@@ -2,16 +2,15 @@ import Link from "next/link";
 import styles from "./index.module.css";
 
 const LEGAL = [
-  { label: "SHIPPING", href: "/page/shipping-policy" },
-  { label: "PRIVACY", href: "/page/privacy-policy" },
-  { label: "TERMS", href: "/page/terms-of-service" },
-  { label: "CONTACT", href: "/page/contact" },
+  { label: "SHIPPING", href: "/shipping-policy" },
+  { label: "PRIVACY", href: "/privacy-policy" },
+  { label: "TERMS", href: "/terms-of-service" },
 ];
 
 const SOCIAL = [
   { label: "INSTAGRAM", href: "https://instagram.com/blckole" },
-  { label: "TIKTOK", href: "https://www.tiktok.com/@blckole" },
-  { label: "PRESS", href: "/page/press" },
+  // { label: "TIKTOK", href: "https://www.tiktok.com/@blckole" },
+  // { label: "PRESS", href: "/page/press" },
 ];
 
 const YEAR = new Date().getFullYear();

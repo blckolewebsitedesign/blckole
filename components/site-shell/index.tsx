@@ -4,7 +4,7 @@ import { useCart } from "components/cart/cart-context";
 import { CartDrawer } from "components/cart/drawer";
 import { Header } from "components/header";
 import { PageTransition } from "components/page-transition";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type NavItem = {
   title: string;
@@ -30,6 +30,16 @@ export function SiteShell({
   const [cartOpen, setCartOpen] = useState(false);
   const { cart } = useCart();
   const cartCount = cart?.totalQuantity ?? 0;
+
+  useEffect(() => {
+    document.body.dataset.cartOpen = cartOpen ? "true" : "false";
+    window.dispatchEvent(
+      new CustomEvent("cart-open-change", { detail: { open: cartOpen } }),
+    );
+    return () => {
+      delete document.body.dataset.cartOpen;
+    };
+  }, [cartOpen]);
 
   return (
     <>

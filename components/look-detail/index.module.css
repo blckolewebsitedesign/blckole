@@ -1,0 +1,214 @@
+/* ── Recommendations bottom sheet ──────────────────────────────── */
+.sheet {
+  position: absolute;
+  /* Cover only the right 60% on desktop so the LookInfo panel on the
+     left stays visible. On mobile this collapses to full-width below. */
+  left: 40%;
+  right: 0;
+  bottom: 0;
+  height: 38vh;
+  min-height: 280rem;
+  z-index: 20;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.65) 14%,
+    rgba(0, 0, 0, 0.94) 36%,
+    var(--color-background) 100%
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 32rem clamp(20rem, 3vw, 48rem) 28rem;
+  animation: sheetUp 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  pointer-events: auto;
+}
+
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    animation: none;
+  }
+}
+
+.handle {
+  position: absolute;
+  top: 8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rem;
+  height: 3rem;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14rem;
+  min-width: 0;
+  padding-top: 8rem;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rem;
+}
+
+.eyebrow {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+}
+
+.count {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Items rail ────────────────────────────────────────────────── */
+.itemsList {
+  list-style: none;
+  margin: 0;
+  padding: 0 4rem 4rem;
+  display: flex;
+  gap: 14rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.itemsList::-webkit-scrollbar {
+  height: 4rem;
+}
+
+.itemsList::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 2rem;
+}
+
+.itemCard {
+  flex: 0 0 auto;
+  width: 180rem;
+  height: 100%;
+  display: flex;
+}
+
+.itemLink {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  transition:
+    border-color var(--transition-base),
+    transform var(--transition-base);
+}
+
+.itemLink:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-2rem);
+}
+
+.itemThumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(180deg, #0c0c0c 0%, #050505 100%);
+  overflow: hidden;
+}
+
+.itemImage {
+  object-fit: contain;
+  object-position: center;
+  padding: 14%;
+}
+
+.itemMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6rem;
+  padding: 12rem 14rem 14rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.itemTitle {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemPrice {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.itemCta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright);
+}
+
+.empty {
+  font-family: var(--font-family-sans);
+  font-size: 12rem;
+  font-weight: 300;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  align-self: center;
+}
+
+/* ── Mobile ────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sheet {
+    left: 0;
+    right: 0;
+    height: 46vh;
+    min-height: 320rem;
+    padding: 28rem 18rem 24rem;
+  }
+  .itemCard {
+    width: 156rem;
+  }
+}

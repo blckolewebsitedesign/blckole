@@ -8,12 +8,12 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: var(--grid-margin);
-  pointer-events: none;
-  mix-blend-mode: difference;
-}
-
-.header > * {
-  pointer-events: auto;
+  /* Glassy translucent bar so scrolling content reads beneath the
+     navbar without colliding with link text. */
+  background: rgba(5, 5, 5, 0.75);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .zoneLeft {

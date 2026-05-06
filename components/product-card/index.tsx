@@ -45,27 +45,29 @@ export function ProductCard({ product, index, priority = false }: Props) {
         ref={ref}
       >
         <div className={styles.frame}>
-          {image ? (
-            <Image
-              src={image.url}
-              alt={image.altText ?? product.title}
-              fill
-              sizes="(max-width: 480px) 100vw, (max-width: 860px) 50vw, (max-width: 1100px) 33vw, 25vw"
-              className={styles.image}
-              priority={priority}
-            />
-          ) : null}
-        </div>
+          <div className={styles.imageArea}>
+            {image ? (
+              <Image
+                src={image.url}
+                alt={image.altText ?? product.title}
+                fill
+                sizes="(max-width: 480px) 100vw, (max-width: 860px) 50vw, (max-width: 1100px) 33vw, 25vw"
+                className={styles.image}
+                priority={priority}
+              />
+            ) : null}
+          </div>
 
-        <div className={styles.info}>
-          {category ? (
-            <span className={styles.category}>{category}</span>
-          ) : null}
-          <div className={styles.titleRow}>
-            <span className={styles.title}>{product.title}</span>
-            <span className={styles.price}>
-              {formatPrice(price.amount, price.currencyCode)}
-            </span>
+          <div className={styles.info}>
+            {category ? (
+              <span className={styles.category}>{category}</span>
+            ) : null}
+            <div className={styles.titleRow}>
+              <span className={styles.title}>{product.title}</span>
+              <span className={styles.price}>
+                {formatPrice(price.amount, price.currencyCode)}
+              </span>
+            </div>
           </div>
         </div>
       </Link>

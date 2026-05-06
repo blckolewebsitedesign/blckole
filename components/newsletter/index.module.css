@@ -1,7 +1,10 @@
 .section {
-  background: var(--color-background);
-  border-top: 1px solid var(--color-divider);
-  border-bottom: 1px solid var(--color-divider);
+  background: linear-gradient(
+    180deg,
+    rgba(19, 17, 20, 0.6) 0%,
+    transparent 100%
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
   padding: 80rem var(--grid-margin);
 }
 
@@ -21,33 +24,37 @@
 }
 
 .eyebrow {
-  font-family: var(--font-family);
-  font-size: 11rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: var(--color-medium-grey);
+  color: var(--color-accent-bright);
   display: block;
-  margin-bottom: 16rem;
+  margin-bottom: 14rem;
 }
 
 .title {
   font-family: var(--font-family-serif);
-  font-size: clamp(34rem, 4vw, 52rem);
+  font-size: clamp(32rem, 4vw, 48rem);
   font-weight: 500;
   font-style: italic;
   line-height: 1.05;
-  margin: 0;
-  color: var(--color-off-black);
+  margin: 10rem 0 0;
+  color: #ffffff;
   letter-spacing: -0.01em;
+  max-width: 22ch;
+  text-transform: uppercase;
 }
 
 .dek {
   font-family: var(--font-family-sans);
   font-size: 13rem;
-  line-height: 1.6;
-  color: var(--color-medium-grey);
-  margin: 16rem 0 0;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.48);
+  margin: 12rem 0 0;
+  max-width: 36ch;
+  text-transform: uppercase;
 }
 
 .form {
@@ -56,23 +63,25 @@
   flex: 1 1 360rem;
   min-width: 280rem;
   max-width: 480rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #050405;
 }
 
 .input {
   flex: 1 1 auto;
-  padding: 16rem 18rem;
+  min-width: 0;
+  padding: 14rem 18rem;
   background: transparent;
   border: none;
   outline: none;
-  font-family: var(--font-family);
+  font-family: var(--font-family-mono);
   font-size: 12rem;
   letter-spacing: 0.05em;
-  color: var(--color-off-black);
+  color: #ffffff;
 }
 
 .input::placeholder {
-  color: var(--color-medium-grey);
+  color: rgba(255, 255, 255, 0.42);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 11rem;
@@ -82,13 +91,13 @@
   flex: 0 0 auto;
   padding: 0 22rem;
   background: var(--color-accent);
-  color: var(--color-off-black);
+  color: #ffffff;
   border: none;
   cursor: pointer;
   font-family: var(--font-family-mono);
-  font-size: 11rem;
+  font-size: 10rem;
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   transition: background var(--transition-base);
 }
@@ -98,24 +107,80 @@
 }
 
 .thanks {
-  font-family: var(--font-family);
-  font-size: 12rem;
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--color-off-black);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 18rem 22rem;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 14rem 22rem;
   margin: 0;
 }
 
 @media (max-width: 768px) {
+  .section {
+    padding: 48rem var(--grid-margin);
+  }
+
   .inner {
     flex-direction: column;
     align-items: stretch;
-    gap: 28rem;
+    gap: 24rem;
   }
+
+  .copy {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .eyebrow {
+    margin-bottom: 10rem;
+  }
+
+  .title {
+    max-width: none;
+    font-size: 30rem;
+    line-height: 1.08;
+    letter-spacing: 0;
+  }
+
+  .dek {
+    max-width: 30ch;
+    font-size: 12rem;
+    line-height: 1.45;
+  }
+
   .form {
+    flex: 0 1 auto;
     width: 100%;
     max-width: none;
+    min-width: 0;
+  }
+
+  .input {
+    padding: 13rem 14rem;
+    min-height: 52rem;
+  }
+
+  .btn {
+    padding: 0 16rem;
+    letter-spacing: 0.14em;
+    min-height: 52rem;
+  }
+
+  .thanks {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 430px) {
+  .form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
   }
 }
