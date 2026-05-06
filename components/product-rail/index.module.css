@@ -1,27 +1,57 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 28rem;
-  padding: 60rem 0 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 60rem;
+  gap: 32rem;
+  padding: 80rem var(--grid-margin) 0;
+  max-width: 1440rem;
+  margin: 0 auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 20rem;
+  gap: 24rem;
+  flex-wrap: wrap;
+  margin-bottom: 24rem;
 }
 
-.title {
+.headContent {
+  display: flex;
+  flex-direction: column;
+  max-width: 600rem;
+}
+
+.eyebrow {
   font-family: var(--font-family-mono);
   font-size: 11rem;
   font-weight: 500;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-off-black);
+  color: var(--color-accent-bright);
+  margin-bottom: 16rem;
+}
+
+.title {
+  font-family: var(--font-family-serif);
+  font-size: clamp(32rem, 5vw, 64rem);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #ffffff;
   margin: 0;
+  text-transform: none;
+}
+
+.description {
+  font-family: var(--font-family-sans);
+  font-size: 14rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 16rem 0 0;
+  text-transform: none;
 }
 
 .viewAll {
@@ -29,25 +59,28 @@
   align-items: center;
   gap: 6rem;
   font-family: var(--font-family-mono);
-  font-size: 10rem;
+  font-size: 11rem;
   font-weight: 500;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
   text-decoration: none;
-  transition: color var(--transition-base);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 4rem;
+  transition: border-color var(--transition-base);
+  margin-bottom: 8rem;
 }
 
 .viewAll:hover {
-  color: var(--color-accent-bright);
+  border-color: #ffffff;
 }
 
 .rail {
   list-style: none;
   margin: 0;
-  padding: 0 4rem 4rem;
+  padding: 0 0 4rem;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24rem;
 }
 
@@ -57,28 +90,24 @@
 
 @media (max-width: 1100px) {
   .rail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 860px) {
   .section {
-    padding-top: 40rem;
-    margin-top: 40rem;
-    gap: 20rem;
+    padding: 60rem var(--grid-margin) 0;
+    gap: 24rem;
   }
   .rail {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16rem;
-    overflow-x: auto;
-    grid-auto-flow: column;
-    grid-auto-columns: 60vw;
-    grid-template-columns: none;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 4rem 12rem;
-    scrollbar-width: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20rem 12rem;
   }
-  .rail::-webkit-scrollbar {
-    display: none;
+}
+
+@media (max-width: 480px) {
+  .rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16rem 10rem;
   }
 }

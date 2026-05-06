@@ -5,9 +5,8 @@ import { Manifesto } from "components/manifesto";
 import { Newsletter } from "components/newsletter";
 import { PressQuote } from "components/press-quote";
 import { Principles } from "components/principles";
-import { RestockingCollection } from "components/restocking-collection";
+import { ProductRail } from "components/product-rail";
 import { ScrollStage } from "components/scroll-stage";
-import { StudioSpotlight } from "components/studio-spotlight";
 import { TrustBar } from "components/trust-bar";
 import type { Product } from "lib/shopify/types";
 import { usePathname, useRouter } from "next/navigation";
@@ -153,9 +152,23 @@ export function HomeScene({
       {!detailOpen && (
         <div className={styles.scrollableContent}>
           <TrustBar />
-          <StudioSpotlight products={featuredProducts} />
+          <ProductRail
+            eyebrow="Shop"
+            title="In the studio now"
+            description="Tap a piece to pick size and colour — add to bag from the product page."
+            products={featuredProducts}
+            viewAllHref="/indexes/products"
+            viewAllLabel="Shop entire line"
+          />
           <PressQuote />
-          <RestockingCollection products={featuredProducts} />
+          <ProductRail
+            eyebrow="Featured"
+            title="Pieces we keep restocking"
+            description="Same flow as any store: browse → open product → choose size → add to bag → checkout when your gateway is live."
+            products={featuredProducts}
+            viewAllHref="/indexes/products"
+            viewAllLabel="View all in shop"
+          />
           <Newsletter />
           <Principles />
           <Manifesto />

@@ -7,18 +7,25 @@ type Props = {
   title: string;
   products: Product[];
   viewAllHref?: string;
+  eyebrow?: string;
+  description?: string;
+  viewAllLabel?: string;
 };
 
-export function ProductRail({ title, products, viewAllHref }: Props) {
+export function ProductRail({ title, products, viewAllHref, eyebrow, description, viewAllLabel = "View all" }: Props) {
   if (products.length === 0) return null;
 
   return (
     <section className={styles.section} aria-label={title}>
       <header className={styles.head}>
-        <h2 className={styles.title}>{title}</h2>
+        <div className={styles.headContent}>
+          {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
+          <h2 className={styles.title}>{title}</h2>
+          {description ? <p className={styles.description}>{description}</p> : null}
+        </div>
         {viewAllHref ? (
           <Link href={viewAllHref} className={styles.viewAll}>
-            View all
+            {viewAllLabel}
             <span aria-hidden="true">→</span>
           </Link>
         ) : null}

@@ -22,7 +22,8 @@
   color: var(--color-off-black);
   /* Vertical cherry-red line on the left, matching the reference. */
   padding-left: 28rem;
-  border-left: 1px solid var(--color-accent);
+  border-left: 1px solid #891824;
+  text-transform: none;
 }
 
 .right {
@@ -39,6 +40,7 @@
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
+  text-transform: none;
 }
 
 .pill {
