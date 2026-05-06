@@ -15,6 +15,7 @@ type Props = {
   currentIndex: number;
   detailOpen: boolean;
   recsOpen: boolean;
+  paused?: boolean;
   onSelect: (
     index: number,
     opts?: { open?: boolean; userInitiated?: boolean },
@@ -34,6 +35,7 @@ export const ScrollStage = React.memo(function ScrollStage({
   currentIndex,
   detailOpen,
   recsOpen,
+  paused = false,
   onSelect,
   onClose,
   onToggleRecs,
@@ -257,11 +259,7 @@ export const ScrollStage = React.memo(function ScrollStage({
           />
         ) : (
           <div className={styles.textContent}>
-            <h1 className={styles.heroHeadline}>
-              Wear what pulls
-              <br />
-              you back.
-            </h1>
+            <h1 className={styles.heroHeadline}>Wear what pulls you back.</h1>
             <p className={styles.heroBody}>
               Denim and layers built to hold a room without shouting. Pick a
               silhouette to see the two-piece capsule — then head to the shop
@@ -307,6 +305,7 @@ export const ScrollStage = React.memo(function ScrollStage({
                     product={entry.product}
                     listenToGlobalFrame={isLatest}
                     priority={true}
+                    paused={paused}
                     onClick={isLatest ? handleModelClick : undefined}
                   />
                 </div>
@@ -333,6 +332,7 @@ export const ScrollStage = React.memo(function ScrollStage({
                   product={p}
                   priority={i < 4}
                   quality="thumb"
+                  paused={paused}
                   noLink
                 />
               </span>

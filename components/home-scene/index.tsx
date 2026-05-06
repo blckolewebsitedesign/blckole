@@ -46,6 +46,7 @@ export function HomeScene({
   );
   // Recs always start collapsed. The user has to tap the model to expand.
   const [recsOpen, setRecsOpen] = useState<boolean>(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     const fromPath = indexFromPathname(pathname);
@@ -58,6 +59,19 @@ export function HomeScene({
       setRecsOpen(false);
     }
   }, [pathname, indexFromPathname]);
+
+  useEffect(() => {
+    const handleCartOpenChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ open?: boolean }>;
+      setCartOpen(Boolean(customEvent.detail?.open));
+    };
+
+    setCartOpen(document.body.dataset.cartOpen === "true");
+    window.addEventListener("cart-open-change", handleCartOpenChange);
+    return () => {
+      window.removeEventListener("cart-open-change", handleCartOpenChange);
+    };
+  }, []);
 
   useEffect(() => {
     products.forEach((p) => router.prefetch(`/looks/${p.handle}`));
@@ -122,6 +136,7 @@ export function HomeScene({
   useEffect(() => {
     if (products.length === 0) return;
     const id = setInterval(() => {
+      if (cartOpen) return;
       if (detailOpenRef.current) return;
       if (
         Date.now() - lastUserInteractionRef.current <
@@ -132,7 +147,7 @@ export function HomeScene({
       setCurrentIndex((cur) => (cur + 1) % products.length);
     }, AUTO_ADVANCE_MS);
     return () => clearInterval(id);
-  }, [products]);
+  }, [cartOpen, products]);
 
   return (
     <div style={{ position: "relative" }}>
@@ -143,6 +158,7 @@ export function HomeScene({
           currentIndex={currentIndex}
           detailOpen={detailOpen}
           recsOpen={recsOpen}
+          paused={cartOpen}
           onSelect={handleSelect}
           onClose={handleClose}
           onToggleRecs={handleToggleRecs}

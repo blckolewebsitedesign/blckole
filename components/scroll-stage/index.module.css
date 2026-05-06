@@ -152,6 +152,66 @@
    The bottom thumbnail strip is hidden ONLY when the recs sheet is
    open, so the user keeps a navigable rail when recs is collapsed. */
 @media (min-width: 769px) {
+  .stage[data-detail-open="false"] {
+    display: grid;
+    grid-template-columns:
+      minmax(var(--grid-margin), 1fr)
+      repeat(12, minmax(0, 92rem))
+      minmax(var(--grid-margin), 1fr);
+    column-gap: 22rem;
+    align-items: stretch;
+  }
+
+  .stage[data-detail-open="false"] .leftPanel {
+    grid-column: 2 / 7;
+    width: auto;
+    padding: 104rem 0 184rem;
+    justify-content: center;
+  }
+
+  .stage[data-detail-open="false"] .textContent {
+    max-width: 590rem;
+    gap: 22rem;
+    padding-top: 0;
+  }
+
+  .stage[data-detail-open="false"] .heroHeadline {
+    font-size: clamp(70rem, 5.8vw, 104rem) !important;
+    line-height: 0.96 !important;
+    max-width: 9.6ch;
+  }
+
+  .stage[data-detail-open="false"] .heroBody {
+    max-width: 430rem;
+    font-size: 14rem !important;
+  }
+
+  .stage[data-detail-open="false"] .rightPanel {
+    grid-column: 7 / 14;
+    width: auto;
+    padding: 104rem 0 184rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stage[data-detail-open="false"] .mainCharacterWrapper {
+    width: min(30vw, 500rem);
+    height: min(62vh, 620rem);
+  }
+
+  .stage[data-detail-open="false"] .thumbnailListWrapper {
+    left: 50%;
+    bottom: 26rem;
+    width: min(760rem, calc(100vw - (var(--grid-margin) * 2)));
+    transform: translateX(-50%);
+  }
+
+  .stage[data-detail-open="false"] .thumbnailList {
+    width: 100%;
+    justify-content: space-between;
+    gap: 14rem;
+  }
+
   .stage[data-detail-open="true"] .leftPanel {
     position: absolute;
     top: 0;
@@ -186,6 +246,13 @@
   opacity: 0;
   pointer-events: none;
   transform: translateY(20rem);
+}
+
+@media (min-width: 769px) {
+  .stage[data-detail-open="false"][data-recs-open="true"]
+    .thumbnailListWrapper {
+    transform: translateX(-50%) translateY(20rem);
+  }
 }
 
 /* ── Two-layer slide for the main character ──
