@@ -3,6 +3,7 @@
 import { useCart } from "components/cart/cart-context";
 import { Panel } from "components/panel";
 import Image from "next/image";
+import Link from "next/link";
 import { useTransition } from "react";
 import { redirectToCheckout, removeItem, updateItemQuantity } from "./actions";
 import styles from "./drawer.module.css";
@@ -13,11 +14,15 @@ type Props = {
 };
 
 function formatPrice(amount: string, currency: string) {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(Number(amount));
+}
+
+function pad(n: number) {
+  return String(n).padStart(2, "0");
 }
 
 export function CartDrawer({ open, onClose }: Props) {
@@ -48,111 +53,164 @@ export function CartDrawer({ open, onClose }: Props) {
   const items = cart?.lines ?? [];
   const subtotal = cart?.cost.subtotalAmount;
   const total = cart?.cost.totalAmount;
+  const itemCount = items.reduce((sum, l) => sum + l.quantity, 0);
 
   return (
     <Panel open={open}>
       <div className={styles.wrapper}>
-        <div className={styles.header}>
-          <span className={styles.title}>Cart</span>
-          <button className={styles.closeBtn} onClick={onClose}>
-            Close
+        <header className={styles.header}>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Close cart"
+          >
+            <span aria-hidden="true">×</span>
+            <span className={styles.closeLabel}>Close</span>
           </button>
-        </div>
+          <span className={styles.eyebrow}>
+            Bag · {pad(itemCount)} {itemCount === 1 ? "item" : "items"}
+          </span>
+        </header>
+
+        <h2 className={styles.title}>Your bag</h2>
 
         <div className={styles.items}>
           {items.length === 0 ? (
-            <div className={styles.empty}>Your cart is empty</div>
+            <div className={styles.empty}>
+              <p className={styles.emptyTitle}>Nothing in here yet.</p>
+              <p className={styles.emptyDek}>
+                Pick a piece — it&apos;ll wait for you.
+              </p>
+              <Link
+                href="/indexes/products"
+                className={styles.emptyCta}
+                onClick={onClose}
+              >
+                Browse the line
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
           ) : (
-            items.map((item) => (
-              <div key={item.merchandise.id} className={styles.line}>
-                {item.merchandise.product.featuredImage && (
-                  <Image
-                    src={item.merchandise.product.featuredImage.url}
-                    alt={
-                      item.merchandise.product.featuredImage.altText ??
-                      item.merchandise.product.title
-                    }
-                    width={48}
-                    height={48}
-                    className={styles.lineImage}
-                  />
-                )}
-
-                <div className={styles.lineInfo}>
-                  <span className={styles.lineTitle}>
-                    {item.merchandise.product.title}
-                  </span>
-                  {item.merchandise.title !== "Default Title" && (
-                    <span className={styles.lineVariant}>
-                      {item.merchandise.title}
-                    </span>
-                  )}
-
-                  <div className={styles.lineActions}>
-                    <div className={styles.lineQty}>
-                      <button
-                        className={styles.qtyBtn}
-                        onClick={() =>
-                          handleQty(item.merchandise.id, "minus", item.quantity)
-                        }
-                        aria-label="Decrease quantity"
-                      >
-                        −
-                      </button>
-                      <span>{item.quantity}</span>
-                      <button
-                        className={styles.qtyBtn}
-                        onClick={() =>
-                          handleQty(item.merchandise.id, "plus", item.quantity)
-                        }
-                        aria-label="Increase quantity"
-                      >
-                        +
-                      </button>
+            <ul className={styles.itemList}>
+              {items.map((item) => {
+                const img = item.merchandise.product.featuredImage;
+                const showVariant = item.merchandise.title !== "Default Title";
+                return (
+                  <li key={item.merchandise.id} className={styles.line}>
+                    <div className={styles.lineThumb}>
+                      {img ? (
+                        <Image
+                          src={img.url}
+                          alt={img.altText ?? item.merchandise.product.title}
+                          fill
+                          sizes="80px"
+                          className={styles.lineImage}
+                        />
+                      ) : null}
                     </div>
 
-                    <span className={styles.linePrice}>
-                      {formatPrice(
-                        item.cost.totalAmount.amount,
-                        item.cost.totalAmount.currencyCode,
-                      )}
-                    </span>
-                  </div>
+                    <div className={styles.lineBody}>
+                      <div className={styles.lineHeadRow}>
+                        <span className={styles.lineTitle}>
+                          {item.merchandise.product.title}
+                        </span>
+                        <span className={styles.linePrice}>
+                          {formatPrice(
+                            item.cost.totalAmount.amount,
+                            item.cost.totalAmount.currencyCode,
+                          )}
+                        </span>
+                      </div>
 
-                  <button
-                    className={styles.removeBtn}
-                    onClick={() => handleRemove(item.merchandise.id)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))
+                      {showVariant ? (
+                        <span className={styles.lineVariant}>
+                          {item.merchandise.title}
+                        </span>
+                      ) : null}
+
+                      <div className={styles.lineActions}>
+                        <div className={styles.qtyGroup} aria-label="Quantity">
+                          <button
+                            type="button"
+                            className={styles.qtyBtn}
+                            onClick={() =>
+                              handleQty(
+                                item.merchandise.id,
+                                "minus",
+                                item.quantity,
+                              )
+                            }
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
+                          <span className={styles.qtyVal} aria-live="polite">
+                            {pad(item.quantity)}
+                          </span>
+                          <button
+                            type="button"
+                            className={styles.qtyBtn}
+                            onClick={() =>
+                              handleQty(
+                                item.merchandise.id,
+                                "plus",
+                                item.quantity,
+                              )
+                            }
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={styles.removeBtn}
+                          onClick={() => handleRemove(item.merchandise.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
 
-        {items.length > 0 && subtotal && total && (
-          <div className={styles.checkout}>
+        {items.length > 0 && subtotal && total ? (
+          <footer className={styles.checkout}>
             <div className={styles.totals}>
               <div className={styles.totalRow}>
-                <span>Subtotal</span>
-                <span>
+                <span className={styles.totalLabel}>Subtotal</span>
+                <span className={styles.totalValue}>
                   {formatPrice(subtotal.amount, subtotal.currencyCode)}
                 </span>
               </div>
               <div className={`${styles.totalRow} ${styles.grand}`}>
-                <span>Total</span>
-                <span>{formatPrice(total.amount, total.currencyCode)}</span>
+                <span className={styles.totalLabel}>Total</span>
+                <span className={styles.totalValue}>
+                  {formatPrice(total.amount, total.currencyCode)}
+                </span>
               </div>
             </div>
 
+            <p className={styles.shipNote}>
+              Shipping &amp; taxes calculated at checkout
+            </p>
+
             <form action={redirectToCheckout}>
               <button type="submit" className={styles.checkoutBtn}>
-                Proceed to Checkout
+                <span>Checkout</span>
+                <span className={styles.checkoutPrice}>
+                  · {formatPrice(total.amount, total.currencyCode)}
+                </span>
               </button>
             </form>
-          </div>
-        )}
+          </footer>
+        ) : null}
       </div>
     </Panel>
   );

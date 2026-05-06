@@ -2,221 +2,375 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--color-background);
+  color: var(--color-off-black);
 }
 
+/* ── Header ────────────────────────────────────────────────────── */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--gap) var(--grid-gutter);
-  border-bottom: var(--border-size) solid var(--color-divider);
+  gap: 16rem;
+  padding: 22rem 28rem 18rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
-}
-
-.title {
-  font-size: var(--font-size-tiny);
-  font-weight: 700;
-  font-stretch: expanded;
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-base);
 }
 
 .closeBtn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-tiny);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-off-black);
-  background: none;
+  gap: 10rem;
+  background: transparent;
   border: none;
   cursor: pointer;
-  transition: color var(--transition-base);
+  font-family: var(--font-family-mono);
+  font-size: 22rem;
+  line-height: 1;
+  color: var(--color-off-black);
   padding: 0;
+  transition: color var(--transition-base);
 }
 
 .closeBtn:hover {
-  color: var(--color-medium-grey);
+  color: var(--color-accent-bright);
 }
 
+.closeLabel {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent-bright);
+}
+
+.title {
+  font-family:
+    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-size: clamp(36rem, 4vw, 52rem) !important;
+  font-weight: 500 !important;
+  font-style: italic !important;
+  line-height: 1 !important;
+  color: var(--color-off-black) !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 !important;
+  padding: 22rem 28rem 18rem;
+}
+
+/* ── Items list ────────────────────────────────────────────────── */
 .items {
   flex: 1;
   overflow-y: auto;
-  padding: var(--gap) 0;
+  scrollbar-width: thin;
 }
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: var(--gap);
-  color: var(--color-medium-grey);
-  font-size: var(--font-size-tiny);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-base);
+.items::-webkit-scrollbar {
+  width: 3rem;
 }
 
-/* Cart line item */
+.items::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.itemList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .line {
   display: grid;
-  grid-template-columns: 48rem 1fr;
-  gap: var(--gap);
-  padding: var(--gap) var(--grid-gutter);
-  border-bottom: var(--border-size) solid var(--color-divider);
+  grid-template-columns: 80rem 1fr;
+  gap: 16rem;
+  padding: 20rem 28rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lineThumb {
+  position: relative;
+  width: 80rem;
+  height: 80rem;
+  background: linear-gradient(180deg, #0c0c0c 0%, #050505 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .lineImage {
-  width: 48rem;
-  height: 48rem;
-  object-fit: cover;
-  border-radius: var(--inner-border-radius);
-  background: var(--color-divider);
+  object-fit: contain;
+  object-position: center;
+  padding: 8%;
 }
 
-.lineInfo {
+.lineBody {
   display: flex;
   flex-direction: column;
-  gap: 4rem;
+  gap: 6rem;
   min-width: 0;
 }
 
+.lineHeadRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rem;
+}
+
 .lineTitle {
-  font-size: var(--font-size-tiny);
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-base);
+  color: var(--color-off-black);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.linePrice {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--color-off-black);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .lineVariant {
-  font-size: var(--font-size-tiny);
-  color: var(--color-medium-grey);
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-base);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .lineActions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: auto;
+  margin-top: 8rem;
+  gap: 12rem;
 }
 
-.lineQty {
-  display: flex;
+.qtyGroup {
+  display: inline-flex;
   align-items: center;
-  gap: 6rem;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .qtyBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18rem;
-  height: 18rem;
-  border: var(--border-size) solid var(--color-divider);
-  border-radius: var(--inner-border-radius);
-  font-size: var(--font-size-tiny);
-  background: none;
-  cursor: pointer;
+  width: 26rem;
+  height: 26rem;
+  font-family: var(--font-family-mono);
+  font-size: 14rem;
+  line-height: 1;
   color: var(--color-off-black);
-  transition:
-    color var(--transition-base),
-    border-color var(--transition-base);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-base);
 }
 
 .qtyBtn:hover {
-  color: var(--color-medium-grey);
-  border-color: var(--color-medium-grey);
+  color: var(--color-accent-bright);
 }
 
-.linePrice {
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
+.qtyVal {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--color-off-black);
+  min-width: 22rem;
+  text-align: center;
 }
 
 .removeBtn {
-  font-size: var(--font-size-tiny);
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-base);
-  color: var(--color-medium-grey);
-  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
   border: none;
-  cursor: pointer;
   padding: 0;
+  cursor: pointer;
   transition: color var(--transition-base);
 }
 
 .removeBtn:hover {
-  color: var(--color-off-black);
+  color: var(--color-accent-bright);
 }
 
-/* Checkout section */
-.checkout {
-  flex-shrink: 0;
-  padding: var(--grid-gutter);
-  background: var(--color-off-black);
-  color: var(--color-white);
+/* ── Empty state ───────────────────────────────────────────────── */
+.empty {
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  align-items: flex-start;
+  gap: 14rem;
+  padding: 40rem 28rem;
 }
 
-.totals {
-  display: flex;
-  flex-direction: column;
-  gap: 4rem;
-}
-
-.totalRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--font-size-tiny);
-  letter-spacing: var(--letter-spacing-base);
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.totalRow.grand {
-  color: var(--color-white);
+.emptyTitle {
+  font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  font-size: 26rem;
+  font-style: italic;
   font-weight: 500;
+  line-height: 1.1;
+  color: var(--color-off-black);
+  margin: 0;
 }
 
-.checkoutBtn {
-  width: 100%;
-  padding: 12rem;
-  background: var(--color-white);
-  color: var(--color-off-black);
-  border: none;
-  border-radius: var(--border-radius);
-  font-family: inherit;
-  font-size: var(--font-size-tiny);
-  font-weight: 700;
-  letter-spacing: var(--letter-spacing-base);
+.emptyDek {
+  font-family: var(--font-family-sans);
+  font-size: 13rem;
+  font-weight: 300;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.emptyCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  cursor: pointer;
+  color: var(--color-accent-bright);
+  text-decoration: none;
+  border: 1px solid var(--color-accent-bright);
+  padding: 12rem 18rem;
+  margin-top: 8rem;
   transition:
     background var(--transition-base),
     color var(--transition-base);
 }
 
+.emptyCta:hover {
+  background: var(--color-accent-bright);
+  color: var(--color-off-black);
+}
+
+/* ── Checkout footer ───────────────────────────────────────────── */
+.checkout {
+  flex-shrink: 0;
+  padding: 22rem 28rem 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 14rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-background);
+}
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  gap: 6rem;
+}
+
+.totalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rem;
+}
+
+.totalLabel {
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.totalValue {
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.grand .totalLabel {
+  color: var(--color-off-black);
+}
+
+.grand .totalValue {
+  font-size: 14rem;
+  color: var(--color-off-black);
+}
+
+.shipNote {
+  font-family: var(--font-family-mono);
+  font-size: 9rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-medium-grey);
+  margin: 0;
+}
+
+.checkoutBtn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rem;
+  font-family: var(--font-family-mono);
+  font-size: 11rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-off-black);
+  background: var(--color-accent);
+  border: none;
+  padding: 18rem 22rem;
+  cursor: pointer;
+  margin-top: 4rem;
+  transition: background var(--transition-base);
+}
+
 .checkoutBtn:hover {
-  background: var(--color-medium-grey);
+  background: var(--color-accent-bright);
+}
+
+.checkoutPrice {
+  font-weight: 500;
+  letter-spacing: 0.22em;
 }
 
 @media (max-width: 900px) {
-  .line {
-    grid-template-columns: 60rem 1fr;
+  .header,
+  .title,
+  .checkout {
+    padding-left: 22rem;
+    padding-right: 22rem;
   }
-
-  .lineImage {
-    width: 60rem;
-    height: 60rem;
+  .line {
+    padding-left: 22rem;
+    padding-right: 22rem;
   }
 }

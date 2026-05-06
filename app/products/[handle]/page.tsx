@@ -3,7 +3,6 @@ import { ProductRail } from "components/product-rail";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/shopify";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import styles from "./page.module.css";
 import { ProductPageClient } from "./product-client";
@@ -47,7 +46,7 @@ export default async function ProductPage(props: {
     <>
       <main className={styles.page}>
         <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
-          <Link href="/" className={styles.crumbLink}>
+          {/* <Link href="/" className={styles.crumbLink}>
             Home
           </Link>
           <span className={styles.crumbSep} aria-hidden="true">
@@ -57,7 +56,7 @@ export default async function ProductPage(props: {
           <span className={styles.crumbSep} aria-hidden="true">
             ›
           </span>
-          <span className={styles.crumbCurrent}>{product.title}</span>
+          <span className={styles.crumbCurrent}>{product.title}</span> */}
         </nav>
 
         <ProductPageClient product={product} />

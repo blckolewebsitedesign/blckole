@@ -3,14 +3,14 @@
   top: var(--header-height);
   bottom: 10rem;
   right: var(--grid-margin);
-  width: calc(var(--grid-column) * 3 + var(--grid-gutter) * 2);
-  background: var(--color-inner-background);
-  border-radius: var(--border-radius);
+  width: clamp(380rem, 32vw, 460rem);
+  background: var(--color-background);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   z-index: calc(var(--z-panel) + 50);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4rem 24rem rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24rem 60rem rgba(0, 0, 0, 0.55);
 }
 
 @media (max-width: 900px) {
@@ -20,6 +20,7 @@
     right: 0;
     left: 0;
     width: 100%;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
