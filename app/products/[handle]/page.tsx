@@ -37,28 +37,9 @@ export default async function ProductPage(props: {
     getProductRecommendations(product.id, "RELATED").catch(() => []),
   ]);
 
-  const breadcrumbMid =
-    product.productType?.trim() ||
-    product.tags.find((t) => !t.startsWith("nextjs-")) ||
-    "Shop";
-
   return (
     <>
       <main className={styles.page}>
-        <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
-          {/* <Link href="/" className={styles.crumbLink}>
-            Home
-          </Link>
-          <span className={styles.crumbSep} aria-hidden="true">
-            ›
-          </span>
-          <span className={styles.crumbMid}>{breadcrumbMid}</span>
-          <span className={styles.crumbSep} aria-hidden="true">
-            ›
-          </span>
-          <span className={styles.crumbCurrent}>{product.title}</span> */}
-        </nav>
-
         <ProductPageClient product={product} />
 
         {complementary.length > 0 && (

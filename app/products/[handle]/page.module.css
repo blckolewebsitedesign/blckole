@@ -2,54 +2,10 @@
   background: var(--color-background);
   color: var(--color-off-black);
   padding: 110rem var(--grid-margin) 80rem;
-  max-width: 1480rem;
-  margin: 0 auto;
-}
-
-/* ── Breadcrumbs ───────────────────────────────────────────────── */
-.breadcrumbs {
-  display: flex;
-  align-items: center;
-  gap: 12rem;
-  font-family: var(--font-family-mono);
-  font-size: 11rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-medium-grey);
-  margin-bottom: 36rem;
-  flex-wrap: wrap;
-}
-
-.crumbLink {
-  color: var(--color-medium-grey);
-  text-decoration: none;
-  transition: color var(--transition-base);
-}
-
-.crumbLink:hover {
-  color: var(--color-off-black);
-}
-
-.crumbSep {
-  color: var(--color-accent-bright);
-}
-
-.crumbMid {
-  color: var(--color-medium-grey);
-}
-
-.crumbCurrent {
-  color: var(--color-off-black);
 }
 
 @media (max-width: 860px) {
   .page {
     padding: 88rem var(--grid-margin) 60rem;
-  }
-  .breadcrumbs {
-    margin-bottom: 24rem;
-    font-size: 10rem;
-    gap: 8rem;
   }
 }
