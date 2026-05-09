@@ -1,12 +1,14 @@
 "use server";
 
 import { TAGS } from "lib/constants";
+import { SHOPIFY_CHECKOUT_COUNTRY } from "lib/currency";
 import {
   addToCart,
   createCart,
   getCart,
   removeFromCart,
   updateCart,
+  updateCartBuyerIdentity,
 } from "lib/shopify";
 import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
@@ -16,27 +18,43 @@ export async function addItem(
   prevState: any,
   selectedVariantId: string | undefined,
 ) {
-  let cartId = (await cookies()).get("cartId")?.value;
-  let cart;
-
-  if (cartId) {
-    cart = await getCart();
-  }
-
-  if (!cartId || !cart) {
-    cart = await createCart();
-    (await cookies()).set("cartId", cart.id!);
-  }
-
   if (!selectedVariantId) {
     return "Error adding item to cart";
   }
 
+  let cartId = (await cookies()).get("cartId")?.value;
+  let cart;
+  const lines = [{ merchandiseId: selectedVariantId, quantity: 1 }];
+
+  if (cartId) {
+    cart = await getCart();
+
+    if (
+      cart?.buyerIdentity.countryCode &&
+      cart.buyerIdentity.countryCode !== SHOPIFY_CHECKOUT_COUNTRY
+    ) {
+      cart = await updateCartBuyerIdentity(SHOPIFY_CHECKOUT_COUNTRY);
+    }
+  }
+
+  if (!cartId || !cart) {
+    cart = await createCart(lines);
+    (await cookies()).set("cartId", cart.id!);
+    updateTag(TAGS.cart);
+    return;
+  }
+
   try {
-    await addToCart([{ merchandiseId: selectedVariantId, quantity: 1 }]);
+    await addToCart(lines);
     updateTag(TAGS.cart);
   } catch (e) {
-    return "Error adding item to cart";
+    try {
+      cart = await createCart(lines);
+      (await cookies()).set("cartId", cart.id!);
+      updateTag(TAGS.cart);
+    } catch {
+      return "Error adding item to cart";
+    }
   }
 }
 
@@ -109,6 +127,13 @@ export async function updateItemQuantity(
 
 export async function redirectToCheckout() {
   let cart = await getCart();
+  if (
+    cart?.buyerIdentity.countryCode &&
+    cart.buyerIdentity.countryCode !== SHOPIFY_CHECKOUT_COUNTRY
+  ) {
+    cart = await updateCartBuyerIdentity(SHOPIFY_CHECKOUT_COUNTRY);
+    updateTag(TAGS.cart);
+  }
   redirect(cart!.checkoutUrl);
 }
 

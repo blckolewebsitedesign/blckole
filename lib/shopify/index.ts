@@ -3,6 +3,11 @@ import {
   SHOPIFY_GRAPHQL_API_ENDPOINT,
   TAGS,
 } from "lib/constants";
+import {
+  DEFAULT_CURRENCY_MARKET,
+  SHOPIFY_CHECKOUT_COUNTRY,
+  type SupportedCountryCode,
+} from "lib/currency";
 import { isShopifyError } from "lib/type-guards";
 import { ensureStartsWith } from "lib/utils";
 import {
@@ -14,6 +19,7 @@ import { cookies, headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import {
   addToCartMutation,
+  cartBuyerIdentityUpdateMutation,
   createCartMutation,
   editCartItemsMutation,
   removeFromCartMutation,
@@ -43,6 +49,7 @@ import {
   ProductMedia,
   ShopifyAddToCartOperation,
   ShopifyCart,
+  ShopifyCartBuyerIdentityUpdateOperation,
   ShopifyCartOperation,
   ShopifyCollection,
   ShopifyCollectionOperation,
@@ -251,12 +258,35 @@ const reshapeProducts = (
   return reshapedProducts;
 };
 
-export async function createCart(): Promise<Cart> {
+export async function createCart(
+  lines?: { merchandiseId: string; quantity: number }[],
+): Promise<Cart> {
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
+    variables: {
+      input: {
+        ...(lines ? { lines } : {}),
+        buyerIdentity: { countryCode: SHOPIFY_CHECKOUT_COUNTRY },
+      },
+    },
   });
 
   return reshapeCart(res.body.data.cartCreate.cart);
+}
+
+export async function updateCartBuyerIdentity(
+  countryCode: SupportedCountryCode,
+): Promise<Cart> {
+  const cartId = (await cookies()).get("cartId")?.value!;
+  const res = await shopifyFetch<ShopifyCartBuyerIdentityUpdateOperation>({
+    query: cartBuyerIdentityUpdateMutation,
+    variables: {
+      cartId,
+      buyerIdentity: { countryCode },
+    },
+  });
+
+  return reshapeCart(res.body.data.cartBuyerIdentityUpdate.cart);
 }
 
 export async function addToCart(
@@ -346,10 +376,12 @@ export async function getCollectionProducts({
   collection,
   reverse,
   sortKey,
+  countryCode = DEFAULT_CURRENCY_MARKET.countryCode,
 }: {
   collection: string;
   reverse?: boolean;
   sortKey?: string;
+  countryCode?: SupportedCountryCode;
 }): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.collections, TAGS.products);
@@ -368,6 +400,7 @@ export async function getCollectionProducts({
       handle: collection,
       reverse,
       sortKey: sortKey === "CREATED_AT" ? "CREATED" : sortKey,
+      country: countryCode,
     },
   });
 
@@ -475,7 +508,10 @@ export async function getPages(): Promise<Page[]> {
   return removeEdgesAndNodes(res.body.data.pages);
 }
 
-export async function getProduct(handle: string): Promise<Product | undefined> {
+export async function getProduct(
+  handle: string,
+  countryCode: SupportedCountryCode = DEFAULT_CURRENCY_MARKET.countryCode,
+): Promise<Product | undefined> {
   "use cache";
   cacheTag(TAGS.products);
   cacheLife("days");
@@ -489,6 +525,7 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
     query: getProductQuery,
     variables: {
       handle,
+      country: countryCode,
     },
   });
   return reshapeProduct(res.body.data.product, false);
@@ -497,6 +534,7 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
 export async function getProductRecommendations(
   productId: string,
   intent: "RELATED" | "COMPLEMENTARY" = "RELATED",
+  countryCode: SupportedCountryCode = DEFAULT_CURRENCY_MARKET.countryCode,
 ): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);
@@ -507,6 +545,7 @@ export async function getProductRecommendations(
     variables: {
       productId,
       intent,
+      country: countryCode,
     },
   });
 
@@ -517,10 +556,12 @@ export async function getProducts({
   query,
   reverse,
   sortKey,
+  countryCode = DEFAULT_CURRENCY_MARKET.countryCode,
 }: {
   query?: string;
   reverse?: boolean;
   sortKey?: string;
+  countryCode?: SupportedCountryCode;
 }): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);
@@ -532,6 +573,7 @@ export async function getProducts({
       query,
       reverse,
       sortKey,
+      country: countryCode,
     },
   });
 

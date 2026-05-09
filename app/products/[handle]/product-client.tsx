@@ -2,6 +2,7 @@
 
 import { addItem } from "components/cart/actions";
 import { useCart } from "components/cart/cart-context";
+import { useDisplayMoney } from "components/currency/use-display-money";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Product, ProductVariant } from "lib/shopify/types";
 import Image from "next/image";
@@ -38,16 +39,9 @@ type Props = {
   product: Product;
 };
 
-function formatPrice(amount: string, currency: string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
-}
-
 export function ProductPageClient({ product }: Props) {
   const { addCartItem } = useCart();
+  const formatPrice = useDisplayMoney();
   const [message, formAction, isPending] = useActionState(addItem, null);
 
   const [selectedOptions, setSelectedOptions] = useState<
@@ -69,7 +63,7 @@ export function ProductPageClient({ product }: Props) {
     v.selectedOptions.every((opt) => selectedOptions[opt.name] === opt.value),
   );
 
-  const price = product.priceRange.minVariantPrice;
+  const price = matchingVariant?.price ?? product.priceRange.minVariantPrice;
   const priceDisplay = formatPrice(price.amount, price.currencyCode);
   const category = product.productType?.trim() || product.tags[0] || "";
 
@@ -310,7 +304,7 @@ export function ProductPageClient({ product }: Props) {
           className={styles.cartForm}
           action={async () => {
             if (matchingVariant) addCartItem(matchingVariant, product);
-            addItemAction();
+            await addItemAction();
           }}
         >
           <button

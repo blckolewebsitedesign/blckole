@@ -1,6 +1,7 @@
 import { CartProvider } from "components/cart/cart-context";
 import { CustomCursor } from "components/custom-cursor";
 import { SiteShell } from "components/site-shell";
+import { getSelectedCurrencyMarket } from "lib/currency-server";
 import { getCart, getPages } from "lib/shopify";
 import { baseUrl } from "lib/utils";
 import { ReactNode } from "react";
@@ -23,6 +24,7 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   const cart = getCart();
+  const activeCurrencyMarket = await getSelectedCurrencyMarket();
 
   const pages = await getPages().catch(() => []);
   const storyCount = pages.filter((p) => p.handle.startsWith("story-")).length;
@@ -62,6 +64,7 @@ export default async function RootLayout({
             rightNavItems={rightNavItems}
             logoSrc="/logo-lockup-white.png"
             locales={["EN", "IN"]}
+            activeCurrencyMarket={activeCurrencyMarket}
           >
             {children}
           </SiteShell>

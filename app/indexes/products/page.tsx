@@ -1,4 +1,5 @@
 import { Footer } from "components/footer";
+import { getSelectedCountryCode } from "lib/currency-server";
 import { getProducts } from "lib/shopify";
 import styles from "./page.module.css";
 import { ShopGrid } from "./shop-grid";
@@ -8,8 +9,12 @@ export const metadata = {
   description: "The full line — denim, tops, and layers.",
 };
 
-export default async function ProductsIndexPage() {
-  const products = await getProducts({}).catch(() => []);
+export default async function ProductsIndexPage(props: {
+  searchParams?: Promise<{ currency?: string }>;
+}) {
+  const searchParams = await props.searchParams;
+  const countryCode = await getSelectedCountryCode(searchParams?.currency);
+  const products = await getProducts({ countryCode }).catch(() => []);
 
   return (
     <>

@@ -43,7 +43,7 @@ export function AddToCart({ product }: Props) {
       <form
         action={async () => {
           if (finalVariant) addCartItem(finalVariant, product);
-          addItemAction();
+          await addItemAction();
         }}
       >
         <button

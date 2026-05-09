@@ -80,7 +80,7 @@
   color: var(--color-accent);
 }
 
-/* ── Locale switcher ───────────────────────────── */
+/* ── Locale and currency controls ───────────────────────────── */
 .localeSwitcher {
   display: inline-flex;
   align-items: center;
@@ -121,6 +121,113 @@
   color: var(--color-medium-grey);
 }
 
+.currencySelector {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-family-mono);
+  font-size: 12rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.currencyTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rem;
+  min-width: 44rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-off-black);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: 1;
+  padding: 4rem 6rem;
+  text-transform: uppercase;
+  transition:
+    border-color var(--transition-base),
+    color var(--transition-base),
+    background var(--transition-base);
+}
+
+.currencyTrigger:hover,
+.currencyTrigger[aria-expanded="true"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.currencyTrigger:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.currencyChevron {
+  color: var(--color-accent);
+  font-size: 9rem;
+  transform: translateY(-1rem);
+}
+
+.currencyMenu {
+  position: absolute;
+  top: calc(100% + 10rem);
+  right: 0;
+  z-index: calc(var(--z-header) + 1);
+  display: grid;
+  min-width: 118rem;
+  padding: 6rem;
+  background: rgba(5, 5, 5, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18rem 40rem rgba(0, 0, 0, 0.42);
+}
+
+.currencyMenu::before {
+  content: "";
+  position: absolute;
+  top: -5rem;
+  right: 14rem;
+  width: 8rem;
+  height: 8rem;
+  background: rgba(5, 5, 5, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  transform: rotate(45deg);
+}
+
+.currencyOption {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-medium-grey);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  padding: 10rem 9rem;
+  text-align: left;
+  text-transform: uppercase;
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.currencyOption:hover,
+.currencyOptionActive {
+  background: rgba(151, 20, 37, 0.92);
+  color: var(--color-off-black);
+}
+
+.currencyCountry {
+  color: inherit;
+  font-size: 9rem;
+  opacity: 0.68;
+}
+
 @media (max-width: 900px) {
   .header {
     grid-template-columns: auto 1fr auto;
@@ -136,5 +243,9 @@
   }
   .logoImg {
     height: 22rem;
+  }
+  .currencyTrigger {
+    min-width: 40rem;
+    padding: 3rem 5rem;
   }
 }

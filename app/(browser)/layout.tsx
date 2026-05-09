@@ -1,4 +1,5 @@
 import { HomeScene } from "components/home-scene";
+import { getSelectedCountryCode } from "lib/currency-server";
 import {
   getCollectionProducts,
   getProductRecommendations,
@@ -12,24 +13,28 @@ export default async function BrowserLayout({
 }: {
   children: ReactNode;
 }) {
+  const countryCode = await getSelectedCountryCode();
   const products = await getCollectionProducts({
     collection: "hidden-homepage-featured-items",
+    countryCode,
   })
     .catch(() => [])
     .then((items) =>
-      items.length > 0 ? items : getProducts({}).catch(() => []),
+      items.length > 0 ? items : getProducts({ countryCode }).catch(() => []),
     );
 
   const recommendationsMap: Record<string, Product[]> = {};
   await Promise.all(
     products.map(async (p) => {
-      recommendationsMap[p.id] = await getProductRecommendations(p.id).catch(
-        () => [],
-      );
+      recommendationsMap[p.id] = await getProductRecommendations(
+        p.id,
+        "RELATED",
+        countryCode,
+      ).catch(() => []);
     }),
   );
 
-  const featuredProducts = await getProducts({}).catch(() => []);
+  const featuredProducts = await getProducts({ countryCode }).catch(() => []);
 
   return (
     <>

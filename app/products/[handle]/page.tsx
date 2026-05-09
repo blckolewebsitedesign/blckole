@@ -1,6 +1,7 @@
 import { Footer } from "components/footer";
 import { ProductRail } from "components/product-rail";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
+import { getSelectedCountryCode } from "lib/currency-server";
 import { getProduct, getProductRecommendations } from "lib/shopify";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -27,14 +28,21 @@ export async function generateMetadata(props: {
 
 export default async function ProductPage(props: {
   params: Promise<{ handle: string }>;
+  searchParams?: Promise<{ currency?: string }>;
 }) {
   const params = await props.params;
-  const product = await getProduct(params.handle);
+  const searchParams = await props.searchParams;
+  const countryCode = await getSelectedCountryCode(searchParams?.currency);
+  const product = await getProduct(params.handle, countryCode);
   if (!product) return notFound();
 
   const [complementary, related] = await Promise.all([
-    getProductRecommendations(product.id, "COMPLEMENTARY").catch(() => []),
-    getProductRecommendations(product.id, "RELATED").catch(() => []),
+    getProductRecommendations(product.id, "COMPLEMENTARY", countryCode).catch(
+      () => [],
+    ),
+    getProductRecommendations(product.id, "RELATED", countryCode).catch(
+      () => [],
+    ),
   ]);
 
   return (

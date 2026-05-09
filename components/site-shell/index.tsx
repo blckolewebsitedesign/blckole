@@ -4,6 +4,7 @@ import { useCart } from "components/cart/cart-context";
 import { CartDrawer } from "components/cart/drawer";
 import { Header } from "components/header";
 import { PageTransition } from "components/page-transition";
+import type { CurrencyMarket } from "lib/currency";
 import { useEffect, useState } from "react";
 
 type NavItem = {
@@ -17,6 +18,7 @@ type Props = {
   rightNavItems: NavItem[];
   logoSrc?: string;
   locales?: string[];
+  activeCurrencyMarket?: CurrencyMarket;
   children: React.ReactNode;
 };
 
@@ -25,6 +27,7 @@ export function SiteShell({
   rightNavItems,
   logoSrc,
   locales,
+  activeCurrencyMarket,
   children,
 }: Props) {
   const [cartOpen, setCartOpen] = useState(false);
@@ -50,6 +53,7 @@ export function SiteShell({
         onCartClick={() => setCartOpen((v) => !v)}
         logoSrc={logoSrc}
         locales={locales}
+        activeCurrencyMarket={activeCurrencyMarket}
       />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <PageTransition>{children}</PageTransition>

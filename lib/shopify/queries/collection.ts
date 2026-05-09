@@ -41,7 +41,8 @@ export const getCollectionProductsQuery = /* GraphQL */ `
     $handle: String!
     $sortKey: ProductCollectionSortKeys
     $reverse: Boolean
-  ) {
+    $country: CountryCode
+  ) @inContext(country: $country) {
     collection(handle: $handle) {
       products(sortKey: $sortKey, reverse: $reverse, first: 100) {
         edges {

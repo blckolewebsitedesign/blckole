@@ -1,3 +1,5 @@
+import type { SupportedCountryCode } from "lib/currency";
+
 export type Maybe<T> = T | null;
 
 export type Connection<T> = {
@@ -123,6 +125,9 @@ export type SEO = {
 export type ShopifyCart = {
   id: string | undefined;
   checkoutUrl: string;
+  buyerIdentity: {
+    countryCode?: SupportedCountryCode | null;
+  };
   cost: {
     subtotalAmount: Money;
     totalAmount: Money;
@@ -173,6 +178,17 @@ export type ShopifyCartOperation = {
 
 export type ShopifyCreateCartOperation = {
   data: { cartCreate: { cart: ShopifyCart } };
+  variables: {
+    input?: {
+      lines?: {
+        merchandiseId: string;
+        quantity: number;
+      }[];
+      buyerIdentity?: {
+        countryCode: SupportedCountryCode;
+      };
+    };
+  };
 };
 
 export type ShopifyAddToCartOperation = {
@@ -218,6 +234,20 @@ export type ShopifyUpdateCartOperation = {
   };
 };
 
+export type ShopifyCartBuyerIdentityUpdateOperation = {
+  data: {
+    cartBuyerIdentityUpdate: {
+      cart: ShopifyCart;
+    };
+  };
+  variables: {
+    cartId: string;
+    buyerIdentity: {
+      countryCode: SupportedCountryCode;
+    };
+  };
+};
+
 export type ShopifyCollectionOperation = {
   data: {
     collection: ShopifyCollection;
@@ -237,6 +267,7 @@ export type ShopifyCollectionProductsOperation = {
     handle: string;
     reverse?: boolean;
     sortKey?: string;
+    country?: SupportedCountryCode;
   };
 };
 
@@ -275,6 +306,7 @@ export type ShopifyProductOperation = {
   data: { product: ShopifyProduct };
   variables: {
     handle: string;
+    country?: SupportedCountryCode;
   };
 };
 
@@ -287,6 +319,7 @@ export type ShopifyProductRecommendationsOperation = {
   variables: {
     productId: string;
     intent?: ProductRecommendationIntent;
+    country?: SupportedCountryCode;
   };
 };
 
@@ -298,6 +331,7 @@ export type ShopifyProductsOperation = {
     query?: string;
     reverse?: boolean;
     sortKey?: string;
+    country?: SupportedCountryCode;
   };
 };
 

@@ -1,9 +1,11 @@
 "use client";
 
+import { useDisplayMoney } from "components/currency/use-display-money";
 import { motion, useInView } from "framer-motion";
 import type { Product } from "lib/shopify/types";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useRef } from "react";
 import styles from "./index.module.css";
 
@@ -13,21 +15,19 @@ type Props = {
   priority?: boolean;
 };
 
-function formatPrice(amount: string, currency: string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
-}
-
 export function ProductCard({ product, index, priority = false }: Props) {
   const ref = useRef<HTMLAnchorElement>(null);
+  const searchParams = useSearchParams();
+  const formatPrice = useDisplayMoney();
   const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
 
   const image = product.featuredImage || product.images[0];
   const price = product.priceRange.minVariantPrice;
   const category = product.productType;
+  const currency = searchParams.get("currency");
+  const href = currency
+    ? `/products/${product.handle}?currency=${encodeURIComponent(currency)}`
+    : `/products/${product.handle}`;
 
   return (
     <motion.div
@@ -39,11 +39,7 @@ export function ProductCard({ product, index, priority = false }: Props) {
         ease: [0.23, 1, 0.32, 1],
       }}
     >
-      <Link
-        href={`/products/${product.handle}`}
-        className={styles.wrapper}
-        ref={ref}
-      >
+      <Link href={href} className={styles.wrapper} ref={ref}>
         <div className={styles.frame}>
           <div className={styles.imageArea}>
             {image ? (

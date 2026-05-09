@@ -1,8 +1,10 @@
 "use client";
 
+import { useDisplayMoney } from "components/currency/use-display-money";
 import type { Product } from "lib/shopify/types";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import styles from "./index.module.css";
 
 type Props = {
@@ -18,14 +20,6 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function formatPrice(amount: string, currency: string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
-}
-
 export function LookInfo({
   product,
   index,
@@ -34,6 +28,9 @@ export function LookInfo({
   expanded,
   onClose,
 }: Props) {
+  const formatPrice = useDisplayMoney();
+  const searchParams = useSearchParams();
+  const currency = searchParams.get("currency");
   const items = recommendations.slice(0, 6);
 
   return (
@@ -65,73 +62,77 @@ export function LookInfo({
       </p>
 
       <div
-          className={`${styles.items} ${expanded ? styles.itemsExpanded : styles.itemsCompact}`}
-          data-no-swipe
-        >
-          {expanded ? (
-            <>
-              {items.length > 0 && (
-                <>
-                  <div className={styles.itemsHead}>
-                    <span className={styles.itemsEyebrow}>In this look</span>
-                    <span className={styles.itemsCount}>
-                      {pad(items.length)} ITEMS
-                    </span>
-                  </div>
-                  <ul className={styles.cardList}>
-                    {items.map((item) => {
-                      const img = item.featuredImage || item.images[0];
-                      const price = item.priceRange.minVariantPrice;
-                      return (
-                        <li key={item.id} className={styles.card}>
-                          <Link
-                            href={`/products/${item.handle}`}
-                            className={styles.cardLink}
-                          >
-                            <div className={styles.cardThumb}>
-                              {img ? (
-                                <Image
-                                  src={img.url}
-                                  alt={img.altText ?? item.title}
-                                  fill
-                                  sizes="56px"
-                                  className={styles.cardImage}
-                                />
-                              ) : null}
-                            </div>
-                            <div className={styles.cardMeta}>
-                              <span className={styles.cardTitle}>{item.title}</span>
-                              <span className={styles.cardPrice}>
-                                {formatPrice(price.amount, price.currencyCode)}
-                              </span>
-                            </div>
-                            <span className={styles.cardCta}>
-                              View
-                              <span aria-hidden="true">→</span>
+        className={`${styles.items} ${expanded ? styles.itemsExpanded : styles.itemsCompact}`}
+        data-no-swipe
+      >
+        {expanded ? (
+          <>
+            {items.length > 0 && (
+              <>
+                <div className={styles.itemsHead}>
+                  <span className={styles.itemsEyebrow}>In this look</span>
+                  <span className={styles.itemsCount}>
+                    {pad(items.length)} ITEMS
+                  </span>
+                </div>
+                <ul className={styles.cardList}>
+                  {items.map((item) => {
+                    const img = item.featuredImage || item.images[0];
+                    const price = item.priceRange.minVariantPrice;
+                    return (
+                      <li key={item.id} className={styles.card}>
+                        <Link
+                          href={
+                            currency
+                              ? `/products/${item.handle}?currency=${encodeURIComponent(currency)}`
+                              : `/products/${item.handle}`
+                          }
+                          className={styles.cardLink}
+                        >
+                          <div className={styles.cardThumb}>
+                            {img ? (
+                              <Image
+                                src={img.url}
+                                alt={img.altText ?? item.title}
+                                fill
+                                sizes="56px"
+                                className={styles.cardImage}
+                              />
+                            ) : null}
+                          </div>
+                          <div className={styles.cardMeta}>
+                            <span className={styles.cardTitle}>
+                              {item.title}
                             </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </>
-              )}
-            </>
-          ) : (
-            items.length > 0 && (
-              <ul className={styles.pillList} aria-label="Worn items">
-                {items.map((item) => (
-                  <li key={item.id} className={styles.pill}>
-                    <span className={styles.pillDot} aria-hidden="true" />
-                    {item.title}
-                  </li>
-                ))}
-              </ul>
-            )
-          )}
-        </div>
-
-      
+                            <span className={styles.cardPrice}>
+                              {formatPrice(price.amount, price.currencyCode)}
+                            </span>
+                          </div>
+                          <span className={styles.cardCta}>
+                            View
+                            <span aria-hidden="true">→</span>
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </>
+        ) : (
+          items.length > 0 && (
+            <ul className={styles.pillList} aria-label="Worn items">
+              {items.map((item) => (
+                <li key={item.id} className={styles.pill}>
+                  <span className={styles.pillDot} aria-hidden="true" />
+                  {item.title}
+                </li>
+              ))}
+            </ul>
+          )
+        )}
+      </div>
     </div>
   );
 }

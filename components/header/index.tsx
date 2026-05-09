@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import styles from "./index.module.css";
+import { CurrencySelector } from "./currency-selector";
 import { LocaleSwitcher } from "./locale-switcher";
+import type { CurrencyMarket } from "lib/currency";
 
 type NavItem = {
   title: string;
@@ -18,6 +21,7 @@ type Props = {
   logoSrc?: string;
   logoAlt?: string;
   locales?: string[];
+  activeCurrencyMarket?: CurrencyMarket;
 };
 
 function fmt(n: number) {
@@ -25,8 +29,14 @@ function fmt(n: number) {
 }
 
 function NavLink({ item }: { item: NavItem }) {
+  const searchParams = useSearchParams();
+  const currency = searchParams.get("currency");
+  const href = currency
+    ? `${item.href}?currency=${encodeURIComponent(currency)}`
+    : item.href;
+
   return (
-    <Link href={item.href} className={styles.navLink}>
+    <Link href={href} className={styles.navLink}>
       {item.title}
       {item.count !== undefined && (
         <span className={styles.navCount}>{fmt(item.count)}</span>
@@ -43,6 +53,7 @@ export function Header({
   logoSrc = "/logo-lockup-white.png",
   logoAlt = "BLCKHOLE",
   locales = ["EN", "IN"],
+  activeCurrencyMarket,
 }: Props) {
   return (
     <header className={styles.header}>
@@ -63,6 +74,7 @@ export function Header({
           ))}
         </nav>
         <LocaleSwitcher locales={locales} />
+        <CurrencySelector activeMarket={activeCurrencyMarket} />
         <button
           type="button"
           className={styles.cartBtn}

@@ -1,9 +1,11 @@
 "use client";
 
 import { useCart } from "components/cart/cart-context";
+import { useDisplayMoney } from "components/currency/use-display-money";
 import { Panel } from "components/panel";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { redirectToCheckout, removeItem, updateItemQuantity } from "./actions";
 import styles from "./drawer.module.css";
@@ -13,20 +15,14 @@ type Props = {
   onClose: () => void;
 };
 
-function formatPrice(amount: string, currency: string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
-}
-
 function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
 export function CartDrawer({ open, onClose }: Props) {
   const { cart, updateCartItem } = useCart();
+  const formatPrice = useDisplayMoney();
+  const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
 
   async function handleRemove(merchandiseId: string) {
@@ -54,6 +50,10 @@ export function CartDrawer({ open, onClose }: Props) {
   const subtotal = cart?.cost.subtotalAmount;
   const total = cart?.cost.totalAmount;
   const itemCount = items.reduce((sum, l) => sum + l.quantity, 0);
+  const currency = searchParams.get("currency");
+  const productsHref = currency
+    ? `/indexes/products?currency=${encodeURIComponent(currency)}`
+    : "/indexes/products";
 
   return (
     <Panel open={open}>
@@ -83,7 +83,7 @@ export function CartDrawer({ open, onClose }: Props) {
                 Pick a piece — it&apos;ll wait for you.
               </p>
               <Link
-                href="/indexes/products"
+                href={productsHref}
                 className={styles.emptyCta}
                 onClick={onClose}
               >
