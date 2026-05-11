@@ -28,19 +28,38 @@ function fmt(n: number) {
   return n.toString().padStart(2, "0");
 }
 
+function isExternalHref(href: string) {
+  return /^https?:\/\//i.test(href);
+}
+
 function NavLink({ item }: { item: NavItem }) {
   const searchParams = useSearchParams();
   const currency = searchParams.get("currency");
-  const href = currency
-    ? `${item.href}?currency=${encodeURIComponent(currency)}`
-    : item.href;
+  const href =
+    currency && !isExternalHref(item.href)
+      ? `${item.href}?currency=${encodeURIComponent(currency)}`
+      : item.href;
 
-  return (
-    <Link href={href} className={styles.navLink}>
+  const content = (
+    <>
       {item.title}
       {item.count !== undefined && (
         <span className={styles.navCount}>{fmt(item.count)}</span>
       )}
+    </>
+  );
+
+  if (isExternalHref(href)) {
+    return (
+      <a href={href} className={styles.navLink}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={styles.navLink}>
+      {content}
     </Link>
   );
 }
