@@ -1,6 +1,7 @@
 import { CartProvider } from "components/cart/cart-context";
 import { CustomCursor } from "components/custom-cursor";
 import { SiteShell } from "components/site-shell";
+import { CUSTOMER_ACCOUNT_PROFILE_URL } from "lib/constants";
 import { getSelectedCurrencyMarket } from "lib/currency-server";
 import { getCart, getPages } from "lib/shopify";
 import { baseUrl } from "lib/utils";
@@ -40,6 +41,7 @@ export default async function RootLayout({
       href: "/story",
       ...(storyCount > 0 ? { count: storyCount } : {}),
     },
+    { title: "PROFILE", href: CUSTOMER_ACCOUNT_PROFILE_URL },
   ];
 
   return (

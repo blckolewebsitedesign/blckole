@@ -1,0 +1,34 @@
+{%- comment -%}
+  Redirect all Shopify theme traffic back to the headless storefront.
+
+  Install in Shopify Admin:
+  Online Store -> Themes -> Edit code -> layout/theme.liquid
+  Paste this snippet as early as possible inside <head>.
+
+  Keep checkout routes on Shopify. Redirect everything else to blckole.com.
+{%- endcomment -%}
+<script>
+  (function () {
+    var shopHost = "shop.blckole.com";
+    var mainOrigin = "https://blckole.com";
+    var host = window.location.hostname.toLowerCase();
+    var path = window.location.pathname;
+
+    var checkoutPatterns = [
+      /^\/checkout(?:\/|$)/i,
+      /^\/checkouts?(?:\/|$)/i,
+      /^\/cart\/c(?:\/|$)/i,
+      /^\/\d+\/checkouts?(?:\/|$)/i,
+    ];
+
+    var isCheckout = checkoutPatterns.some(function (pattern) {
+      return pattern.test(path);
+    });
+
+    if (host === shopHost && !isCheckout) {
+      window.location.replace(
+        mainOrigin + path + window.location.search + window.location.hash,
+      );
+    }
+  })();
+</script>
