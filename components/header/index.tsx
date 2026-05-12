@@ -1,11 +1,10 @@
 "use client";
 
+import type { CurrencyMarket } from "lib/currency";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import styles from "./index.module.css";
 import { CurrencySelector } from "./currency-selector";
-import { LocaleSwitcher } from "./locale-switcher";
-import type { CurrencyMarket } from "lib/currency";
+import styles from "./index.module.css";
 
 type NavItem = {
   title: string;
@@ -92,7 +91,7 @@ export function Header({
             <NavLink key={item.href} item={item} />
           ))}
         </nav>
-        <LocaleSwitcher locales={locales} />
+        {/* <LocaleSwitcher locales={locales} /> */}
         <CurrencySelector activeMarket={activeCurrencyMarket} />
         <button
           type="button"

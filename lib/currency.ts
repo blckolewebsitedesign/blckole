@@ -1,8 +1,8 @@
 export const CURRENCY_COUNTRY_COOKIE = "currencyCountry";
 export const SHOPIFY_CHECKOUT_COUNTRY = "IN";
 
-export type SupportedCurrencyCode = "USD" | "INR" | "EUR" | "GBP";
-export type SupportedCountryCode = "US" | "IN" | "DE" | "GB";
+export type SupportedCurrencyCode = "USD" | "INR";
+export type SupportedCountryCode = "US" | "IN";
 
 export type CurrencyMarket = {
   currencyCode: SupportedCurrencyCode;
@@ -14,8 +14,6 @@ export type CurrencyMarket = {
 export const CURRENCY_MARKETS = [
   { currencyCode: "INR", countryCode: "IN", label: "INR", locale: "en-IN" },
   { currencyCode: "USD", countryCode: "US", label: "USD", locale: "en-US" },
-  { currencyCode: "EUR", countryCode: "DE", label: "EUR", locale: "de-DE" },
-  { currencyCode: "GBP", countryCode: "GB", label: "GBP", locale: "en-GB" },
 ] as const satisfies readonly CurrencyMarket[];
 
 export const DEFAULT_CURRENCY_MARKET = CURRENCY_MARKETS[0];

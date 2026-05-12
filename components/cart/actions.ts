@@ -1,7 +1,7 @@
 "use server";
 
 import { TAGS } from "lib/constants";
-import { SHOPIFY_CHECKOUT_COUNTRY } from "lib/currency";
+import { getSelectedCountryCode } from "lib/currency-server";
 import {
   addToCart,
   createCart,
@@ -22,6 +22,7 @@ export async function addItem(
     return "Error adding item to cart";
   }
 
+  const selectedCountryCode = await getSelectedCountryCode();
   let cartId = (await cookies()).get("cartId")?.value;
   let cart;
   const lines = [{ merchandiseId: selectedVariantId, quantity: 1 }];
@@ -31,14 +32,14 @@ export async function addItem(
 
     if (
       cart?.buyerIdentity.countryCode &&
-      cart.buyerIdentity.countryCode !== SHOPIFY_CHECKOUT_COUNTRY
+      cart.buyerIdentity.countryCode !== selectedCountryCode
     ) {
-      cart = await updateCartBuyerIdentity(SHOPIFY_CHECKOUT_COUNTRY);
+      cart = await updateCartBuyerIdentity(selectedCountryCode);
     }
   }
 
   if (!cartId || !cart) {
-    cart = await createCart(lines);
+    cart = await createCart(lines, selectedCountryCode);
     (await cookies()).set("cartId", cart.id!);
     updateTag(TAGS.cart);
     return;
@@ -49,7 +50,7 @@ export async function addItem(
     updateTag(TAGS.cart);
   } catch (e) {
     try {
-      cart = await createCart(lines);
+      cart = await createCart(lines, selectedCountryCode);
       (await cookies()).set("cartId", cart.id!);
       updateTag(TAGS.cart);
     } catch {
@@ -126,18 +127,20 @@ export async function updateItemQuantity(
 }
 
 export async function redirectToCheckout() {
+  const selectedCountryCode = await getSelectedCountryCode();
   let cart = await getCart();
   if (
     cart?.buyerIdentity.countryCode &&
-    cart.buyerIdentity.countryCode !== SHOPIFY_CHECKOUT_COUNTRY
+    cart.buyerIdentity.countryCode !== selectedCountryCode
   ) {
-    cart = await updateCartBuyerIdentity(SHOPIFY_CHECKOUT_COUNTRY);
+    cart = await updateCartBuyerIdentity(selectedCountryCode);
     updateTag(TAGS.cart);
   }
   redirect(cart!.checkoutUrl);
 }
 
 export async function createCartAndSetCookie() {
-  let cart = await createCart();
+  const selectedCountryCode = await getSelectedCountryCode();
+  let cart = await createCart(undefined, selectedCountryCode);
   (await cookies()).set("cartId", cart.id!);
 }

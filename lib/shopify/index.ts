@@ -260,13 +260,14 @@ const reshapeProducts = (
 
 export async function createCart(
   lines?: { merchandiseId: string; quantity: number }[],
+  countryCode: SupportedCountryCode = SHOPIFY_CHECKOUT_COUNTRY,
 ): Promise<Cart> {
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
     variables: {
       input: {
         ...(lines ? { lines } : {}),
-        buyerIdentity: { countryCode: SHOPIFY_CHECKOUT_COUNTRY },
+        buyerIdentity: { countryCode },
       },
     },
   });
