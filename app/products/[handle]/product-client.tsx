@@ -135,18 +135,14 @@ export function ProductPageClient({ product }: Props) {
       {/* ── Left column (info) ───────────────────────────────── */}
       <div className={styles.leftCol}>
         {category ? <span className={styles.category}>{category}</span> : null}
-
         <h1 className={styles.title}>{product.title}</h1>
-
         <div className={styles.priceRow}>
           <span className={styles.price}>{priceDisplay}</span>
           <span className={styles.priceTax}>MRP incl. of all taxes</span>
         </div>
-
         {description ? (
           <p className={styles.description}>{description}</p>
         ) : null}
-
         {realOptions.map((option) => {
           const isColor = /colou?r/i.test(option.name);
           return (
@@ -198,7 +194,6 @@ export function ProductPageClient({ product }: Props) {
             </div>
           );
         })}
-
         <div className={styles.utilityRow}>
           <button
             type="button"
@@ -267,7 +262,6 @@ export function ProductPageClient({ product }: Props) {
             Shipping &amp; returns
           </button>
         </div>
-
         <div className={styles.accordions}>
           {sections.map(({ key, label, content }) => (
             <div key={key} className={styles.accordionItem}>
@@ -299,7 +293,6 @@ export function ProductPageClient({ product }: Props) {
             </div>
           ))}
         </div>
-
         <form
           className={styles.cartForm}
           action={async () => {
@@ -328,7 +321,6 @@ export function ProductPageClient({ product }: Props) {
             <span className={styles.addToBagPrice}>· {priceDisplay}</span>
           </button>
         </form>
-
         <p className={styles.returns}>
           <svg
             className={styles.returnsIcon}
@@ -345,7 +337,6 @@ export function ProductPageClient({ product }: Props) {
           </svg>
           14-day returns &amp; easy exchange
         </p>
-
         {message ? (
           <p className={styles.errorMsg} aria-live="polite" role="status">
             {message}
