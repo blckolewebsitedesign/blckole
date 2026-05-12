@@ -10,6 +10,7 @@ import { createHash, randomBytes } from "node:crypto";
 
 export const CUSTOMER_ACCESS_TOKEN_COOKIE = "customerAccountAccessToken";
 export const CUSTOMER_REFRESH_TOKEN_COOKIE = "customerAccountRefreshToken";
+export const CUSTOMER_ID_TOKEN_COOKIE = "customerAccountIdToken";
 export const CUSTOMER_AUTH_STATE_COOKIE = "customerAccountAuthState";
 export const CUSTOMER_AUTH_NONCE_COOKIE = "customerAccountAuthNonce";
 export const CUSTOMER_AUTH_VERIFIER_COOKIE = "customerAccountAuthVerifier";
@@ -30,6 +31,8 @@ export type CustomerAccountLineItem = {
   title: string;
   name: string;
   quantity: number;
+  variantId?: string | null;
+  refundableQuantity: number;
   image?: {
     url: string;
     altText?: string | null;
@@ -213,6 +216,7 @@ export async function saveCustomerTokens(tokens: {
   access_token: string;
   expires_in: number;
   refresh_token?: string;
+  id_token?: string;
 }) {
   const cookieStore = await cookies();
   cookieStore.set(
@@ -228,6 +232,14 @@ export async function saveCustomerTokens(tokens: {
       cookieOptions(60 * 60 * 24 * 30),
     );
   }
+
+  if (tokens.id_token) {
+    cookieStore.set(
+      CUSTOMER_ID_TOKEN_COOKIE,
+      tokens.id_token,
+      cookieOptions(tokens.expires_in),
+    );
+  }
 }
 
 export async function clearCustomerSession() {
@@ -235,6 +247,7 @@ export async function clearCustomerSession() {
   [
     CUSTOMER_ACCESS_TOKEN_COOKIE,
     CUSTOMER_REFRESH_TOKEN_COOKIE,
+    CUSTOMER_ID_TOKEN_COOKIE,
     CUSTOMER_AUTH_STATE_COOKIE,
     CUSTOMER_AUTH_NONCE_COOKIE,
     CUSTOMER_AUTH_VERIFIER_COOKIE,
@@ -245,6 +258,10 @@ export async function clearCustomerSession() {
 
 export async function getCustomerAccessToken() {
   return (await cookies()).get(CUSTOMER_ACCESS_TOKEN_COOKIE)?.value;
+}
+
+export async function getCustomerIdToken() {
+  return (await cookies()).get(CUSTOMER_ID_TOKEN_COOKIE)?.value;
 }
 
 const customerProfileQuery = /* GraphQL */ `
@@ -285,6 +302,8 @@ const customerProfileQuery = /* GraphQL */ `
                   title
                   name
                   quantity
+                  variantId
+                  refundableQuantity
                   image {
                     url
                     altText

@@ -289,6 +289,90 @@
   text-transform: uppercase;
 }
 
+.actionButton {
+  color: var(--color-off-black);
+  background: var(--color-accent);
+  min-height: 34rem;
+  padding: 0 12rem;
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  transition: background var(--transition-base);
+}
+
+.actionButton:hover:not(:disabled) {
+  background: var(--color-accent-bright);
+}
+
+.actionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.mutedAction {
+  color: var(--color-medium-grey);
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.statusDetails {
+  margin-top: 18rem;
+  padding-top: 18rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.statusDetails summary {
+  color: var(--color-accent-bright);
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.statusDetails summary::-webkit-details-marker {
+  display: none;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 14rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.statusGrid div {
+  min-height: 82rem;
+  padding: 14rem;
+  background: #050505;
+}
+
+.statusGrid dt {
+  color: var(--color-medium-grey);
+  font-family: var(--font-family-mono);
+  font-size: 10rem;
+  letter-spacing: 0;
+  margin-bottom: 10rem;
+  text-transform: uppercase;
+}
+
+.statusGrid dd {
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-family-sans);
+  font-size: 13rem;
+  font-weight: 300;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+}
+
 .emptyState {
   display: grid;
   min-height: 180rem;
@@ -324,6 +408,10 @@
   }
 
   .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statusGrid {
     grid-template-columns: 1fr;
   }
 

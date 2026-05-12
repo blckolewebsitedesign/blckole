@@ -6,6 +6,7 @@ import {
 } from "lib/customer-account";
 import { formatMoney } from "lib/money";
 import Link from "next/link";
+import { buyAgain } from "./actions";
 import styles from "./page.module.css";
 
 export const metadata = {
@@ -37,10 +38,29 @@ function getTracking(order: CustomerAccountOrder) {
     .find((tracking) => tracking.number || tracking.url);
 }
 
+function getReturnHref(order: CustomerAccountOrder) {
+  const subject = encodeURIComponent(`Return request for ${order.name}`);
+  const body = encodeURIComponent(
+    [
+      `Order: ${order.name}`,
+      "",
+      "Items to return:",
+      order.lineItems
+        .filter((item) => item.refundableQuantity > 0)
+        .map((item) => `- ${item.name} (${item.refundableQuantity} available)`)
+        .join("\n"),
+      "",
+      "Reason:",
+    ].join("\n"),
+  );
+
+  return `mailto:support@blckole.com?subject=${subject}&body=${body}`;
+}
+
 export default async function ProfilePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ auth?: string }>;
+  searchParams?: Promise<{ auth?: string; cart?: string }>;
 }) {
   const params = await searchParams;
   const configured = isCustomerAccountConfigured();
@@ -81,6 +101,9 @@ export default async function ProfilePage({
                 <p className={styles.notice}>
                   Sign-in did not complete. Try the OTP flow again.
                 </p>
+              ) : null}
+              {params?.auth === "signed_out" ? (
+                <p className={styles.notice}>You have been signed out.</p>
               ) : null}
             </div>
 
@@ -142,6 +165,17 @@ export default async function ProfilePage({
                 <div>
                   <p className={styles.panelLabel}>Previous orders</p>
                   <h2 className={styles.sectionTitle}>Order history</h2>
+                  {params?.cart === "updated" ? (
+                    <p className={styles.notice}>
+                      Items were added to your cart. Open the cart from the
+                      header to review them.
+                    </p>
+                  ) : null}
+                  {params?.cart === "unavailable" ? (
+                    <p className={styles.notice}>
+                      This order has no reorderable variants.
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -157,6 +191,12 @@ export default async function ProfilePage({
                       tracking?.number
                         ? tracking.company || "Tracking active"
                         : order.fulfillmentStatus || order.financialStatus,
+                    );
+                    const reorderableItems = order.lineItems.filter(
+                      (item) => item.variantId,
+                    );
+                    const returnable = order.lineItems.some(
+                      (item) => item.refundableQuantity > 0,
                     );
 
                     return (
@@ -186,6 +226,43 @@ export default async function ProfilePage({
                             </p>
                           </div>
                           <div className={styles.orderActions}>
+                            <form action={buyAgain}>
+                              {reorderableItems.map((item) => (
+                                <input
+                                  key={item.variantId}
+                                  type="hidden"
+                                  name="variantId"
+                                  value={item.variantId ?? ""}
+                                />
+                              ))}
+                              {reorderableItems.map((item) => (
+                                <input
+                                  key={`${item.variantId}-quantity`}
+                                  type="hidden"
+                                  name="quantity"
+                                  value={item.quantity}
+                                />
+                              ))}
+                              <button
+                                type="submit"
+                                className={styles.actionButton}
+                                disabled={reorderableItems.length === 0}
+                              >
+                                Buy again
+                              </button>
+                            </form>
+                            {returnable ? (
+                              <a
+                                href={getReturnHref(order)}
+                                className={styles.textLink}
+                              >
+                                Request return
+                              </a>
+                            ) : (
+                              <span className={styles.mutedAction}>
+                                Return unavailable
+                              </span>
+                            )}
                             {tracking?.url ? (
                               <a
                                 href={tracking.url}
@@ -194,14 +271,29 @@ export default async function ProfilePage({
                                 Track package
                               </a>
                             ) : null}
-                            <a
-                              href={order.statusPageUrl}
-                              className={styles.textLink}
-                            >
-                              Order status
-                            </a>
                           </div>
                         </div>
+                        <details className={styles.statusDetails}>
+                          <summary>Order status</summary>
+                          <dl className={styles.statusGrid}>
+                            <div>
+                              <dt>Payment</dt>
+                              <dd>{cleanStatus(order.financialStatus)}</dd>
+                            </div>
+                            <div>
+                              <dt>Fulfillment</dt>
+                              <dd>{cleanStatus(order.fulfillmentStatus)}</dd>
+                            </div>
+                            <div>
+                              <dt>Tracking</dt>
+                              <dd>
+                                {tracking?.number ||
+                                  tracking?.company ||
+                                  "Not available yet"}
+                              </dd>
+                            </div>
+                          </dl>
+                        </details>
                       </article>
                     );
                   })}
