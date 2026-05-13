@@ -24,7 +24,10 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const cart = getCart();
+  const cart = getCart().catch((error) => {
+    console.error("[cart] Unable to hydrate cart", error);
+    return undefined;
+  });
   const activeCurrencyMarket = await getSelectedCurrencyMarket();
 
   const pages = await getPages().catch(() => []);
