@@ -20,7 +20,7 @@ const TRY_ON_RIG_VERSION = "blckole_avatar_v1";
 
 const getTryOnProductsQuery = /* GraphQL */ `
   query getTryOnProducts($country: CountryCode) @inContext(country: $country) {
-    products(first: 100, query: "metafield:try_on.enabled:true") {
+    products(first: 100) {
       edges {
         node {
           id
@@ -79,6 +79,12 @@ const getTryOnProductsQuery = /* GraphQL */ `
           }
           metafields(
             identifiers: [
+              { namespace: "custom", key: "enabled" }
+              { namespace: "custom", key: "category" }
+              { namespace: "custom", key: "compatible_avatar" }
+              { namespace: "custom", key: "rig_version" }
+              { namespace: "custom", key: "body_mask" }
+              { namespace: "custom", key: "sort_order" }
               { namespace: "try_on", key: "enabled" }
               { namespace: "try_on", key: "category" }
               { namespace: "try_on", key: "compatible_avatar" }
@@ -158,7 +164,8 @@ function metafieldMap(metafields: TryOnMetafield[]) {
 }
 
 function isEnabled(value: string | undefined) {
-  return value === "true" || value === "1";
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "true" || normalized === "1" || normalized === "yes";
 }
 
 function isWearableCategory(
