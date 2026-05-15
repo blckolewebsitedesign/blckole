@@ -1,5 +1,17 @@
 "use client";
 
+import {
+  ContactShadows,
+  Html,
+  OrbitControls,
+  useGLTF,
+} from "@react-three/drei";
+import {
+  Canvas,
+  useFrame,
+  useThree,
+  type ThreeEvent,
+} from "@react-three/fiber";
 import { getSkinToneColor } from "components/tryon/skin-tones";
 import {
   resolveWearableModelUrl,
@@ -8,18 +20,11 @@ import {
 import styles from "components/tryon/tryon.module.css";
 import { bindGarmentToAvatar } from "lib/three/bindGarmentToAvatar";
 import { applyBodyMask } from "lib/three/bodyMask";
-import { Html, OrbitControls, useGLTF } from "@react-three/drei";
-import {
-  Canvas,
-  useFrame,
-  useThree,
-  type ThreeEvent,
-} from "@react-three/fiber";
 import React, { Suspense, useEffect, useMemo, useRef } from "react";
 import { useTryOnStore } from "stores/useTryOnStore";
+import * as THREE from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import type { AvatarGender } from "types/tryon";
-import * as THREE from "three";
 
 type Props = {
   avatar: AvatarGender;
@@ -113,6 +118,8 @@ function tintAvatar(scene: THREE.Object3D, tone: string) {
   });
 }
 
+const LOCKED_POLAR_ANGLE = Math.acos((1.08 - 0.48) / Math.hypot(1.08 - 0.48, 5.78));
+
 function CameraRig() {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
@@ -131,6 +138,8 @@ function CameraRig() {
       enableDamping
       dampingFactor={0.08}
       target={[0, 0.48, 0]}
+      minPolarAngle={LOCKED_POLAR_ANGLE}
+      maxPolarAngle={LOCKED_POLAR_ANGLE}
     />
   );
 }
@@ -240,7 +249,7 @@ function AvatarModel({
       scale,
       position: [
         -center.x * scale,
-        -1.02 - bounds.min.y * scale,
+        -0.6 - bounds.min.y * scale,
         -center.z * scale,
       ] as [number, number, number],
     };
@@ -327,6 +336,15 @@ function SceneContent({
           onWornProductClick={onWornProductClick}
         />
       </SceneErrorBoundary>
+      <ContactShadows
+        position={[0, -0.6, 0]}
+        opacity={10}
+        scale={8}
+        blur={6}
+        far={2.4}
+        resolution={1024}
+        color="#000000"
+      />
       <CameraRig />
     </>
   );

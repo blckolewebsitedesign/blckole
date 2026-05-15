@@ -105,7 +105,7 @@ function PreviewModel({ modelUrl, type }: Pick<Props, "modelUrl" | "type">) {
       <Center>
         <group
           ref={groupRef}
-          scale={type === "bottomwear" ? 1.56 : 1.34}
+          scale={type === "bottomwear" ? 1.2 : 1.34}
           rotation={[0.12, 0, 0]}
         >
           <primitive object={scene} />
