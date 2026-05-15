@@ -2,6 +2,7 @@
 
 import { AvatarStage } from "components/tryon/AvatarStage";
 import styles from "components/tryon/tryon.module.css";
+import { getProductGlbUrlForAvatar } from "lib/tryon/getProductGlbUrl";
 import { Html, OrbitControls, useGLTF } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -118,6 +119,7 @@ export function ExperienceCanvas({ products }: Props) {
   const [resetSignal, setResetSignal] = useState(0);
   const [zoomSignal, setZoomSignal] = useState(0);
   const [webglError, setWebglError] = useState<string | null>(null);
+  const selectedAvatar = useTryOnStore((state) => state.selectedAvatar);
 
   const preloadUrls = useMemo(() => {
     const categories = ["top", "bottom", "shoes", "accessory"] as const;
@@ -125,9 +127,10 @@ export function ExperienceCanvas({ products }: Props) {
       products
         .filter((product) => product.category === category)
         .slice(0, 3)
-        .map((product) => product.glbUrl),
+        .map((product) => getProductGlbUrlForAvatar(product, selectedAvatar))
+        .filter((url): url is string => Boolean(url)),
     );
-  }, [products]);
+  }, [products, selectedAvatar]);
 
   useEffect(() => {
     useGLTF.preload("/models/avatar/male-avatar.glb");

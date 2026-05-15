@@ -11,6 +11,7 @@ import * as THREE from "three";
 type Props = {
   avatarScene: THREE.Object3D;
   product: TryOnProduct;
+  glbUrl: string;
   onError?: (productId: string, message: string) => void;
   onLoaded?: (productId: string) => void;
 };
@@ -74,8 +75,8 @@ function cloneMaterials(scene: THREE.Object3D) {
   });
 }
 
-function InnerGarmentLayer({ avatarScene, product, onLoaded }: Props) {
-  const gltf = useGLTF(product.glbUrl);
+function InnerGarmentLayer({ avatarScene, product, glbUrl, onLoaded }: Props) {
+  const gltf = useGLTF(glbUrl);
   const opacityRef = useRef(0);
 
   const scene = useMemo(() => {

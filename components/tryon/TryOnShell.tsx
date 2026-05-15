@@ -5,6 +5,7 @@ import { LookSummary } from "components/tryon/LookSummary";
 import { ProductRail } from "components/tryon/ProductRail";
 import styles from "components/tryon/tryon.module.css";
 import { AnimatePresence, motion } from "framer-motion";
+import { getProductGlbUrlForAvatar } from "lib/tryon/getProductGlbUrl";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -55,8 +56,9 @@ export function TryOnShell({ products }: Props) {
     () =>
       products.filter(
         (product) =>
-          product.compatibleAvatar === "unisex" ||
-          product.compatibleAvatar === selectedAvatar,
+          (product.compatibleAvatar === "unisex" ||
+            product.compatibleAvatar === selectedAvatar) &&
+          Boolean(getProductGlbUrlForAvatar(product, selectedAvatar)),
       ),
     [products, selectedAvatar],
   );

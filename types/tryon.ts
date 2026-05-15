@@ -32,6 +32,8 @@ export type TryOnProduct = {
   currencyCode: string;
   imageUrl: string;
   glbUrl: string;
+  maleGlbUrl?: string;
+  femaleGlbUrl?: string;
   compatibleAvatar: CompatibleAvatar;
   rigVersion: "blckole_avatar_v1";
   bodyMask: BodyMaskPart[];

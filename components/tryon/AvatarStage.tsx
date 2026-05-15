@@ -2,6 +2,7 @@
 
 import { GarmentLayer } from "components/tryon/GarmentLayer";
 import { applyBodyMask, getCombinedBodyMask } from "lib/three/bodyMask";
+import { getProductGlbUrlForAvatar } from "lib/tryon/getProductGlbUrl";
 import { useTryOnStore } from "stores/useTryOnStore";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -102,15 +103,21 @@ export function AvatarStage({
       scale={fitTransform.scale}
     >
       <primitive object={avatarScene} />
-      {garments.map((product) => (
-        <GarmentLayer
-          key={product.id}
-          avatarScene={avatarScene}
-          product={product}
-          onError={setProductError}
-          onLoaded={clearProductError}
-        />
-      ))}
+      {garments.map((product) => {
+        const glbUrl = getProductGlbUrlForAvatar(product, avatar);
+        if (!glbUrl) return null;
+
+        return (
+          <GarmentLayer
+            key={`${product.id}:${glbUrl}`}
+            avatarScene={avatarScene}
+            product={product}
+            glbUrl={glbUrl}
+            onError={setProductError}
+            onLoaded={clearProductError}
+          />
+        );
+      })}
     </group>
   );
 }

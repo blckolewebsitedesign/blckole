@@ -85,12 +85,16 @@ const getTryOnProductsQuery = /* GraphQL */ `
               { namespace: "custom", key: "rig_version" }
               { namespace: "custom", key: "body_mask" }
               { namespace: "custom", key: "sort_order" }
+              { namespace: "custom", key: "male_glb_url" }
+              { namespace: "custom", key: "female_glb_url" }
               { namespace: "try_on", key: "enabled" }
               { namespace: "try_on", key: "category" }
               { namespace: "try_on", key: "compatible_avatar" }
               { namespace: "try_on", key: "rig_version" }
               { namespace: "try_on", key: "body_mask" }
               { namespace: "try_on", key: "sort_order" }
+              { namespace: "try_on", key: "male_glb_url" }
+              { namespace: "try_on", key: "female_glb_url" }
             ]
           ) {
             namespace
@@ -163,6 +167,11 @@ function metafieldMap(metafields: TryOnMetafield[]) {
   );
 }
 
+function cleanUrl(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed && /^https?:\/\//i.test(trimmed) ? trimmed : undefined;
+}
+
 function isEnabled(value: string | undefined) {
   const normalized = value?.trim().toLowerCase();
   return normalized === "true" || normalized === "1" || normalized === "yes";
@@ -203,21 +212,64 @@ function parseBodyMask(value: string | undefined): BodyMaskPart[] {
   }
 }
 
-function getGlbUrl(media: Connection<ShopifyTryOnMedia>): string | undefined {
-  const model = removeEdgesAndNodes(media).find(
-    (item) => item.mediaContentType === "MODEL_3D" && "sources" in item,
-  );
-  if (!model || !("sources" in model)) return undefined;
+function getGlbSources(media: Connection<ShopifyTryOnMedia>) {
+  return removeEdgesAndNodes(media).flatMap((item) => {
+    if (item.mediaContentType !== "MODEL_3D" || !("sources" in item)) {
+      return [];
+    }
 
-  return model.sources.find((source) => {
-    const format = source.format?.toLowerCase();
-    const mimeType = source.mimeType?.toLowerCase();
-    return (
-      format === "glb" ||
-      mimeType === "model/gltf-binary" ||
-      source.url.toLowerCase().includes(".glb")
-    );
-  })?.url;
+    return item.sources.filter((source) => {
+      const format = source.format?.toLowerCase();
+      const mimeType = source.mimeType?.toLowerCase();
+      return (
+        format === "glb" ||
+        mimeType === "model/gltf-binary" ||
+        source.url.toLowerCase().includes(".glb")
+      );
+    });
+  });
+}
+
+function getGlbUrl(media: Connection<ShopifyTryOnMedia>): string | undefined {
+  return getGlbSources(media)[0]?.url;
+}
+
+function getAvatarGlbUrls(media: Connection<ShopifyTryOnMedia>) {
+  return getGlbSources(media).reduce<{
+    male?: string;
+    female?: string;
+  }>((urls, source) => {
+    const url = source.url.toLowerCase();
+
+    if (!urls.female && url.includes("female")) {
+      return { ...urls, female: source.url };
+    }
+
+    if (!urls.male && url.includes("male")) {
+      return { ...urls, male: source.url };
+    }
+
+    return urls;
+  }, {});
+}
+
+function getMetafieldUrl(
+  fields: Map<string, string>,
+  key: "male_glb_url" | "female_glb_url",
+) {
+  return cleanUrl(fields.get(key));
+}
+
+function getAvatarSpecificGlbUrls(
+  fields: Map<string, string>,
+  media: Connection<ShopifyTryOnMedia>,
+) {
+  const mediaUrls = getAvatarGlbUrls(media);
+
+  return {
+    male: getMetafieldUrl(fields, "male_glb_url") ?? mediaUrls.male,
+    female: getMetafieldUrl(fields, "female_glb_url") ?? mediaUrls.female,
+  };
 }
 
 function normalizeTryOnProduct(
@@ -236,7 +288,11 @@ function normalizeTryOnProduct(
   const rigVersion = fields.get("rig_version");
   if (rigVersion !== TRY_ON_RIG_VERSION) return undefined;
 
-  const glbUrl = getGlbUrl(product.media);
+  const avatarGlbUrls = getAvatarSpecificGlbUrls(fields, product.media);
+  const maleGlbUrl = avatarGlbUrls.male;
+  const femaleGlbUrl = avatarGlbUrls.female;
+  const mediaGlbUrl = getGlbUrl(product.media);
+  const glbUrl = maleGlbUrl ?? femaleGlbUrl ?? mediaGlbUrl;
   if (!glbUrl) return undefined;
 
   const variants = removeEdgesAndNodes(product.variants);
@@ -258,6 +314,8 @@ function normalizeTryOnProduct(
     currencyCode: price.currencyCode,
     imageUrl: product.featuredImage?.url ?? "",
     glbUrl,
+    maleGlbUrl,
+    femaleGlbUrl,
     compatibleAvatar,
     rigVersion,
     bodyMask: parseBodyMask(fields.get("body_mask")),
