@@ -1,4 +1,3 @@
-import { Footer } from "components/footer";
 import { TryOnShell } from "components/tryon/TryOnShell";
 import { getSelectedCountryCode } from "lib/currency-server";
 import { getTryOnProducts } from "lib/shopify/tryOnProducts";
@@ -20,10 +19,5 @@ export default async function TryOnPage(props: {
     return [];
   });
 
-  return (
-    <>
-      <TryOnShell products={products} />
-      <Footer />
-    </>
-  );
+  return <TryOnShell products={products} />;
 }

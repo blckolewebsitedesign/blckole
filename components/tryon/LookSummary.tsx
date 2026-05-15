@@ -39,6 +39,7 @@ export function LookSummary() {
   const { addCartItems } = useCart();
   const [message, formAction, isPending] = useActionState(addItems, null);
   const selectedAvatar = useTryOnStore((state) => state.selectedAvatar);
+  const selectedSkinTone = useTryOnStore((state) => state.selectedSkinTone);
   const top = useTryOnStore((state) => state.selectedTop);
   const bottom = useTryOnStore((state) => state.selectedBottom);
   const shoes = useTryOnStore((state) => state.selectedShoes);
@@ -64,136 +65,168 @@ export function LookSummary() {
     selectedProducts.map((product) => product.variantId),
   );
 
+  const shareLook = async () => {
+    const text = `BLCKOLE try-on: ${selectedProducts
+      .map((product) => product.title)
+      .join(", ")}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "BLCKOLE try-on", text });
+        return;
+      }
+
+      await navigator.clipboard?.writeText(`${text} ${window.location.href}`);
+    } catch {
+      // Share cancellation is a normal browser flow.
+    }
+  };
+
   return (
     <aside className={styles.summary} aria-label="Selected outfit">
-      <header className={styles.summaryHeader}>
-        <span className={styles.summaryKicker}>{selectedAvatar} model</span>
-        <h2 className={styles.summaryTitle}>Current look</h2>
-      </header>
+      <div className={styles.summaryPanel}>
+        <header className={styles.summaryHeader}>
+          <span className={styles.summaryKicker}>
+            {selectedAvatar} / {selectedSkinTone}
+          </span>
+          <h2 className={styles.summaryTitle}>Current look</h2>
+        </header>
 
-      {selectedProducts.length === 0 ? (
-        <p className={styles.summaryEmpty}>
-          Choose pieces to style the avatar.
-        </p>
-      ) : (
-        <div className={styles.summaryItems}>
-          {selectedProducts.map((product) => (
-            <div key={product.id} className={styles.summaryItem}>
-              <div className={styles.summaryItemHead}>
-                <div>
-                  <span className={styles.summaryCategory}>
-                    {product.category}
-                  </span>
-                  <h3 className={styles.summaryProductTitle}>
-                    {product.title}
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  className={styles.removeButton}
-                  onClick={() => removeProduct(product.category, product.id)}
-                >
-                  Remove
-                </button>
-              </div>
-
-              {product.variants.length > 1 ? (
-                <label className={styles.variantLabel}>
-                  Size / variant
-                  <select
-                    className={styles.variantSelect}
-                    value={product.variantId}
-                    onChange={(event) =>
-                      setProductVariant(product.id, event.target.value)
-                    }
+        {selectedProducts.length === 0 ? (
+          <p className={styles.summaryEmpty}>
+            Choose pieces to style the avatar.
+          </p>
+        ) : (
+          <div className={styles.summaryItems}>
+            {selectedProducts.map((product) => (
+              <div key={product.id} className={styles.summaryItem}>
+                <div className={styles.summaryItemHead}>
+                  <div>
+                    <span className={styles.summaryCategory}>
+                      {product.category}
+                    </span>
+                    <h3 className={styles.summaryProductTitle}>
+                      {product.title}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.removeButton}
+                    onClick={() => removeProduct(product.category, product.id)}
                   >
-                    {product.variants.map((variant) => (
-                      <option
-                        key={variant.id}
-                        value={variant.id}
-                        disabled={!variant.availableForSale}
-                      >
-                        {selectedVariantLabel(product, variant.id)}
-                        {!variant.availableForSale ? " · Sold out" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : (
-                <span className={styles.variantStatic}>
-                  {selectedVariantLabel(product, product.variantId)}
+                    Remove
+                  </button>
+                </div>
+
+                {product.variants.length > 1 ? (
+                  <label className={styles.variantLabel}>
+                    Size / variant
+                    <select
+                      className={styles.variantSelect}
+                      value={product.variantId}
+                      onChange={(event) =>
+                        setProductVariant(product.id, event.target.value)
+                      }
+                    >
+                      {product.variants.map((variant) => (
+                        <option
+                          key={variant.id}
+                          value={variant.id}
+                          disabled={!variant.availableForSale}
+                        >
+                          {selectedVariantLabel(product, variant.id)}
+                          {!variant.availableForSale ? " - Sold out" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <span className={styles.variantStatic}>
+                    {selectedVariantLabel(product, product.variantId)}
+                  </span>
+                )}
+
+                <span className={styles.summaryPrice}>
+                  {formatPrice(product.price, product.currencyCode)}
                 </span>
-              )}
-
-              <span className={styles.summaryPrice}>
-                {formatPrice(product.price, product.currencyCode)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className={styles.summaryActions}>
-        <button
-          type="button"
-          className={styles.secondaryButton}
-          onClick={saveLook}
-          disabled={selectedProducts.length === 0}
-        >
-          Save Look
-        </button>
-        <button
-          type="button"
-          className={styles.secondaryButton}
-          onClick={resetLook}
-          disabled={selectedProducts.length === 0}
-        >
-          Reset Look
-        </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <form
-        action={async () => {
-          addCartItems(
-            selectedProducts.map((product) => {
-              const variant =
-                product.variants.find(
-                  (item) => item.id === product.variantId,
-                ) ?? product.variants[0]!;
+      <div className={styles.summaryBar}>
+        <div className={styles.savedLooks}>
+          Saved <span>{savedLooks.length.toString().padStart(2, "0")}</span>
+        </div>
 
-              return {
-                variant,
-                product: {
-                  id: product.shopifyProductId,
-                  handle: product.handle,
-                  title: product.title,
-                  featuredImage: {
-                    url: product.imageUrl || "/logo.svg",
-                    altText: product.title,
-                    width: 1,
-                    height: 1,
+        <div className={styles.summaryActions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={saveLook}
+            disabled={selectedProducts.length === 0}
+          >
+            Save Look
+          </button>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={resetLook}
+            disabled={selectedProducts.length === 0}
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => void shareLook()}
+            disabled={selectedProducts.length === 0}
+          >
+            Share
+          </button>
+        </div>
+
+        <form
+          className={styles.addForm}
+          action={async () => {
+            addCartItems(
+              selectedProducts.map((product) => {
+                const variant =
+                  product.variants.find(
+                    (item) => item.id === product.variantId,
+                  ) ?? product.variants[0]!;
+
+                return {
+                  variant,
+                  product: {
+                    id: product.shopifyProductId,
+                    handle: product.handle,
+                    title: product.title,
+                    featuredImage: {
+                      url: product.imageUrl || "/logo.svg",
+                      altText: product.title,
+                      width: 1,
+                      height: 1,
+                    },
                   },
-                },
-              };
-            }),
-          );
-          await addItemsAction();
-        }}
-      >
-        <button
-          type="submit"
-          className={styles.addButton}
-          disabled={selectedProducts.length === 0 || isPending}
+                };
+              }),
+            );
+            await addItemsAction();
+          }}
         >
-          <span>{isPending ? "Adding" : "Add All To Bag"}</span>
-          {selectedProducts.length > 0 ? (
-            <span>· {formatPrice(total.toString(), currencyCode)}</span>
-          ) : null}
-        </button>
-      </form>
-
-      <div className={styles.savedLooks}>
-        Saved looks <span>{savedLooks.length.toString().padStart(2, "0")}</span>
+          <button
+            type="submit"
+            className={styles.addButton}
+            disabled={selectedProducts.length === 0 || isPending}
+          >
+            <span>{isPending ? "Adding" : "Add All To Bag"}</span>
+            {selectedProducts.length > 0 ? (
+              <span> / {formatPrice(total.toString(), currencyCode)}</span>
+            ) : null}
+          </button>
+        </form>
       </div>
 
       {message ? (

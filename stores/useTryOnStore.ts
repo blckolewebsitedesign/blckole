@@ -1,12 +1,18 @@
 "use client";
 
 import { create } from "zustand";
-import type { AvatarGender, TryOnLook, TryOnProduct } from "types/tryon";
+import type {
+  AvatarGender,
+  SkinToneId,
+  TryOnLook,
+  TryOnProduct,
+} from "types/tryon";
 
 const PULL_DURATION_MS = 620;
 
 type TryOnState = {
   selectedAvatar: AvatarGender;
+  selectedSkinTone: SkinToneId;
   selectedTop: TryOnProduct | null;
   selectedBottom: TryOnProduct | null;
   selectedShoes: TryOnProduct | null;
@@ -15,6 +21,7 @@ type TryOnState = {
   savedLooks: TryOnLook[];
   productErrors: Record<string, string>;
   setAvatar: (avatar: AvatarGender) => void;
+  setSkinTone: (tone: SkinToneId) => void;
   selectProduct: (product: TryOnProduct) => void;
   setProductVariant: (productId: string, variantId: string) => void;
   resetLook: () => void;
@@ -51,6 +58,7 @@ function updateProductInSlot(
 function currentLook(state: TryOnState): TryOnLook {
   return {
     avatar: state.selectedAvatar,
+    skinTone: state.selectedSkinTone,
     top: state.selectedTop,
     bottom: state.selectedBottom,
     shoes: state.selectedShoes,
@@ -59,7 +67,8 @@ function currentLook(state: TryOnState): TryOnLook {
 }
 
 export const useTryOnStore = create<TryOnState>((set, get) => ({
-  selectedAvatar: "male",
+  selectedAvatar: "female",
+  selectedSkinTone: "fair",
   selectedTop: null,
   selectedBottom: null,
   selectedShoes: null,
@@ -76,6 +85,7 @@ export const useTryOnStore = create<TryOnState>((set, get) => ({
       selectedAccessories: [],
       pendingProduct: null,
     }),
+  setSkinTone: (tone) => set({ selectedSkinTone: tone }),
   selectProduct: (product) => {
     set({ pendingProduct: product });
 

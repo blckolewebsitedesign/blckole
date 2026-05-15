@@ -1,6 +1,7 @@
 "use client";
 
 import { GarmentLayer } from "components/tryon/GarmentLayer";
+import { getSkinToneColor } from "components/tryon/skin-tones";
 import { applyBodyMask, getCombinedBodyMask } from "lib/three/bodyMask";
 import { getProductGlbUrlForAvatar } from "lib/tryon/getProductGlbUrl";
 import { useTryOnStore } from "stores/useTryOnStore";
@@ -24,6 +25,44 @@ function avatarUrl(avatar: AvatarGender) {
   return `/models/avatar/${avatar}-avatar.glb`;
 }
 
+function cloneMaterial(material: THREE.Material) {
+  return material.clone();
+}
+
+function cloneSceneMaterials(scene: THREE.Object3D) {
+  scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+
+    object.material = Array.isArray(object.material)
+      ? object.material.map(cloneMaterial)
+      : cloneMaterial(object.material);
+  });
+}
+
+function tintAvatar(scene: THREE.Object3D, tone: string) {
+  const toneColor = new THREE.Color(tone);
+
+  scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+
+    const materials = Array.isArray(object.material)
+      ? object.material
+      : [object.material];
+
+    for (const material of materials) {
+      if ("color" in material && material.color instanceof THREE.Color) {
+        material.color.copy(toneColor);
+      }
+
+      if ("emissive" in material && material.emissive instanceof THREE.Color) {
+        material.emissive.copy(toneColor).multiplyScalar(0.35);
+      }
+
+      material.needsUpdate = true;
+    }
+  });
+}
+
 export function AvatarStage({
   avatar,
   top,
@@ -34,11 +73,13 @@ export function AvatarStage({
 }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useGLTF(avatarUrl(avatar));
+  const selectedSkinTone = useTryOnStore((state) => state.selectedSkinTone);
   const setProductError = useTryOnStore((state) => state.setProductError);
   const clearProductError = useTryOnStore((state) => state.clearProductError);
 
   const avatarScene = useMemo(() => {
     const scene = clone(gltf.scene);
+    cloneSceneMaterials(scene);
     scene.traverse((object) => {
       if (object instanceof THREE.SkinnedMesh || object instanceof THREE.Mesh) {
         object.frustumCulled = false;
@@ -89,6 +130,10 @@ export function AvatarStage({
   useEffect(() => {
     applyBodyMask(avatarScene, bodyMask);
   }, [avatarScene, bodyMask]);
+
+  useEffect(() => {
+    tintAvatar(avatarScene, getSkinToneColor(selectedSkinTone));
+  }, [avatarScene, selectedSkinTone]);
 
   useFrame((_, delta) => {
     if (!rotate || !groupRef.current) return;

@@ -95,11 +95,22 @@ function TryOnScene({ rotate }: { rotate: boolean }) {
 
   return (
     <>
-      <hemisphereLight args={["#ffffff", "#891824", 2.2]} />
-      <ambientLight intensity={2.2} />
-      <directionalLight position={[2.5, 4, 3]} intensity={3.2} />
-      <directionalLight position={[-3, 2, -2]} intensity={1.7} />
-      <directionalLight position={[0, 1.6, -3]} intensity={2.1} />
+      <hemisphereLight args={["#ffffff", "#6f0711", 1.9]} />
+      <ambientLight intensity={1.45} />
+      <directionalLight position={[0, 4, 4]} intensity={3.9} />
+      <directionalLight
+        position={[-3, 2, 1.5]}
+        intensity={1.5}
+        color="#ffccd1"
+      />
+      <directionalLight position={[3, 2, -2]} intensity={1.6} color="#b81f30" />
+      <spotLight
+        position={[0, 4, 2.8]}
+        angle={0.36}
+        penumbra={0.8}
+        intensity={6}
+        color="#ffffff"
+      />
       <SceneErrorBoundary resetKey={selectedAvatar}>
         <AvatarStage
           avatar={selectedAvatar}
@@ -134,6 +145,7 @@ export function ExperienceCanvas({ products }: Props) {
 
   useEffect(() => {
     useGLTF.preload("/models/avatar/male-avatar.glb");
+    useGLTF.preload("/models/avatar/female-avatar.glb");
     preloadUrls.forEach((url) => useGLTF.preload(url));
   }, [preloadUrls]);
 
@@ -163,7 +175,7 @@ export function ExperienceCanvas({ products }: Props) {
             );
           }}
         >
-          <color attach="background" args={["#101010"]} />
+          <color attach="background" args={["#020202"]} />
           <Suspense
             fallback={
               <Html center className={styles.canvasMessage}>
@@ -188,7 +200,7 @@ export function ExperienceCanvas({ products }: Props) {
           onClick={() => setRotate((value) => !value)}
           aria-pressed={rotate}
         >
-          Rotate
+          View in 3D
         </button>
         <button
           type="button"

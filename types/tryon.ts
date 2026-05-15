@@ -1,5 +1,13 @@
 export type AvatarGender = "male" | "female";
 
+export type SkinToneId =
+  | "porcelain"
+  | "fair"
+  | "sand"
+  | "tan"
+  | "umber"
+  | "deep";
+
 export type CompatibleAvatar = AvatarGender | "unisex";
 
 export type WearableCategory = "top" | "bottom" | "shoes" | "accessory";
@@ -42,6 +50,7 @@ export type TryOnProduct = {
 
 export type TryOnLook = {
   avatar: AvatarGender;
+  skinTone: SkinToneId;
   top: TryOnProduct | null;
   bottom: TryOnProduct | null;
   shoes: TryOnProduct | null;
