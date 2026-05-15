@@ -20,7 +20,14 @@ import {
 import styles from "components/tryon/tryon.module.css";
 import { bindGarmentToAvatar } from "lib/three/bindGarmentToAvatar";
 import { applyBodyMask } from "lib/three/bodyMask";
-import React, { Suspense, useEffect, useMemo, useRef } from "react";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTryOnStore } from "stores/useTryOnStore";
 import * as THREE from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -118,7 +125,13 @@ function tintAvatar(scene: THREE.Object3D, tone: string) {
   });
 }
 
-const LOCKED_POLAR_ANGLE = Math.acos((1.08 - 0.48) / Math.hypot(1.08 - 0.48, 5.78));
+const LOCKED_POLAR_ANGLE = Math.acos(
+  (1.08 - 0.48) / Math.hypot(1.08 - 0.48, 5.78),
+);
+
+function getWornProductKey(product: TryOnUiProduct, avatar: AvatarGender) {
+  return `${product.id}:${resolveWearableModelUrl(product, avatar)}`;
+}
 
 function CameraRig() {
   const controlsRef = useRef<any>(null);
@@ -170,16 +183,21 @@ function WornProductLayer({
   avatar,
   avatarScene,
   product,
+  productKey,
   onProductClick,
+  onReady,
 }: {
   avatar: AvatarGender;
   avatarScene: THREE.Object3D;
   product: TryOnUiProduct;
+  productKey: string;
   onProductClick: (product: TryOnUiProduct) => void;
+  onReady: (productKey: string) => void;
 }) {
   const glbUrl = resolveWearableModelUrl(product, avatar);
   const gltf = useGLTF(glbUrl);
   const opacityRef = useRef(0);
+  const readySentRef = useRef(false);
   const scene = useMemo(() => {
     const garmentScene = clone(gltf.scene);
     cloneSceneMaterials(garmentScene);
@@ -189,9 +207,15 @@ function WornProductLayer({
   }, [avatarScene, gltf.scene]);
 
   useFrame((_, delta) => {
-    if (opacityRef.current >= 1) return;
-    opacityRef.current = Math.min(1, opacityRef.current + delta * 3.2);
-    setSceneOpacity(scene, opacityRef.current);
+    if (opacityRef.current < 1) {
+      opacityRef.current = Math.min(1, opacityRef.current + delta * 3.2);
+      setSceneOpacity(scene, opacityRef.current);
+    }
+
+    if (!readySentRef.current && opacityRef.current >= 0.92) {
+      readySentRef.current = true;
+      onReady(productKey);
+    }
   });
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
@@ -207,6 +231,12 @@ function WornProductLayer({
   const handlePointerOut = () => {
     document.body.style.cursor = "";
   };
+
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = "";
+    };
+  }, []);
 
   return (
     <primitive
@@ -234,6 +264,17 @@ function AvatarModel({
     cloneSceneMaterials(scene);
     return scene;
   }, [gltf.scene]);
+  const productEntries = useMemo(
+    () =>
+      products.map((product) => ({
+        product,
+        productKey: getWornProductKey(product, avatar),
+      })),
+    [avatar, products],
+  );
+  const [readyWearableKeys, setReadyWearableKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const fitTransform = useMemo(() => {
     const bounds = new THREE.Box3().setFromObject(avatarScene);
@@ -249,18 +290,54 @@ function AvatarModel({
       scale,
       position: [
         -center.x * scale,
-        -0.6 - bounds.min.y * scale,
+        -0.5 - bounds.min.y * scale,
         -center.z * scale,
       ] as [number, number, number],
     };
   }, [avatarScene]);
 
   useEffect(() => {
+    const activeKeys = new Set(productEntries.map((entry) => entry.productKey));
+
+    setReadyWearableKeys((currentKeys) => {
+      const nextKeys = new Set(
+        Array.from(currentKeys).filter((key) => activeKeys.has(key)),
+      );
+
+      if (
+        nextKeys.size === currentKeys.size &&
+        Array.from(nextKeys).every((key) => currentKeys.has(key))
+      ) {
+        return currentKeys;
+      }
+
+      return nextKeys;
+    });
+  }, [productEntries]);
+
+  const markWearableReady = useCallback((productKey: string) => {
+    setReadyWearableKeys((currentKeys) => {
+      if (currentKeys.has(productKey)) return currentKeys;
+
+      const nextKeys = new Set(currentKeys);
+      nextKeys.add(productKey);
+      return nextKeys;
+    });
+  }, []);
+
+  useEffect(() => {
+    const readyProducts = productEntries
+      .filter((entry) => readyWearableKeys.has(entry.productKey))
+      .map((entry) => entry.product);
+
+    // Only hide avatar body sections after their replacement garment is loadedFopad
+    // and mostly visible. Rapid product scrolling can otherwise mask the body
+    // before the new GLB is ready, which makes the main character disappear.
     applyBodyMask(
       avatarScene,
-      Array.from(new Set(products.flatMap((product) => product.bodyMask))),
+      Array.from(new Set(readyProducts.flatMap((product) => product.bodyMask))),
     );
-  }, [avatarScene, products]);
+  }, [avatarScene, productEntries, readyWearableKeys]);
 
   useEffect(() => {
     tintAvatar(avatarScene, getSkinToneColor(selectedSkinTone));
@@ -273,20 +350,17 @@ function AvatarModel({
       scale={fitTransform.scale}
     >
       <primitive object={avatarScene} />
-      {products.map((product) => {
-        const glbUrl = resolveWearableModelUrl(product, avatar);
-
+      {productEntries.map(({ product, productKey }) => {
         return (
-          <WearableErrorBoundary
-            key={`${product.id}:${glbUrl}`}
-            resetKey={glbUrl}
-          >
+          <WearableErrorBoundary key={productKey} resetKey={productKey}>
             <Suspense fallback={null}>
               <WornProductLayer
                 avatar={avatar}
                 avatarScene={avatarScene}
                 product={product}
+                productKey={productKey}
                 onProductClick={onWornProductClick}
+                onReady={markWearableReady}
               />
             </Suspense>
           </WearableErrorBoundary>
@@ -337,12 +411,12 @@ function SceneContent({
         />
       </SceneErrorBoundary>
       <ContactShadows
-        position={[0, -0.6, 0]}
+        position={[0, -0.5, 0]}
         opacity={10}
         scale={8}
         blur={6}
         far={2.4}
-        resolution={1024}
+        resolution={512}
         color="#000000"
       />
       <CameraRig />

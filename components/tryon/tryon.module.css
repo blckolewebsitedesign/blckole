@@ -80,7 +80,7 @@
 }
 
 .switchLayer {
-  top: 112rem;
+  top: 140rem;
   z-index: 18;
   pointer-events: none;
 }
@@ -565,9 +565,9 @@
   z-index: 17;
   display: grid;
   grid-template-columns: 88rem minmax(0, 1fr);
-  gap: 14rem;
+  gap: 14rem 14rem;
   width: min(360rem, 38vw);
-  padding: 12rem;
+  padding: 14rem 12rem 12rem;
   border: 1rem solid rgba(255, 38, 56, 0.82);
   color: #ffffff;
   background:
@@ -587,8 +587,78 @@
 }
 
 .tooltipBottom {
-  left: 24vw;
-  top: clamp(430rem, 48svh, 520rem);
+  right: 14vw;
+  left: auto;
+  top: clamp(720rem, 78svh, 820rem);
+}
+
+.tooltipHudHeader {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7rem;
+  font-family: var(--font-family-mono);
+  font-size: 9rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 38, 56, 0.95);
+  text-shadow: 0 0 8rem rgba(255, 38, 56, 0.6);
+}
+
+.tooltipPulse {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  background: #ff2638;
+  box-shadow: 0 0 10rem rgba(255, 38, 56, 0.95);
+  animation: tooltipPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tooltipPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+.tooltipScan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2rem;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 38, 56, 0.8),
+    transparent
+  );
+  box-shadow: 0 0 12rem rgba(255, 38, 56, 0.7);
+  animation: tooltipScan 2.4s linear infinite;
+}
+
+@keyframes tooltipScan {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(88rem);
+    opacity: 0;
+  }
 }
 
 .tooltipCorner {
@@ -668,14 +738,17 @@
 
 .tooltipConnector {
   position: absolute;
-  right: -116rem;
-  bottom: -8rem;
-  width: 116rem;
-  height: 48rem;
+  right: auto;
+  left: 90%;
+  top: 50%;
+  bottom: auto;
+  width: clamp(120rem, calc(28vw - min(360rem, 38vw)), 260rem);
+  height: 120rem;
+  border-top: 1rem solid rgba(255, 38, 56, 0.82);
   border-right: 1rem solid rgba(255, 38, 56, 0.82);
-  border-bottom: 1rem solid rgba(255, 38, 56, 0.82);
-  transform: skewX(34deg);
-  transform-origin: left top;
+  border-bottom: 0;
+  border-left: 0;
+  transform: none;
 }
 
 .tooltipConnector::after {
@@ -691,11 +764,24 @@
 }
 
 .tooltipBottom .tooltipConnector {
-  right: -128rem;
-  bottom: 20rem;
-  width: 128rem;
-  height: 66rem;
-  transform: skewX(26deg);
+  left: auto;
+  right: 100%;
+  top: auto;
+  bottom: 50%;
+  width: clamp(200rem, calc(36vw - min(360rem, 38vw)), 360rem);
+  height: 160rem;
+  border-right: 0;
+  border-top: 0;
+  border-left: 1rem solid rgba(255, 38, 56, 0.82);
+  border-bottom: 1rem solid rgba(255, 38, 56, 0.82);
+  transform: none;
+}
+
+.tooltipBottom .tooltipConnector::after {
+  right: auto;
+  bottom: auto;
+  left: -4rem;
+  top: -4rem;
 }
 
 .bottomHud {
@@ -776,9 +862,13 @@
     right: 104rem;
   }
 
-  .tooltipTop,
-  .tooltipBottom {
+  .tooltipTop {
     left: 16vw;
+  }
+
+  .tooltipBottom {
+    right: 10vw;
+    left: auto;
   }
 
   .bottomHud {

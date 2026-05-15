@@ -35,6 +35,10 @@ export function ProductTooltipCard({ product }: Props) {
           transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
         >
           <span className={styles.tooltipCorner} aria-hidden="true" />
+          <span className={styles.tooltipHudHeader}>
+            <span className={styles.tooltipPulse} aria-hidden="true" />
+            {`// ${product.type === "topwear" ? "TOPWEAR" : "BOTTOMWEAR"} // ACTIVE`}
+          </span>
           <div className={styles.tooltipThumb}>
             {showImage ? (
               <img
@@ -44,6 +48,7 @@ export function ProductTooltipCard({ product }: Props) {
                 onError={() => setShowImage(false)}
               />
             ) : null}
+            <span className={styles.tooltipScan} aria-hidden="true" />
           </div>
           <div className={styles.tooltipMeta}>
             <h3>{product.name}</h3>
