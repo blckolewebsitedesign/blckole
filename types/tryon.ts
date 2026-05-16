@@ -2,11 +2,11 @@ export type AvatarGender = "male" | "female";
 
 export type SkinToneId =
   | "porcelain"
+  | "ivory"
   | "fair"
+  | "peach"
   | "sand"
-  | "tan"
-  | "umber"
-  | "deep";
+  | "warmSand";
 
 export type CompatibleAvatar = AvatarGender | "unisex";
 

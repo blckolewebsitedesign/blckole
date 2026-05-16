@@ -1,12 +1,12 @@
 import type { SkinToneId } from "types/tryon";
 
 export const SKIN_TONES: { id: SkinToneId; label: string; color: string }[] = [
-  { id: "porcelain", label: "Porcelain", color: "#f4d9ca" },
-  { id: "fair", label: "Fair", color: "#e7bfa7" },
-  { id: "sand", label: "Sand", color: "#c99272" },
-  { id: "tan", label: "Tan", color: "#a87353" },
-  { id: "umber", label: "Umber", color: "#795039" },
-  { id: "deep", label: "Deep", color: "#50311f" },
+  { id: "porcelain", label: "Porcelain", color: "#f7dfd2" },
+  { id: "ivory", label: "Ivory", color: "#f1d0c0" },
+  { id: "fair", label: "Fair", color: "#edc7b3" },
+  { id: "peach", label: "Peach", color: "#e4b69d" },
+  { id: "sand", label: "Sand", color: "#d9a07d" },
+  { id: "warmSand", label: "Warm Sand", color: "#c99272" },
 ];
 
 export function getSkinToneColor(id: SkinToneId) {
