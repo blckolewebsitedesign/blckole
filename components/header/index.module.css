@@ -170,6 +170,13 @@
   .zoneRightNav {
     display: none;
   }
+  .logoLink {
+    grid-column: 2;
+  }
+  .zoneRight {
+    grid-column: 3;
+    justify-self: end;
+  }
   .navLink,
   .cartBtn {
     font-size: 10rem;

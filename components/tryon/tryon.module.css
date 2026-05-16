@@ -342,36 +342,25 @@
 
 .skinPanel {
   position: absolute;
-  top: 176rem;
-  right: 8.4vw;
-  z-index: 16;
-  width: 252rem;
-  padding: 11rem;
-  border: 1rem solid rgba(255, 255, 255, 0.36);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 32%),
-    rgba(0, 0, 0, 0.54);
-  box-shadow:
-    0 0 26rem rgba(215, 25, 40, 0.12),
-    0 0 30rem rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1rem rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(14rem);
-}
-
-.skinPanel::before {
-  content: "";
-  position: absolute;
-  left: -12rem;
-  top: 37rem;
-  width: 12rem;
-  height: 25rem;
-  border: 1rem solid rgba(255, 255, 255, 0.22);
-  border-right: 0;
-  background: rgba(0, 0, 0, 0.62);
+  top: 140rem;
+  right: clamp(42rem, 5vw, 72rem);
+  z-index: 20;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .skinHeader {
-  margin-bottom: 8rem;
+  margin: 0;
+  padding: 8rem 12rem;
+  border: 1rem solid rgba(255, 255, 255, 0.2);
+  border-radius: 999rem;
+  background: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
   font-family: var(--font-family-mono);
   font-size: 9rem;
   font-weight: 700;
@@ -381,11 +370,17 @@
 }
 
 .skinSwatches {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8rem;
   display: flex;
+  flex-direction: row;
   gap: 8rem;
   padding: 8rem;
   border: 1rem solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 999rem;
 }
 
 .skinSwatch {
@@ -995,6 +990,38 @@
   color: #ff2638;
 }
 
+.categoryArrows {
+  display: none;
+}
+
+.cycleArrow {
+  pointer-events: auto;
+  width: 48rem;
+  height: 48rem;
+  border-radius: 50%;
+  border: 1rem solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font-family: var(--font-family-mono);
+  font-size: 22rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.cycleArrow:hover {
+  background: rgba(255, 38, 56, 0.6);
+  border-color: #ff2638;
+  box-shadow: 0 0 16rem rgba(255, 38, 56, 0.4);
+}
+
+.cycleArrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .actionMessage {
   grid-column: 1 / -1;
   justify-self: center;
@@ -1009,7 +1036,6 @@
 @media (max-width: 1180px) {
   .skinPanel {
     right: 28rem;
-    width: 300rem;
   }
 
   .floatingRail {
@@ -1063,38 +1089,66 @@
   }
 
   .genderSwitch {
-    width: min(100%, 360rem);
+    width: min(100%, 220rem);
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .genderOption {
+    min-height: 32rem;
+    padding: 0 12rem;
+    font-size: 9rem;
   }
 
   .sceneWrap {
     position: relative;
-    height: 58svh;
-    min-height: 470rem;
+    height: 74svh;
+    min-height: 560rem;
+    margin-top: 40rem;
     margin-right: calc(var(--grid-margin) * -1);
     margin-left: calc(var(--grid-margin) * -1);
   }
 
   .skinPanel {
-    position: relative;
-    top: auto;
-    right: auto;
-    z-index: 12;
-    width: 100%;
-    margin-top: 16rem;
+    top: 116rem;
+    right: var(--grid-margin);
   }
 
-  .skinPanel::before {
-    display: none;
+  .skinHeader {
+    padding: 6rem 10rem;
+    font-size: 8rem;
+  }
+
+  .skinSwatches {
+    padding: 6rem;
+    gap: 6rem;
+  }
+
+  .skinSwatch {
+    width: 18rem;
+    height: 18rem;
   }
 
   .floatingRail {
-    position: relative;
-    top: auto;
-    grid-template-columns: 1fr;
-    gap: 10rem;
-    padding: 0;
-    margin-top: 18rem;
+    display: none !important;
+  }
+
+  .categoryArrows {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 var(--grid-margin, 12rem);
+    z-index: 18;
+    pointer-events: none;
+  }
+
+  .categoryArrows.topwear {
+    top: 35svh;
+  }
+
+  .categoryArrows.bottomwear {
+    top: 60svh;
   }
 
   .floatingRail::before,

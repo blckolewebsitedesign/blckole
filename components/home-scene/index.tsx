@@ -194,7 +194,10 @@ export function HomeScene({
 
   return (
     <div style={{ position: "relative" }}>
-      <div className={styles.mainFixed}>
+      <div
+        className={styles.mainFixed}
+        data-detail-open={detailOpen ? "true" : "false"}
+      >
         <ScrollStage
           products={products}
           recommendationsMap={recommendationsMap}

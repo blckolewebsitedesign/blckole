@@ -1,12 +1,20 @@
 .mainFixed {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 340vh;
   z-index: 1;
+}
+
+.mainFixed[data-detail-open="true"] {
+  height: 100vh;
 }
 
 @media (max-width: 768px) {
   .mainFixed {
+    height: 280vh;
+  }
+
+  .mainFixed[data-detail-open="true"] {
     height: auto;
     min-height: 100svh;
   }

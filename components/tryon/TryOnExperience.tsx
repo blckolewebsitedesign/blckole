@@ -448,6 +448,24 @@ export function TryOnExperience({
 
         <SkinToneSelector />
 
+        <div className={`${styles.categoryArrows} ${styles.topwear}`}>
+          <button className={styles.cycleArrow} disabled={isTopwearSwitching} onClick={() => cycleProduct('topwear', -1)} aria-label="Previous Topwear">
+            {'<'}
+          </button>
+          <button className={styles.cycleArrow} disabled={isTopwearSwitching} onClick={() => cycleProduct('topwear', 1)} aria-label="Next Topwear">
+            {'>'}
+          </button>
+        </div>
+
+        <div className={`${styles.categoryArrows} ${styles.bottomwear}`}>
+          <button className={styles.cycleArrow} disabled={isBottomwearSwitching} onClick={() => cycleProduct('bottomwear', -1)} aria-label="Previous Bottomwear">
+            {'<'}
+          </button>
+          <button className={styles.cycleArrow} disabled={isBottomwearSwitching} onClick={() => cycleProduct('bottomwear', 1)} aria-label="Next Bottomwear">
+            {'>'}
+          </button>
+        </div>
+
         <FloatingProductCarousel
           title="Topwear"
           type="topwear"
@@ -473,8 +491,6 @@ export function TryOnExperience({
         <ProductTooltipCard
           product={isProductAlreadyWorn ? activeTooltipProduct : null}
         />
-
-        <ActionButtons onReset={resetLook} onShare={() => void shareLook()} />
 
         <Canvas
           className="pointer-events-none"

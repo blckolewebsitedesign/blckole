@@ -2,19 +2,21 @@
 
 import { SKIN_TONES } from "components/tryon/skin-tones";
 import styles from "components/tryon/tryon.module.css";
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { useTryOnStore } from "stores/useTryOnStore";
 
 export function SkinToneSelector() {
   const selectedSkinTone = useTryOnStore((state) => state.selectedSkinTone);
   const setSkinTone = useTryOnStore((state) => state.setSkinTone);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <section className={styles.skinPanel} aria-label="Skin tone">
-      <header className={styles.skinHeader}>
-        <span>Skin tone</span>
+      <header className={styles.skinHeader} onClick={() => setIsOpen(!isOpen)}>
+        <span>Skin tone {isOpen ? '▲' : '▼'}</span>
       </header>
-      <div className={styles.skinSwatches}>
+      {isOpen && (
+        <div className={styles.skinSwatches}>
         {SKIN_TONES.map((tone) => (
           <button
             key={tone.id}
@@ -29,7 +31,8 @@ export function SkinToneSelector() {
             title={tone.label}
           />
         ))}
-      </div>
+        </div>
+      )}
     </section>
   );
 }
