@@ -7,7 +7,7 @@ import { getSkinToneColor } from "components/tryon/skin-tones";
 import { type TryOnUiProduct } from "components/tryon/tryon-products";
 import styles from "components/tryon/tryon.module.css";
 import { applyBodyMask } from "lib/three/bodyMask";
-import React, {
+import {
   Suspense,
   useCallback,
   useEffect,

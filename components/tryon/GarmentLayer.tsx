@@ -59,8 +59,14 @@ function setSceneOpacity(scene: THREE.Object3D, opacity: number) {
       : [object.material];
 
     for (const material of materials) {
-      material.transparent = opacity < 1;
-      material.opacity = opacity;
+      const origTransparent = material.userData.originalTransparent ?? false;
+      const origOpacity = material.userData.originalOpacity ?? 1;
+      const origDepthWrite = material.userData.originalDepthWrite ?? true;
+
+      const isFading = opacity < 0.999;
+      material.transparent = isFading ? true : origTransparent;
+      material.opacity = isFading ? opacity * origOpacity : origOpacity;
+      material.depthWrite = isFading ? false : origDepthWrite;
       material.needsUpdate = true;
     }
   });
@@ -69,9 +75,18 @@ function setSceneOpacity(scene: THREE.Object3D, opacity: number) {
 function cloneMaterials(scene: THREE.Object3D) {
   scene.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
+    
+    const saveMaterialProps = (mat: THREE.Material) => {
+      const m = mat.clone();
+      m.userData.originalTransparent = m.transparent;
+      m.userData.originalOpacity = m.opacity;
+      m.userData.originalDepthWrite = m.depthWrite;
+      return m;
+    };
+
     object.material = Array.isArray(object.material)
-      ? object.material.map((material) => material.clone())
-      : object.material.clone();
+      ? object.material.map(saveMaterialProps)
+      : saveMaterialProps(object.material);
   });
 }
 

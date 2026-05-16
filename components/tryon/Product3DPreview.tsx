@@ -1,7 +1,7 @@
 "use client";
 
-import { Center } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Center, PerspectiveCamera, View } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import { SafeGLBModel } from "components/tryon/SafeGLBModel";
 import styles from "components/tryon/tryon.module.css";
 import React, { Suspense, useRef, useState } from "react";
@@ -113,6 +113,8 @@ export function Product3DPreview({
     <PreviewFallback thumbnail={thumbnail} name={name} type={type} />
   );
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   return (
     <PreviewErrorBoundary resetKey={modelUrl} fallback={fallback}>
       <div
@@ -120,15 +122,12 @@ export function Product3DPreview({
         data-active={active ? "true" : "false"}
         data-type={type}
       >
-        <Canvas
-          camera={{ position: [0, 0.1, 2.52], fov: 34 }}
-          dpr={1}
-          gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
-        >
+        <View className="absolute inset-0 h-full w-full">
+          <PerspectiveCamera makeDefault position={[0, 0.1, 2.52]} fov={34} />
           <Suspense fallback={null}>
             <RotatingPreview modelUrl={modelUrl} type={type} />
           </Suspense>
-        </Canvas>
+        </View>
       </div>
     </PreviewErrorBoundary>
   );

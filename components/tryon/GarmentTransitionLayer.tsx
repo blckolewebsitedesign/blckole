@@ -51,11 +51,14 @@ function setSceneOpacity(scene: THREE.Object3D, opacity: number) {
       : [object.material];
 
     for (const material of materials) {
-      material.transparent = opacity < 0.999;
-      material.opacity = opacity;
-      // Disable depthWrite while semi-transparent so the garment doesn't
-      // punch a hole into the avatar; re-enable once fully opaque.
-      material.depthWrite = opacity >= 0.95;
+      const origTransparent = material.userData.originalTransparent ?? false;
+      const origOpacity = material.userData.originalOpacity ?? 1;
+      const origDepthWrite = material.userData.originalDepthWrite ?? true;
+
+      const isFading = opacity < 0.999;
+      material.transparent = isFading ? true : origTransparent;
+      material.opacity = isFading ? opacity * origOpacity : origOpacity;
+      material.depthWrite = isFading ? false : origDepthWrite;
       material.needsUpdate = true;
     }
   });
@@ -113,9 +116,18 @@ function SingleGarmentSlot({
     cloned.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
       object.frustumCulled = false;
+      
+      const saveMaterialProps = (mat: THREE.Material) => {
+        const m = mat.clone();
+        m.userData.originalTransparent = m.transparent;
+        m.userData.originalOpacity = m.opacity;
+        m.userData.originalDepthWrite = m.depthWrite;
+        return m;
+      };
+
       object.material = Array.isArray(object.material)
-        ? object.material.map((material) => material.clone())
-        : object.material.clone();
+        ? object.material.map(saveMaterialProps)
+        : saveMaterialProps(object.material);
     });
     bindGarmentToAvatar(cloned, avatarScene);
     setSceneOpacity(cloned, 0);

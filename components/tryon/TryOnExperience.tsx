@@ -1,5 +1,7 @@
 "use client";
 
+import { Canvas } from "@react-three/fiber";
+import { View } from "@react-three/drei";
 import { ActionButtons } from "components/tryon/ActionButtons";
 import { AvatarGenderSwitch } from "components/tryon/AvatarGenderSwitch";
 import { FloatingProductCarousel } from "components/tryon/FloatingProductCarousel";
@@ -108,6 +110,7 @@ export function TryOnExperience({
   const switching = useTryOnSwitching({ cooldownMs: ROOT_WHEEL_COOLDOWN_MS });
   const rootWheelDeltaRef = useRef(0);
   const rootLastWheelSwitchRef = useRef(0);
+  const mainRef = useRef<HTMLElement>(null);
 
   const compatibleTopwear = useMemo(
     () =>
@@ -322,49 +325,73 @@ export function TryOnExperience({
     ],
   );
 
-  const handleExperienceWheel = (event: WheelEvent<HTMLElement>) => {
-    const findWheelZone = (type: TryOnUiProduct["type"]) =>
-      event.currentTarget.querySelector<HTMLElement>(
-        `[data-tryon-wheel-zone="${type}"]`,
-      );
-    const isPointerInsideZone = (element: HTMLElement | null) => {
-      if (!element) return false;
+  const handleExperienceWheel = useCallback(
+    (event: globalThis.WheelEvent) => {
+      const currentTarget = mainRef.current;
+      if (!currentTarget) return;
 
-      const bounds = element.getBoundingClientRect();
-      return (
-        event.clientY >= bounds.top - 44 && event.clientY <= bounds.bottom + 44
-      );
-    };
+      const findWheelZone = (type: TryOnUiProduct["type"]) =>
+        currentTarget.querySelector<HTMLElement>(
+          `[data-tryon-wheel-zone="${type}"]`,
+        );
+      
+      const isPointerInsideZone = (element: HTMLElement | null) => {
+        if (!element) return false;
 
-    const wheelZone: TryOnUiProduct["type"] | null = isPointerInsideZone(
-      findWheelZone("topwear"),
-    )
-      ? "topwear"
-      : isPointerInsideZone(findWheelZone("bottomwear"))
-        ? "bottomwear"
-        : null;
+        const bounds = element.getBoundingClientRect();
+        return (
+          event.clientY >= bounds.top - 44 && event.clientY <= bounds.bottom + 44
+        );
+      };
 
-    // Only prevent default INSIDE one of the wheel interaction zones, so the
-    // rest of the page (and any future scrollable sections) is untouched.
-    if (!wheelZone) return;
-    event.preventDefault();
+      const wheelZone: TryOnUiProduct["type"] | null = isPointerInsideZone(
+        findWheelZone("topwear"),
+      )
+        ? "topwear"
+        : isPointerInsideZone(findWheelZone("bottomwear"))
+          ? "bottomwear"
+          : null;
 
-    if (!switching.canSwitch(wheelZone)) {
+      // Only prevent default INSIDE one of the wheel interaction zones, so the
+      // rest of the page (and any future scrollable sections) is untouched.
+      if (!wheelZone) return;
+      event.preventDefault();
+
+      if (!switching.canSwitch(wheelZone)) {
+        rootWheelDeltaRef.current = 0;
+        return;
+      }
+
+      rootWheelDeltaRef.current += event.deltaY;
+
+      const now = window.performance.now();
+      if (now - rootLastWheelSwitchRef.current < ROOT_WHEEL_COOLDOWN_MS) return;
+      if (Math.abs(rootWheelDeltaRef.current) < ROOT_WHEEL_THRESHOLD) return;
+
+      const direction = rootWheelDeltaRef.current > 0 ? 1 : -1;
       rootWheelDeltaRef.current = 0;
-      return;
-    }
+      rootLastWheelSwitchRef.current = now;
+      cycleProduct(wheelZone, direction);
+    },
+    [cycleProduct, switching],
+  );
 
-    rootWheelDeltaRef.current += event.deltaY;
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
 
-    const now = window.performance.now();
-    if (now - rootLastWheelSwitchRef.current < ROOT_WHEEL_COOLDOWN_MS) return;
-    if (Math.abs(rootWheelDeltaRef.current) < ROOT_WHEEL_THRESHOLD) return;
-
-    const direction = rootWheelDeltaRef.current > 0 ? 1 : -1;
-    rootWheelDeltaRef.current = 0;
-    rootLastWheelSwitchRef.current = now;
-    cycleProduct(wheelZone, direction);
-  };
+    // Attach as non-passive to allow preventDefault
+    el.addEventListener("wheel", handleExperienceWheel, {
+      passive: false,
+      capture: true,
+    });
+    
+    return () => {
+      el.removeEventListener("wheel", handleExperienceWheel, {
+        capture: true,
+      });
+    };
+  }, [handleExperienceWheel]);
 
   const shareLook = async () => {
     const text = `BLCKOLE try-on: ${selectedProducts
@@ -390,8 +417,8 @@ export function TryOnExperience({
     <TryOnErrorBoundary>
       <GlobalTryOnLoader />
       <main
+        ref={mainRef}
         className={`${styles.experience} relative min-h-[100svh] overflow-hidden`}
-        onWheelCapture={handleExperienceWheel}
       >
         <img
           className={styles.stageBackgroundImage}
@@ -448,6 +475,16 @@ export function TryOnExperience({
         />
 
         <ActionButtons onReset={resetLook} onShare={() => void shareLook()} />
+
+        <Canvas
+          className="pointer-events-none"
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 100 }}
+          eventSource={mainRef}
+          dpr={1}
+          gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
+        >
+          <View.Port />
+        </Canvas>
       </main>
     </TryOnErrorBoundary>
   );

@@ -18,6 +18,8 @@ function getSkinnedMeshes(scene: THREE.Object3D) {
   return meshes;
 }
 
+const warnedScenes = new Set<string>();
+
 export function bindGarmentToAvatar(
   garmentScene: THREE.Object3D,
   avatarScene: THREE.Object3D,
@@ -27,9 +29,12 @@ export function bindGarmentToAvatar(
   const result: BindResult = { boundMeshes: 0, skippedMeshes: 0 };
 
   if (garmentMeshes.length === 0) {
-    console.warn(
-      "[try-on] Garment has no SkinnedMesh. Rendering as a static fallback; realistic top/bottom try-on requires garments rigged to the avatar skeleton.",
-    );
+    if (!warnedScenes.has(garmentScene.uuid)) {
+      warnedScenes.add(garmentScene.uuid);
+      console.warn(
+        "[try-on] Garment has no SkinnedMesh. Rendering as a static fallback; realistic top/bottom try-on requires garments rigged to the avatar skeleton.",
+      );
+    }
     return result;
   }
 
