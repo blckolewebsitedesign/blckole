@@ -79,16 +79,11 @@ function RotatingPreview({ modelUrl, type }: Pick<Props, "modelUrl" | "type">) {
 
   return (
     <>
-      <ambientLight intensity={2.15} />
-      <directionalLight position={[1.8, 2.4, 2.4]} intensity={3.2} />
-      <directionalLight position={[-2.1, 1.8, 1.6]} intensity={1.6} />
-      <directionalLight
-        position={[-2.4, 1.1, -2]}
-        intensity={1.05}
-        color="#d71928"
-      />
-      <pointLight position={[0, -0.8, 1.3]} intensity={0.95} color="#ffffff" />
-      <pointLight position={[1.2, 0.4, -1.5]} intensity={0.6} color="#ff2638" />
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[1.8, 2.4, 2.4]} intensity={1.2} />
+      <directionalLight position={[-2.1, 1.8, 1.6]} intensity={0.5} />
+      <directionalLight position={[0, 2, -3]} intensity={0.8} />
+      <pointLight position={[0, -0.8, 1.3]} intensity={0.3} color="#ffffff" />
       <Center>
         <group
           ref={groupRef}

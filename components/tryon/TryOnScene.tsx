@@ -17,6 +17,7 @@ import {
 } from "react";
 import { useTryOnStore } from "stores/useTryOnStore";
 import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import type { AvatarGender, BodyMaskPart } from "types/tryon";
 
@@ -204,31 +205,28 @@ function AvatarRoot({
 function SceneContent(props: Props) {
   return (
     <>
-      <hemisphereLight args={["#ffffff", "#65070f", 1.8]} />
-      <ambientLight intensity={1.24} />
-      <directionalLight position={[0, 4, 4]} intensity={4.3} />
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[0, 4, 4]} intensity={1.2} />
+      <directionalLight position={[0, 4, -4]} intensity={1.0} />
+      <directionalLight position={[-3, 2, 0]} intensity={0.4} />
+      <directionalLight position={[3, 2, 0]} intensity={0.4} />
       <directionalLight
         position={[-3, 2, 1.8]}
-        intensity={1.2}
-        color="#ffccd1"
-      />
-      <directionalLight
-        position={[3, 1.8, -2]}
-        intensity={1.8}
-        color="#d71928"
+        intensity={0.25}
+        color="#ffeaec"
       />
       <spotLight
         position={[0, 4.2, 2.8]}
         angle={0.34}
         penumbra={0.86}
-        intensity={6.2}
+        intensity={1.0}
         color="#ffffff"
       />
       <AvatarRoot {...props} />
       <ContactShadows
         position={[0, -0.5, 0]}
-        opacity={10}
-        scale={8}
+        opacity={5}
+        scale={5}
         blur={6}
         far={2.4}
         resolution={512}
@@ -266,13 +264,24 @@ export function TryOnScene(props: Props) {
       ) : null}
       <Canvas
         camera={{ position: [0, 1.08, 5.78], fov: 34 }}
-        dpr={1}
+        dpr={[1, 2]}
         gl={{
-          antialias: false,
+          antialias: true,
           alpha: true,
           powerPreference: "high-performance",
         }}
-        onCreated={({ gl }) => {
+        onCreated={({ gl, scene }) => {
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.0;
+          gl.outputColorSpace = THREE.SRGBColorSpace;
+
+          const pmrem = new THREE.PMREMGenerator(gl);
+          scene.environment = pmrem.fromScene(
+            new RoomEnvironment(),
+            0.04,
+          ).texture;
+          pmrem.dispose();
+
           gl.domElement.addEventListener(
             "webglcontextlost",
             (event) => {

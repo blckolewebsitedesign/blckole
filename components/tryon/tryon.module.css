@@ -718,7 +718,7 @@
 
 .tooltipCard {
   position: absolute;
-  z-index: 17;
+  z-index: 200;
   display: grid;
   grid-template-columns: 88rem minmax(0, 1fr);
   gap: 14rem 14rem;

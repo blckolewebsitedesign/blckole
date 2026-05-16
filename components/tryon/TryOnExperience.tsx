@@ -2,6 +2,8 @@
 
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
+import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { ActionButtons } from "components/tryon/ActionButtons";
 import { AvatarGenderSwitch } from "components/tryon/AvatarGenderSwitch";
 import { FloatingProductCarousel } from "components/tryon/FloatingProductCarousel";
@@ -495,9 +497,21 @@ export function TryOnExperience({
         <Canvas
           className="pointer-events-none"
           style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 100 }}
-          eventSource={mainRef}
-          dpr={1}
-          gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
+          eventSource={mainRef as React.RefObject<HTMLElement>}
+          dpr={[1, 2]}
+          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          onCreated={({ gl, scene }) => {
+            gl.toneMapping = THREE.ACESFilmicToneMapping;
+            gl.toneMappingExposure = 1.0;
+            gl.outputColorSpace = THREE.SRGBColorSpace;
+
+            const pmrem = new THREE.PMREMGenerator(gl);
+            scene.environment = pmrem.fromScene(
+              new RoomEnvironment(),
+              0.04,
+            ).texture;
+            pmrem.dispose();
+          }}
         >
           <View.Port />
         </Canvas>

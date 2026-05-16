@@ -25,7 +25,9 @@ html {
   --gap: 10rem;
   --gap-s: 8rem;
   --grid-gutter: 20rem;
-  --grid-margin: 30rem;
+  /* Matches the ScrollStage's left/right edge so every page in the app
+     aligns to the same content rails as the homepage hero. */
+  --grid-margin: clamp(46rem, 4.2vw, 68rem);
 
   /* Radii & borders */
   --border-radius: 0rem;
@@ -69,7 +71,7 @@ html {
 
 @media (max-width: 900px) {
   :root {
-    --grid-margin: 20rem;
+    --grid-margin: 24rem;
     --grid-columns: 8;
     --grid-column: calc(
       (100vw - (var(--grid-margin) * 2) - (var(--grid-gutter) * 7)) / 8
