@@ -1,11 +1,11 @@
 "use client";
 
-import styles from "components/tryon/tryon.module.css";
-import { Center, Html, useGLTF } from "@react-three/drei";
+import { Center } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import React, { Suspense, useMemo, useRef, useState } from "react";
-import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import * as THREE from "three";
+import { SafeGLBModel } from "components/tryon/SafeGLBModel";
+import styles from "components/tryon/tryon.module.css";
+import React, { Suspense, useRef, useState } from "react";
+import type { Group } from "three";
 
 type Props = {
   modelUrl: string;
@@ -29,6 +29,10 @@ class PreviewErrorBoundary extends React.Component<
 
   static getDerivedStateFromError() {
     return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[try-on] Preview failed to load", error);
   }
 
   componentDidUpdate(prevProps: BoundaryProps) {
@@ -65,25 +69,8 @@ function PreviewFallback({
   );
 }
 
-function PreviewModel({ modelUrl, type }: Pick<Props, "modelUrl" | "type">) {
-  const groupRef = useRef<THREE.Group>(null);
-  const gltf = useGLTF(modelUrl);
-  const scene = useMemo(() => {
-    const nextScene = clone(gltf.scene);
-    nextScene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      object.frustumCulled = false;
-      const materials = Array.isArray(object.material)
-        ? object.material
-        : [object.material];
-
-      for (const material of materials) {
-        material.side = THREE.DoubleSide;
-        material.needsUpdate = true;
-      }
-    });
-    return nextScene;
-  }, [gltf.scene]);
+function RotatingPreview({ modelUrl, type }: Pick<Props, "modelUrl" | "type">) {
+  const groupRef = useRef<Group>(null);
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
@@ -108,7 +95,7 @@ function PreviewModel({ modelUrl, type }: Pick<Props, "modelUrl" | "type">) {
           scale={type === "bottomwear" ? 1.2 : 1.34}
           rotation={[0.12, 0, 0]}
         >
-          <primitive object={scene} />
+          <SafeGLBModel url={modelUrl} doubleSided />
         </group>
       </Center>
     </>
@@ -138,14 +125,8 @@ export function Product3DPreview({
           dpr={1}
           gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
         >
-          <Suspense
-            fallback={
-              <Html center className={styles.previewLoading}>
-                Loading
-              </Html>
-            }
-          >
-            <PreviewModel modelUrl={modelUrl} type={type} />
+          <Suspense fallback={null}>
+            <RotatingPreview modelUrl={modelUrl} type={type} />
           </Suspense>
         </Canvas>
       </div>

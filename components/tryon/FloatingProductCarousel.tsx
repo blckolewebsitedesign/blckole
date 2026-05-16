@@ -20,6 +20,7 @@ type Props = {
   selectedProduct: TryOnUiProduct | null;
   onProductClick: (product: TryOnUiProduct) => void;
   onCycle: (type: TryOnUiProductType, direction: -1 | 1) => void;
+  isSwitching?: boolean;
 };
 
 function wrapIndex(index: number, length: number) {
@@ -61,6 +62,7 @@ export function FloatingProductCarousel({
   selectedProduct,
   onProductClick,
   onCycle,
+  isSwitching = false,
 }: Props) {
   const visibleProducts = useMemo(
     () => products.filter((product) => isProductCompatible(product, avatar)),
@@ -76,8 +78,14 @@ export function FloatingProductCarousel({
   );
 
   const cycle = (direction: -1 | 1) => {
+    if (isSwitching) return;
     if (visibleProducts.length <= 1) return;
     onCycle(type, direction);
+  };
+
+  const handleProductClick = (product: TryOnUiProduct) => {
+    if (isSwitching && product.id !== selectedProduct?.id) return;
+    onProductClick(product);
   };
 
   return (
@@ -87,6 +95,7 @@ export function FloatingProductCarousel({
       }`}
       aria-label={title}
       data-tryon-wheel-zone={type}
+      data-switching={isSwitching ? "true" : "false"}
     >
       <header className={styles.railHudLabel}>
         <h2>{title}</h2>
@@ -101,6 +110,9 @@ export function FloatingProductCarousel({
           className={styles.carouselArrow}
           onClick={() => cycle(-1)}
           aria-label={`Previous ${title}`}
+          aria-disabled={isSwitching}
+          disabled={isSwitching}
+          data-disabled={isSwitching ? "true" : "false"}
         >
           {"<"}
         </button>
@@ -118,8 +130,9 @@ export function FloatingProductCarousel({
                     className={styles.floatingProduct}
                     data-active={active ? "true" : "false"}
                     data-type={type}
-                    onClick={() => onProductClick(product)}
+                    onClick={() => handleProductClick(product)}
                     aria-pressed={active}
+                    aria-disabled={isSwitching && !active}
                     initial={{ opacity: 0, y: 10, scale: 0.92 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.92 }}
@@ -150,8 +163,9 @@ export function FloatingProductCarousel({
                     className={styles.floatingProduct}
                     data-active={active ? "true" : "false"}
                     data-type={type}
-                    onClick={() => onProductClick(product)}
+                    onClick={() => handleProductClick(product)}
                     aria-pressed={active}
+                    aria-disabled={isSwitching && !active}
                     initial={{ opacity: 0, y: 10, scale: 0.92 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.92 }}
@@ -176,6 +190,9 @@ export function FloatingProductCarousel({
           className={styles.carouselArrow}
           onClick={() => cycle(1)}
           aria-label={`Next ${title}`}
+          aria-disabled={isSwitching}
+          disabled={isSwitching}
+          data-disabled={isSwitching ? "true" : "false"}
         >
           {">"}
         </button>

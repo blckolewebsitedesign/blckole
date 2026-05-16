@@ -19,6 +19,49 @@ type Props = {
   featuredProducts: Product[];
 };
 
+const brandValues = [
+  {
+    title: "Premium Fabrics",
+    text: "Built from elevated hand-feel materials chosen for comfort, structure, and daily wear.",
+    meta: "Selected textures",
+  },
+  {
+    title: "Distinctive Designs",
+    text: "Sharp silhouettes, graphic details, and statement pieces made to stand apart.",
+    meta: "Blckole identity",
+  },
+  {
+    title: "Limited Drops",
+    text: "Small-batch releases keep every drop focused, intentional, and harder to find twice.",
+    meta: "Limited quantities",
+  },
+  {
+    title: "Personalized Virtual Try-On",
+    text: "Preview the look on your selected avatar before you move from browse to bag.",
+    meta: "Try before checkout",
+  },
+];
+
+function WhyBlckole() {
+  return (
+    <section className={styles.whySection} aria-labelledby="why-blckole-title">
+      <h2 id="why-blckole-title" className={styles.whyTitle}>
+        <span>why</span> BLCKOLE?
+      </h2>
+
+      <div className={styles.valueGrid}>
+        {brandValues.map((item) => (
+          <article key={item.title} className={styles.valueItem}>
+            <p className={styles.valueText}>{item.text}</p>
+            <h3 className={styles.valueTitle}>{item.title}</h3>
+            <p className={styles.valueMeta}>{item.meta}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function HomeScene({
   products,
   recommendationsMap,
@@ -177,14 +220,7 @@ export function HomeScene({
             viewAllLabel="Shop entire line"
           />
           <PressQuote />
-          <ProductRail
-            eyebrow="Featured"
-            title="Pieces we keep restocking"
-            description="Same flow as any store: browse → open product → choose size → add to bag → checkout when your gateway is live."
-            products={featuredProducts}
-            viewAllHref="/indexes/products"
-            viewAllLabel="View all in shop"
-          />
+          <WhyBlckole />
           <Newsletter />
           <Principles />
           <Manifesto />

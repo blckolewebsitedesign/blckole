@@ -1,24 +1,11 @@
 "use client";
 
-import {
-  ContactShadows,
-  Html,
-  OrbitControls,
-  useGLTF,
-} from "@react-three/drei";
-import {
-  Canvas,
-  useFrame,
-  useThree,
-  type ThreeEvent,
-} from "@react-three/fiber";
+import { ContactShadows, OrbitControls, useGLTF } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { GarmentTransitionLayer } from "components/tryon/GarmentTransitionLayer";
 import { getSkinToneColor } from "components/tryon/skin-tones";
-import {
-  resolveWearableModelUrl,
-  type TryOnUiProduct,
-} from "components/tryon/tryon-products";
+import { type TryOnUiProduct } from "components/tryon/tryon-products";
 import styles from "components/tryon/tryon.module.css";
-import { bindGarmentToAvatar } from "lib/three/bindGarmentToAvatar";
 import { applyBodyMask } from "lib/three/bodyMask";
 import React, {
   Suspense,
@@ -30,49 +17,18 @@ import React, {
 } from "react";
 import { useTryOnStore } from "stores/useTryOnStore";
 import * as THREE from "three";
-import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import type { AvatarGender } from "types/tryon";
+import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
+import type { AvatarGender, BodyMaskPart } from "types/tryon";
 
 type Props = {
   avatar: AvatarGender;
   topwear: TryOnUiProduct | null;
   bottomwear: TryOnUiProduct | null;
   onWornProductClick: (product: TryOnUiProduct) => void;
+  onTopwearReady?: (product: TryOnUiProduct) => void;
+  onBottomwearReady?: (product: TryOnUiProduct) => void;
+  onWebGLError?: (message: string) => void;
 };
-
-type BoundaryProps = {
-  resetKey: string;
-  children: React.ReactNode;
-};
-
-class SceneErrorBoundary extends React.Component<
-  BoundaryProps,
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidUpdate(prevProps: BoundaryProps) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
-      this.setState({ hasError: false });
-    }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Html center className={styles.canvasMessage}>
-          Avatar unavailable
-        </Html>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 function avatarUrl(avatar: AvatarGender) {
   return `/models/avatar/${avatar}-avatar.glb`;
@@ -85,21 +41,6 @@ function cloneSceneMaterials(scene: THREE.Object3D) {
     object.material = Array.isArray(object.material)
       ? object.material.map((material) => material.clone())
       : object.material.clone();
-  });
-}
-
-function setSceneOpacity(scene: THREE.Object3D, opacity: number) {
-  scene.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return;
-    const materials = Array.isArray(object.material)
-      ? object.material
-      : [object.material];
-
-    for (const material of materials) {
-      material.transparent = opacity < 1;
-      material.opacity = opacity;
-      material.needsUpdate = true;
-    }
   });
 }
 
@@ -129,10 +70,6 @@ const LOCKED_POLAR_ANGLE = Math.acos(
   (1.08 - 0.48) / Math.hypot(1.08 - 0.48, 5.78),
 );
 
-function getWornProductKey(product: TryOnUiProduct, avatar: AvatarGender) {
-  return `${product.id}:${resolveWearableModelUrl(product, avatar)}`;
-}
-
 function CameraRig() {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
@@ -157,124 +94,22 @@ function CameraRig() {
   );
 }
 
-class WearableErrorBoundary extends React.Component<
-  BoundaryProps,
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidUpdate(prevProps: BoundaryProps) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
-      this.setState({ hasError: false });
-    }
-  }
-
-  render() {
-    if (this.state.hasError) return null;
-    return this.props.children;
-  }
-}
-
-function WornProductLayer({
+function AvatarRoot({
   avatar,
-  avatarScene,
-  product,
-  productKey,
-  onProductClick,
-  onReady,
-}: {
-  avatar: AvatarGender;
-  avatarScene: THREE.Object3D;
-  product: TryOnUiProduct;
-  productKey: string;
-  onProductClick: (product: TryOnUiProduct) => void;
-  onReady: (productKey: string) => void;
-}) {
-  const glbUrl = resolveWearableModelUrl(product, avatar);
-  const gltf = useGLTF(glbUrl);
-  const opacityRef = useRef(0);
-  const readySentRef = useRef(false);
-  const scene = useMemo(() => {
-    const garmentScene = clone(gltf.scene);
-    cloneSceneMaterials(garmentScene);
-    bindGarmentToAvatar(garmentScene, avatarScene);
-    setSceneOpacity(garmentScene, 0);
-    return garmentScene;
-  }, [avatarScene, gltf.scene]);
-
-  useFrame((_, delta) => {
-    if (opacityRef.current < 1) {
-      opacityRef.current = Math.min(1, opacityRef.current + delta * 3.2);
-      setSceneOpacity(scene, opacityRef.current);
-    }
-
-    if (!readySentRef.current && opacityRef.current >= 0.92) {
-      readySentRef.current = true;
-      onReady(productKey);
-    }
-  });
-
-  const handleClick = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
-    onProductClick(product);
-  };
-
-  const handlePointerOver = (event: ThreeEvent<PointerEvent>) => {
-    event.stopPropagation();
-    document.body.style.cursor = "pointer";
-  };
-
-  const handlePointerOut = () => {
-    document.body.style.cursor = "";
-  };
-
-  useEffect(() => {
-    return () => {
-      document.body.style.cursor = "";
-    };
-  }, []);
-
-  return (
-    <primitive
-      object={scene}
-      onClick={handleClick}
-      onPointerOver={handlePointerOver}
-      onPointerOut={handlePointerOut}
-    />
-  );
-}
-
-function AvatarModel({
-  avatar,
-  products,
+  topwear,
+  bottomwear,
   onWornProductClick,
-}: {
-  avatar: AvatarGender;
-  products: TryOnUiProduct[];
-  onWornProductClick: (product: TryOnUiProduct) => void;
-}) {
+  onTopwearReady,
+  onBottomwearReady,
+}: Props) {
   const gltf = useGLTF(avatarUrl(avatar));
   const selectedSkinTone = useTryOnStore((state) => state.selectedSkinTone);
+
   const avatarScene = useMemo(() => {
-    const scene = clone(gltf.scene);
+    const scene = cloneSkeleton(gltf.scene);
     cloneSceneMaterials(scene);
     return scene;
   }, [gltf.scene]);
-  const productEntries = useMemo(
-    () =>
-      products.map((product) => ({
-        product,
-        productKey: getWornProductKey(product, avatar),
-      })),
-    [avatar, products],
-  );
-  const [readyWearableKeys, setReadyWearableKeys] = useState<Set<string>>(
-    () => new Set(),
-  );
 
   const fitTransform = useMemo(() => {
     const bounds = new THREE.Box3().setFromObject(avatarScene);
@@ -296,48 +131,42 @@ function AvatarModel({
     };
   }, [avatarScene]);
 
-  useEffect(() => {
-    const activeKeys = new Set(productEntries.map((entry) => entry.productKey));
+  // Two stable refs hold the products that are currently rendered (in any
+  // phase) for each category. Per-frame we mask the avatar body to match
+  // the union — this keeps the avatar visible no matter how fast the user
+  // queues up swaps, because we never end up with a "hidden body part with
+  // no garment covering it" state.
+  const topwearLiveRef = useRef<TryOnUiProduct[]>([]);
+  const bottomwearLiveRef = useRef<TryOnUiProduct[]>([]);
+  const lastMaskSignatureRef = useRef<string | null>(null);
 
-    setReadyWearableKeys((currentKeys) => {
-      const nextKeys = new Set(
-        Array.from(currentKeys).filter((key) => activeKeys.has(key)),
-      );
-
-      if (
-        nextKeys.size === currentKeys.size &&
-        Array.from(nextKeys).every((key) => currentKeys.has(key))
-      ) {
-        return currentKeys;
-      }
-
-      return nextKeys;
-    });
-  }, [productEntries]);
-
-  const markWearableReady = useCallback((productKey: string) => {
-    setReadyWearableKeys((currentKeys) => {
-      if (currentKeys.has(productKey)) return currentKeys;
-
-      const nextKeys = new Set(currentKeys);
-      nextKeys.add(productKey);
-      return nextKeys;
-    });
+  const handleTopwearLiveChange = useCallback((products: TryOnUiProduct[]) => {
+    topwearLiveRef.current = products;
+    lastMaskSignatureRef.current = null;
   }, []);
 
-  useEffect(() => {
-    const readyProducts = productEntries
-      .filter((entry) => readyWearableKeys.has(entry.productKey))
-      .map((entry) => entry.product);
+  const handleBottomwearLiveChange = useCallback(
+    (products: TryOnUiProduct[]) => {
+      bottomwearLiveRef.current = products;
+      lastMaskSignatureRef.current = null;
+    },
+    [],
+  );
 
-    // Only hide avatar body sections after their replacement garment is loadedFopad
-    // and mostly visible. Rapid product scrolling can otherwise mask the body
-    // before the new GLB is ready, which makes the main character disappear.
-    applyBodyMask(
-      avatarScene,
-      Array.from(new Set(readyProducts.flatMap((product) => product.bodyMask))),
-    );
-  }, [avatarScene, productEntries, readyWearableKeys]);
+  useFrame(() => {
+    const parts = new Set<BodyMaskPart>();
+    for (const product of topwearLiveRef.current) {
+      for (const part of product.bodyMask) parts.add(part);
+    }
+    for (const product of bottomwearLiveRef.current) {
+      for (const part of product.bodyMask) parts.add(part);
+    }
+
+    const signature = Array.from(parts).sort().join(",");
+    if (signature === lastMaskSignatureRef.current) return;
+    lastMaskSignatureRef.current = signature;
+    applyBodyMask(avatarScene, Array.from(parts));
+  });
 
   useEffect(() => {
     tintAvatar(avatarScene, getSkinToneColor(selectedSkinTone));
@@ -349,38 +178,28 @@ function AvatarModel({
       rotation={[0, Math.PI, 0]}
       scale={fitTransform.scale}
     >
-      <primitive object={avatarScene} />
-      {productEntries.map(({ product, productKey }) => {
-        return (
-          <WearableErrorBoundary key={productKey} resetKey={productKey}>
-            <Suspense fallback={null}>
-              <WornProductLayer
-                avatar={avatar}
-                avatarScene={avatarScene}
-                product={product}
-                productKey={productKey}
-                onProductClick={onWornProductClick}
-                onReady={markWearableReady}
-              />
-            </Suspense>
-          </WearableErrorBoundary>
-        );
-      })}
+      <primitive object={avatarScene} dispose={null} />
+      <GarmentTransitionLayer
+        avatar={avatar}
+        avatarScene={avatarScene}
+        product={topwear}
+        onWornProductClick={onWornProductClick}
+        onReadyForCategory={onTopwearReady}
+        onActiveProductsChange={handleTopwearLiveChange}
+      />
+      <GarmentTransitionLayer
+        avatar={avatar}
+        avatarScene={avatarScene}
+        product={bottomwear}
+        onWornProductClick={onWornProductClick}
+        onReadyForCategory={onBottomwearReady}
+        onActiveProductsChange={handleBottomwearLiveChange}
+      />
     </group>
   );
 }
 
-function SceneContent({
-  avatar,
-  topwear,
-  bottomwear,
-  onWornProductClick,
-}: Props) {
-  const wornProducts = useMemo(
-    () => [topwear, bottomwear].filter(Boolean) as TryOnUiProduct[],
-    [bottomwear, topwear],
-  );
-
+function SceneContent(props: Props) {
   return (
     <>
       <hemisphereLight args={["#ffffff", "#65070f", 1.8]} />
@@ -403,13 +222,7 @@ function SceneContent({
         intensity={6.2}
         color="#ffffff"
       />
-      <SceneErrorBoundary resetKey={avatar}>
-        <AvatarModel
-          avatar={avatar}
-          products={wornProducts}
-          onWornProductClick={onWornProductClick}
-        />
-      </SceneErrorBoundary>
+      <AvatarRoot {...props} />
       <ContactShadows
         position={[0, -0.5, 0]}
         opacity={10}
@@ -424,12 +237,9 @@ function SceneContent({
   );
 }
 
-export function TryOnScene({
-  avatar,
-  topwear,
-  bottomwear,
-  onWornProductClick,
-}: Props) {
+export function TryOnScene(props: Props) {
+  const [contextLost, setContextLost] = useState(false);
+
   useEffect(() => {
     useGLTF.preload("/models/avatar/female-avatar.glb");
     useGLTF.preload("/models/avatar/male-avatar.glb");
@@ -437,24 +247,52 @@ export function TryOnScene({
 
   return (
     <div className={styles.sceneWrap}>
+      {contextLost ? (
+        <div className={styles.canvasContextLost} role="alert">
+          <p>3D view paused — graphics context was lost.</p>
+          <button
+            type="button"
+            className={styles.sceneErrorButton}
+            onClick={() => {
+              setContextLost(false);
+              if (typeof window !== "undefined") window.location.reload();
+            }}
+          >
+            Reload scene
+          </button>
+        </div>
+      ) : null}
       <Canvas
         camera={{ position: [0, 1.08, 5.78], fov: 34 }}
         dpr={1}
-        gl={{ antialias: false, alpha: true }}
+        gl={{
+          antialias: false,
+          alpha: true,
+          powerPreference: "high-performance",
+        }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener(
+            "webglcontextlost",
+            (event) => {
+              event.preventDefault();
+              console.warn("[try-on] WebGL context lost");
+              setContextLost(true);
+              props.onWebGLError?.("WebGL context lost");
+            },
+            false,
+          );
+          gl.domElement.addEventListener(
+            "webglcontextrestored",
+            () => {
+              console.info("[try-on] WebGL context restored");
+              setContextLost(false);
+            },
+            false,
+          );
+        }}
       >
-        <Suspense
-          fallback={
-            <Html center className={styles.canvasMessage}>
-              Loading avatar
-            </Html>
-          }
-        >
-          <SceneContent
-            avatar={avatar}
-            topwear={topwear}
-            bottomwear={bottomwear}
-            onWornProductClick={onWornProductClick}
-          />
+        <Suspense fallback={null}>
+          <SceneContent {...props} />
         </Suspense>
       </Canvas>
     </div>

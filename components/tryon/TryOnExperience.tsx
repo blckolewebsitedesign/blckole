@@ -3,15 +3,28 @@
 import { ActionButtons } from "components/tryon/ActionButtons";
 import { AvatarGenderSwitch } from "components/tryon/AvatarGenderSwitch";
 import { FloatingProductCarousel } from "components/tryon/FloatingProductCarousel";
+import { GlobalTryOnLoader } from "components/tryon/GlobalTryOnLoader";
 import { ProductTooltipCard } from "components/tryon/ProductTooltipCard";
 import { SkinToneSelector } from "components/tryon/SkinToneSelector";
+import { TryOnErrorBoundary } from "components/tryon/TryOnErrorBoundary";
 import { TryOnScene } from "components/tryon/TryOnScene";
 import {
   isProductCompatible,
+  resolvePreviewModelUrl,
+  resolveWearableModelUrl,
   type TryOnUiProduct,
 } from "components/tryon/tryon-products";
 import styles from "components/tryon/tryon.module.css";
-import { useEffect, useMemo, useRef, useState, type WheelEvent } from "react";
+import { useModelPreload } from "components/tryon/useModelPreload";
+import { useTryOnSwitching } from "components/tryon/useTryOnSwitching";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type WheelEvent,
+} from "react";
 import type { AvatarGender } from "types/tryon";
 
 type Props = {
@@ -20,7 +33,12 @@ type Props = {
 };
 
 const ROOT_WHEEL_THRESHOLD = 46;
-const ROOT_WHEEL_COOLDOWN_MS = 260;
+// Minimum delay between wheel-triggered product changes. Matches the
+// switching cooldown so the wheel can never out-race the lock.
+const ROOT_WHEEL_COOLDOWN_MS = 340;
+// How many previews around the current selection we treat as "visible".
+// Anything beyond this is a deferred preload, not a priority one.
+const VISIBLE_PREVIEW_NEIGHBORS = 2;
 
 function firstCompatibleProduct(
   products: TryOnUiProduct[],
@@ -47,6 +65,29 @@ function getCircularProduct(
   return products[nextIndex]!;
 }
 
+function neighborsAround(
+  products: TryOnUiProduct[],
+  selected: TryOnUiProduct | null,
+  span: number,
+) {
+  if (products.length === 0) return [] as TryOnUiProduct[];
+  const baseIndex = selected
+    ? Math.max(
+        0,
+        products.findIndex((product) => product.id === selected.id),
+      )
+    : 0;
+
+  const out: TryOnUiProduct[] = [];
+  for (let offset = -span; offset <= span; offset += 1) {
+    const idx =
+      (((baseIndex + offset) % products.length) + products.length) %
+      products.length;
+    out.push(products[idx]!);
+  }
+  return out;
+}
+
 export function TryOnExperience({
   topwearProducts,
   bottomwearProducts,
@@ -63,6 +104,8 @@ export function TryOnExperience({
   const [activeTooltipProduct, setActiveTooltipProduct] =
     useState<TryOnUiProduct | null>(null);
   const [isProductAlreadyWorn, setIsProductAlreadyWorn] = useState(false);
+
+  const switching = useTryOnSwitching({ cooldownMs: ROOT_WHEEL_COOLDOWN_MS });
   const rootWheelDeltaRef = useRef(0);
   const rootLastWheelSwitchRef = useRef(0);
 
@@ -86,6 +129,68 @@ export function TryOnExperience({
     [selectedBottomwear, selectedTopwear],
   );
 
+  // Priority preloads: avatar + currently-worn + visible neighbors.
+  // Deferred preloads: the rest of both compatible catalogs, fired in idle.
+  const { priorityUrls, deferredUrls } = useMemo(() => {
+    const priority = new Set<string>();
+    priority.add(`/models/avatar/${selectedAvatarGender}-avatar.glb`);
+
+    if (selectedTopwear) {
+      priority.add(
+        resolveWearableModelUrl(selectedTopwear, selectedAvatarGender),
+      );
+      priority.add(
+        resolvePreviewModelUrl(selectedTopwear, selectedAvatarGender),
+      );
+    }
+    if (selectedBottomwear) {
+      priority.add(
+        resolveWearableModelUrl(selectedBottomwear, selectedAvatarGender),
+      );
+      priority.add(
+        resolvePreviewModelUrl(selectedBottomwear, selectedAvatarGender),
+      );
+    }
+
+    for (const product of neighborsAround(
+      compatibleTopwear,
+      selectedTopwear,
+      VISIBLE_PREVIEW_NEIGHBORS,
+    )) {
+      priority.add(resolvePreviewModelUrl(product, selectedAvatarGender));
+    }
+    for (const product of neighborsAround(
+      compatibleBottomwear,
+      selectedBottomwear,
+      VISIBLE_PREVIEW_NEIGHBORS,
+    )) {
+      priority.add(resolvePreviewModelUrl(product, selectedAvatarGender));
+    }
+
+    const deferred = new Set<string>();
+    for (const product of compatibleTopwear) {
+      deferred.add(resolveWearableModelUrl(product, selectedAvatarGender));
+      deferred.add(resolvePreviewModelUrl(product, selectedAvatarGender));
+    }
+    for (const product of compatibleBottomwear) {
+      deferred.add(resolveWearableModelUrl(product, selectedAvatarGender));
+      deferred.add(resolvePreviewModelUrl(product, selectedAvatarGender));
+    }
+
+    return {
+      priorityUrls: Array.from(priority),
+      deferredUrls: Array.from(deferred),
+    };
+  }, [
+    compatibleBottomwear,
+    compatibleTopwear,
+    selectedAvatarGender,
+    selectedBottomwear,
+    selectedTopwear,
+  ]);
+
+  useModelPreload({ priorityUrls, deferredUrls });
+
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -98,6 +203,20 @@ export function TryOnExperience({
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
   }, []);
+
+  const handleTopwearReady = useCallback(
+    (product: TryOnUiProduct) => {
+      switching.finish("topwear", product.id);
+    },
+    [switching],
+  );
+
+  const handleBottomwearReady = useCallback(
+    (product: TryOnUiProduct) => {
+      switching.finish("bottomwear", product.id);
+    },
+    [switching],
+  );
 
   useEffect(() => {
     if (
@@ -127,29 +246,35 @@ export function TryOnExperience({
     setSelectedAvatarGender(avatar);
     setActiveTooltipProduct(null);
     setIsProductAlreadyWorn(false);
+    switching.reset();
   };
 
-  const handleProductClick = (product: TryOnUiProduct) => {
-    const active =
-      product.type === "topwear"
-        ? selectedTopwear?.id === product.id
-        : selectedBottomwear?.id === product.id;
+  const handleProductClick = useCallback(
+    (product: TryOnUiProduct) => {
+      const active =
+        product.type === "topwear"
+          ? selectedTopwear?.id === product.id
+          : selectedBottomwear?.id === product.id;
 
-    if (active) {
+      if (active) {
+        setActiveTooltipProduct(null);
+        setIsProductAlreadyWorn(false);
+        return;
+      }
+
+      if (!switching.tryStart(product.type, product.id)) return;
+
+      if (product.type === "topwear") {
+        setSelectedTopwear(product);
+      } else {
+        setSelectedBottomwear(product);
+      }
+
       setActiveTooltipProduct(null);
       setIsProductAlreadyWorn(false);
-      return;
-    }
-
-    if (product.type === "topwear") {
-      setSelectedTopwear(product);
-    } else {
-      setSelectedBottomwear(product);
-    }
-
-    setActiveTooltipProduct(null);
-    setIsProductAlreadyWorn(false);
-  };
+    },
+    [selectedBottomwear, selectedTopwear, switching],
+  );
 
   const handleWornProductClick = (product: TryOnUiProduct) => {
     const alreadyShowing =
@@ -166,26 +291,38 @@ export function TryOnExperience({
     setIsProductAlreadyWorn(false);
   };
 
-  const cycleProduct = (type: TryOnUiProduct["type"], direction: -1 | 1) => {
-    // Infinite circular switching: arrows and wheel gestures both use this
-    // function so moving past either end wraps cleanly to the opposite side.
-    if (type === "topwear") {
-      setSelectedTopwear((current) =>
-        getCircularProduct(compatibleTopwear, current, direction),
-      );
-    } else {
-      setSelectedBottomwear((current) =>
-        getCircularProduct(compatibleBottomwear, current, direction),
-      );
-    }
+  const cycleProduct = useCallback(
+    (type: TryOnUiProduct["type"], direction: -1 | 1) => {
+      if (!switching.canSwitch(type)) return;
 
-    setActiveTooltipProduct(null);
-    setIsProductAlreadyWorn(false);
-  };
+      const pool =
+        type === "topwear" ? compatibleTopwear : compatibleBottomwear;
+      const currentSelected =
+        type === "topwear" ? selectedTopwear : selectedBottomwear;
+      const next = getCircularProduct(pool, currentSelected, direction);
+      if (!next || next.id === currentSelected?.id) return;
+
+      if (!switching.tryStart(type, next.id)) return;
+
+      if (type === "topwear") {
+        setSelectedTopwear(next);
+      } else {
+        setSelectedBottomwear(next);
+      }
+
+      setActiveTooltipProduct(null);
+      setIsProductAlreadyWorn(false);
+    },
+    [
+      compatibleBottomwear,
+      compatibleTopwear,
+      selectedBottomwear,
+      selectedTopwear,
+      switching,
+    ],
+  );
 
   const handleExperienceWheel = (event: WheelEvent<HTMLElement>) => {
-    event.preventDefault();
-
     const findWheelZone = (type: TryOnUiProduct["type"]) =>
       event.currentTarget.querySelector<HTMLElement>(
         `[data-tryon-wheel-zone="${type}"]`,
@@ -207,11 +344,16 @@ export function TryOnExperience({
         ? "bottomwear"
         : null;
 
+    // Only prevent default INSIDE one of the wheel interaction zones, so the
+    // rest of the page (and any future scrollable sections) is untouched.
     if (!wheelZone) return;
+    event.preventDefault();
 
-    // Zone-based wheel switching for the central avatar area. The page stays
-    // locked, and the vertical pointer zone decides which circular carousel
-    // advances when the user scrolls over the character.
+    if (!switching.canSwitch(wheelZone)) {
+      rootWheelDeltaRef.current = 0;
+      return;
+    }
+
     rootWheelDeltaRef.current += event.deltaY;
 
     const now = window.performance.now();
@@ -241,62 +383,72 @@ export function TryOnExperience({
     }
   };
 
+  const isTopwearSwitching = Boolean(switching.pending.topwear);
+  const isBottomwearSwitching = Boolean(switching.pending.bottomwear);
+
   return (
-    <main
-      className={`${styles.experience} relative min-h-[100svh] overflow-hidden`}
-      onWheelCapture={handleExperienceWheel}
-    >
-      <img
-        className={styles.stageBackgroundImage}
-        src="/tryon-stage-bg.png"
-        alt=""
-        aria-hidden="true"
-      />
-      <div className={styles.stageAtmosphere} aria-hidden="true" />
-
-      <div
-        className={`${styles.switchLayer} absolute left-0 right-0 flex justify-center`}
+    <TryOnErrorBoundary>
+      <GlobalTryOnLoader />
+      <main
+        className={`${styles.experience} relative min-h-[100svh] overflow-hidden`}
+        onWheelCapture={handleExperienceWheel}
       >
-        <AvatarGenderSwitch
-          value={selectedAvatarGender}
-          onChange={updateAvatarGender}
+        <img
+          className={styles.stageBackgroundImage}
+          src="/tryon-stage-bg.png"
+          alt=""
+          aria-hidden="true"
         />
-      </div>
+        <div className={styles.stageAtmosphere} aria-hidden="true" />
 
-      <TryOnScene
-        avatar={selectedAvatarGender}
-        topwear={selectedTopwear}
-        bottomwear={selectedBottomwear}
-        onWornProductClick={handleWornProductClick}
-      />
+        <div
+          className={`${styles.switchLayer} absolute left-0 right-0 flex justify-center`}
+        >
+          <AvatarGenderSwitch
+            value={selectedAvatarGender}
+            onChange={updateAvatarGender}
+          />
+        </div>
 
-      <SkinToneSelector />
+        <TryOnScene
+          avatar={selectedAvatarGender}
+          topwear={selectedTopwear}
+          bottomwear={selectedBottomwear}
+          onWornProductClick={handleWornProductClick}
+          onTopwearReady={handleTopwearReady}
+          onBottomwearReady={handleBottomwearReady}
+        />
 
-      <FloatingProductCarousel
-        title="Topwear"
-        type="topwear"
-        products={compatibleTopwear}
-        avatar={selectedAvatarGender}
-        selectedProduct={selectedTopwear}
-        onProductClick={handleProductClick}
-        onCycle={cycleProduct}
-      />
+        <SkinToneSelector />
 
-      <FloatingProductCarousel
-        title="Bottomwear"
-        type="bottomwear"
-        products={compatibleBottomwear}
-        avatar={selectedAvatarGender}
-        selectedProduct={selectedBottomwear}
-        onProductClick={handleProductClick}
-        onCycle={cycleProduct}
-      />
+        <FloatingProductCarousel
+          title="Topwear"
+          type="topwear"
+          products={compatibleTopwear}
+          avatar={selectedAvatarGender}
+          selectedProduct={selectedTopwear}
+          onProductClick={handleProductClick}
+          onCycle={cycleProduct}
+          isSwitching={isTopwearSwitching}
+        />
 
-      <ProductTooltipCard
-        product={isProductAlreadyWorn ? activeTooltipProduct : null}
-      />
+        <FloatingProductCarousel
+          title="Bottomwear"
+          type="bottomwear"
+          products={compatibleBottomwear}
+          avatar={selectedAvatarGender}
+          selectedProduct={selectedBottomwear}
+          onProductClick={handleProductClick}
+          onCycle={cycleProduct}
+          isSwitching={isBottomwearSwitching}
+        />
 
-      <ActionButtons onReset={resetLook} onShare={() => void shareLook()} />
-    </main>
+        <ProductTooltipCard
+          product={isProductAlreadyWorn ? activeTooltipProduct : null}
+        />
+
+        <ActionButtons onReset={resetLook} onShare={() => void shareLook()} />
+      </main>
+    </TryOnErrorBoundary>
   );
 }
