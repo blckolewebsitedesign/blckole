@@ -1,10 +1,7 @@
 "use client";
 
-import { LookInfo } from "components/look-info";
-import { RotatingFigure } from "components/rotating-figure";
 import type { Product, ProductMedia } from "lib/shopify/types";
-import { preloadVideos } from "lib/video-preload";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
 
 type VideoMedia = Extract<ProductMedia, { mediaContentType: "VIDEO" }>;
@@ -29,6 +26,317 @@ const SWIPE_MAX_DURATION = 600;
 
 type LayerEntry = { product: Product; dir: 0 | -1 | 1 };
 
+const SCROLL_SEQUENCE_FRAME_COUNT = 224;
+const SCROLL_SEQUENCE_PATH = "/scroll-sequence";
+
+function getScrollSequenceFrameSrc(frameNumber: number) {
+  const paddedFrame = String(frameNumber).padStart(3, "0");
+  return `${SCROLL_SEQUENCE_PATH}/ezgif-frame-${paddedFrame}.png`;
+}
+
+function drawCoverImage(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  width: number,
+  height: number,
+) {
+  const imageRatio = image.naturalWidth / image.naturalHeight;
+  const canvasRatio = width / height;
+  const drawHeight = imageRatio > canvasRatio ? height : width / imageRatio;
+  const drawWidth = imageRatio > canvasRatio ? height * imageRatio : width;
+  const offsetX = (width - drawWidth) / 2;
+  const offsetY = (height - drawHeight) / 2;
+
+  context.clearRect(0, 0, width, height);
+  context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+}
+
+function ScrollSequenceCanvas({
+  active,
+  scrollRootRef,
+}: {
+  active: boolean;
+  scrollRootRef: React.RefObject<HTMLElement | null>;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(
+    Array.from({ length: SCROLL_SEQUENCE_FRAME_COUNT }, () => null),
+  );
+  const currentFrameRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!active || failed) return;
+
+    let cancelled = false;
+
+    const loadFrame = (index: number) => {
+      if (imagesRef.current[index]) return imagesRef.current[index];
+
+      const image = new Image();
+      image.decoding = "async";
+      image.addEventListener(
+        "load",
+        () => {
+          window.dispatchEvent(new Event("scroll-sequence-frame-load"));
+        },
+        { once: true },
+      );
+      image.src = getScrollSequenceFrameSrc(index + 1);
+      imagesRef.current[index] = image;
+      return image;
+    };
+
+    const firstImage = loadFrame(0);
+    if (!firstImage) return;
+
+    const handleFirstFrame = () => {
+      if (cancelled) return;
+      setReady(true);
+
+      const preloadRest = () => {
+        for (let i = 1; i < SCROLL_SEQUENCE_FRAME_COUNT; i += 1) {
+          loadFrame(i);
+        }
+      };
+
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(preloadRest, { timeout: 1400 });
+      } else {
+        globalThis.setTimeout(preloadRest, 250);
+      }
+    };
+
+    const handleFirstFrameError = () => {
+      if (!cancelled) setFailed(true);
+    };
+
+    if (firstImage.complete && firstImage.naturalWidth > 0) {
+      handleFirstFrame();
+    } else {
+      firstImage.addEventListener("load", handleFirstFrame, { once: true });
+      firstImage.addEventListener("error", handleFirstFrameError, {
+        once: true,
+      });
+    }
+
+    return () => {
+      cancelled = true;
+      firstImage.removeEventListener("load", handleFirstFrame);
+      firstImage.removeEventListener("error", handleFirstFrameError);
+    };
+  }, [active, failed]);
+
+  useEffect(() => {
+    if (!active || !ready) return;
+
+    const canvas = canvasRef.current;
+    const scrollRoot = scrollRootRef.current?.parentElement;
+    const context = canvas?.getContext("2d", { alpha: false });
+    if (!canvas || !scrollRoot || !context) return;
+
+    const getNearestLoadedFrame = (targetFrame: number) => {
+      for (let offset = 0; offset < SCROLL_SEQUENCE_FRAME_COUNT; offset += 1) {
+        const prev = targetFrame - offset;
+        const next = targetFrame + offset;
+        const prevImage = prev >= 0 ? imagesRef.current[prev] : null;
+        const nextImage =
+          next < SCROLL_SEQUENCE_FRAME_COUNT ? imagesRef.current[next] : null;
+
+        if (prevImage?.complete && prevImage.naturalWidth > 0) return prevImage;
+        if (nextImage?.complete && nextImage.naturalWidth > 0) return nextImage;
+      }
+
+      return null;
+    };
+
+    const render = () => {
+      rafRef.current = null;
+
+      const rootRect = scrollRoot.getBoundingClientRect();
+      const scrollDistance = Math.max(
+        1,
+        scrollRoot.offsetHeight - window.innerHeight,
+      );
+      const progress = Math.min(1, Math.max(0, -rootRect.top / scrollDistance));
+      const frameIndex = Math.min(
+        SCROLL_SEQUENCE_FRAME_COUNT - 1,
+        Math.round(progress * (SCROLL_SEQUENCE_FRAME_COUNT - 1)),
+      );
+      scrollRootRef.current?.style.setProperty(
+        "--sequence-progress",
+        progress.toFixed(4),
+      );
+
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.max(1, Math.round(canvas.clientWidth * pixelRatio));
+      const height = Math.max(1, Math.round(canvas.clientHeight * pixelRatio));
+
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+        currentFrameRef.current = -1;
+      }
+
+      const image = getNearestLoadedFrame(frameIndex);
+      if (!image) return;
+
+      if (currentFrameRef.current !== frameIndex) {
+        currentFrameRef.current = frameIndex;
+        drawCoverImage(context, image, width, height);
+      }
+    };
+
+    const requestRender = () => {
+      if (rafRef.current !== null) return;
+      rafRef.current = window.requestAnimationFrame(render);
+    };
+
+    requestRender();
+    window.addEventListener("scroll", requestRender, { passive: true });
+    window.addEventListener("resize", requestRender);
+    window.addEventListener("scroll-sequence-frame-load", requestRender);
+
+    return () => {
+      window.removeEventListener("scroll", requestRender);
+      window.removeEventListener("resize", requestRender);
+      window.removeEventListener("scroll-sequence-frame-load", requestRender);
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [active, ready, scrollRootRef]);
+
+  if (failed) return null;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={styles.sequenceCanvas}
+      aria-hidden="true"
+      data-ready={ready ? "true" : "false"}
+    />
+  );
+}
+
+function HeroLeftContent() {
+  return (
+    <section className={styles.textContent} aria-labelledby="hero-title">
+      <p className={styles.heroEyebrow}>You are being pulled in.</p>
+      <h1 id="hero-title" className={styles.heroHeadline}>
+        <span>You always</span>
+        <span>find your</span>
+        <span>way back.</span>
+      </h1>
+      <p className={styles.heroBody}>
+        <span>The void has chosen.</span>
+        <span>Two remain.</span>
+        <span>This is the final pull.</span>
+      </p>
+      {/* <a href="/story" className={styles.trailerLink}>
+        <span className={styles.trailerIcon} aria-hidden="true" />
+        Watch trailer
+      </a> */}
+    </section>
+  );
+}
+
+function HeroRightActions({}: { onSelectAvatar: () => void }) {
+  return (
+    <div className={styles.actionStack} data-no-swipe>
+      <a href="/indexes/products" className={styles.secondaryAction}>
+        <span>Shop now</span>
+      </a>
+      <a href="/try-on" className={styles.secondaryAction}>
+        Select avatar
+      </a>
+      <a href="/indexes/products" className={styles.secondaryAction}>
+        Explore catalog
+      </a>
+    </div>
+  );
+}
+
+function HeroBottomBar({
+  soundOn,
+  onToggleSound,
+}: {
+  soundOn: boolean;
+  onToggleSound: () => void;
+}) {
+  return (
+    <div className={styles.landingFooter} data-no-swipe>
+      <button
+        type="button"
+        className={styles.soundStatus}
+        aria-pressed={soundOn}
+        onClick={onToggleSound}
+      >
+        {/* <span>Sound: {soundOn ? "on" : "off"}</span>
+        <span className={styles.soundBars}>
+          <span />
+          <span />
+          <span />
+          <span />
+        </span> */}
+      </button>
+
+      <div className={styles.scrollCue} aria-hidden="true">
+        <span className={styles.mouseCue}>
+          <span />
+        </span>
+        <span>Scroll to enter</span>
+      </div>
+    </div>
+  );
+}
+
+// function DetailCharacter({
+//   layers,
+//   paused,
+//   onModelClick,
+// }: {
+//   layers: LayerEntry[];
+//   paused: boolean;
+//   onModelClick: () => void;
+// }) {
+//   return (
+//     <div className={styles.mainCharacterWrapper}>
+//       <div className={styles.floorGlow} aria-hidden="true" />
+//       <div className={styles.mainCharacter}>
+//         {layers.map((entry, i, arr) => {
+//           const isLatest = i === arr.length - 1;
+//           const cls = isLatest
+//             ? entry.dir === -1
+//               ? styles.charLayerInLeft
+//               : entry.dir === 1
+//                 ? styles.charLayerInRight
+//                 : styles.charLayerInitial
+//             : entry.dir === -1
+//               ? styles.charLayerOutRight
+//               : styles.charLayerOutLeft;
+//           return (
+//             <div
+//               key={entry.product.id}
+//               className={`${styles.charLayer} ${cls}`}
+//             >
+//               <RotatingFigure
+//                 product={entry.product}
+//                 listenToGlobalFrame={isLatest}
+//                 priority={true}
+//                 paused={paused}
+//                 onClick={isLatest ? onModelClick : undefined}
+//               />
+//             </div>
+//           );
+//         })}
+//       </div>
+//     </div>
+//   );
+// }
+
 export const ScrollStage = React.memo(function ScrollStage({
   products,
   recommendationsMap,
@@ -40,307 +348,39 @@ export const ScrollStage = React.memo(function ScrollStage({
   onClose,
   onToggleRecs,
 }: Props) {
-  const total = products.length;
-
-  const safeIndex = Math.max(0, Math.min(total - 1, currentIndex));
-  const activeProduct = products[safeIndex];
-  const activeRecommendations =
-    activeProduct && recommendationsMap
-      ? (recommendationsMap[activeProduct.id] ?? [])
-      : [];
-
-  const indexRef = useRef(safeIndex);
-  const totalRef = useRef(total);
-  const detailOpenRef = useRef(detailOpen);
-  useEffect(() => {
-    indexRef.current = safeIndex;
-    totalRef.current = total;
-    detailOpenRef.current = detailOpen;
-  }, [safeIndex, total, detailOpen]);
-
-  // Click on the model:
-  //  - Browse mode: enter detail (info on left, recs sheet up).
-  //  - Detail mode: toggle the recs sheet open/closed.
-  const handleModelClick = useCallback(() => {
-    if (detailOpenRef.current) {
-      onToggleRecs();
-    } else {
-      onSelect(indexRef.current, { open: true, userInitiated: true });
-    }
-  }, [onSelect, onToggleRecs]);
-
-  useEffect(() => {
-    if (total === 0) return;
-    const videoUrls: string[] = [];
-    for (const p of products) {
-      const raw = p.media?.find((m) => m.mediaContentType === "VIDEO");
-      const video = raw as VideoMedia | undefined;
-      if (!video?.sources?.length) continue;
-      const src =
-        video.sources.find((s) => s.mimeType === "video/mp4") ??
-        video.sources[0];
-      if (src?.url) videoUrls.push(src.url);
-    }
-    if (videoUrls.length === 0) return;
-    void preloadVideos(videoUrls, {
-      concurrency: 2,
-      priorityIndex: safeIndex,
-    });
-  }, [products, safeIndex, total]);
-
-  // Esc closes the detail mode entirely.
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && detailOpen) onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose, detailOpen]);
-
   // Swipe navigation (pointer-based, both modes).
-  const stageRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = stageRef.current;
-    if (!el) return;
+  const stageRef = useRef<HTMLElement>(null);
 
-    let startX = 0;
-    let startY = 0;
-    let startTime = 0;
-    let tracking = false;
-
-    const onDown = (e: PointerEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target?.closest("[data-no-swipe]")) return;
-      tracking = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startTime = Date.now();
-    };
-
-    const onUp = (e: PointerEvent) => {
-      if (!tracking) return;
-      tracking = false;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      const dt = Date.now() - startTime;
-      if (dt > SWIPE_MAX_DURATION) return;
-      if (Math.abs(dx) < SWIPE_MIN_DISTANCE) return;
-      if (Math.abs(dy) > Math.abs(dx)) return;
-
-      const t = totalRef.current;
-      if (t === 0) return;
-      const dir = dx > 0 ? -1 : 1;
-      const next = (indexRef.current + dir + t) % t;
-      onSelect(next, { open: false, userInitiated: true });
-    };
-
-    const onCancel = () => {
-      tracking = false;
-    };
-
-    el.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onCancel);
-    return () => {
-      el.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onCancel);
-    };
-  }, [onSelect]);
-
-  // Wheel navigation in detail mode only. Uses a velocity accumulator
-  // so trackpad momentum bursts feel natural — small deltas pile up
-  // until they cross a threshold (one switch), then the accumulator
-  // empties. A short reset gap (~180ms) treats lulls as a new intent.
-  // A switch lock just shorter than the slide animation prevents
-  // overlapping transitions while still allowing chained scrolls.
-  useEffect(() => {
-    const el = stageRef.current;
-    if (!el) return;
-
-    const SWITCH_THRESHOLD = 90;
-    const RESET_GAP_MS = 180;
-    const SWITCH_LOCK_MS = 380;
-    let accumulator = 0;
-    let lastWheelAt = 0;
-    let switchLockUntil = 0;
-
-    const onWheel = (e: WheelEvent) => {
-      if (!detailOpenRef.current) return;
-      const target = e.target as HTMLElement | null;
-      // Allow native scroll inside the LookInfo content (cards / pills).
-      if (target?.closest("[data-no-swipe]")) return;
-
-      const dx = e.deltaX;
-      const dy = e.deltaY;
-      const dominant = Math.abs(dy) > Math.abs(dx) ? dy : dx;
-      if (Math.abs(dominant) < 1) return;
-
-      e.preventDefault();
-
-      const now = Date.now();
-      if (now - lastWheelAt > RESET_GAP_MS) {
-        accumulator = 0;
-      }
-      lastWheelAt = now;
-      accumulator += dominant;
-
-      if (now < switchLockUntil) return;
-      if (Math.abs(accumulator) < SWITCH_THRESHOLD) return;
-
-      switchLockUntil = now + SWITCH_LOCK_MS;
-      const dir = accumulator > 0 ? 1 : -1;
-      accumulator = 0;
-
-      const t = totalRef.current;
-      if (t === 0) return;
-      const next = (indexRef.current + dir + t) % t;
-      onSelect(next, { open: false, userInitiated: true });
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-    };
-  }, [onSelect]);
-
-  // ── Two-layer slide for the main character ──
-  const [characterLayers, setCharacterLayers] = useState<LayerEntry[]>(() =>
-    activeProduct ? [{ product: activeProduct, dir: 0 }] : [],
-  );
-  const prevActiveIdRef = useRef<string | null>(activeProduct?.id ?? null);
-  const prevIndexRef = useRef<number>(safeIndex);
-
-  useEffect(() => {
-    if (!activeProduct) return;
-    if (prevActiveIdRef.current === activeProduct.id) return;
-
-    const prevIdx = prevIndexRef.current;
-    let dir: 1 | -1 = 1;
-    if (total > 0) {
-      const forward = (safeIndex - prevIdx + total) % total;
-      const backward = (prevIdx - safeIndex + total) % total;
-      dir = forward <= backward ? 1 : -1;
-    }
-    prevActiveIdRef.current = activeProduct.id;
-    prevIndexRef.current = safeIndex;
-
-    setCharacterLayers((cur) => {
-      const last = cur[cur.length - 1];
-      if (last && last.product.id === activeProduct.id) return cur;
-      return [...cur.slice(-1), { product: activeProduct, dir }];
-    });
-    const t = setTimeout(() => {
-      setCharacterLayers((cur) => cur.slice(-1));
-    }, 550);
-    return () => clearTimeout(t);
-  }, [activeProduct, safeIndex, total]);
-
-  if (total === 0 || !activeProduct) return null;
+  const [soundOn, setSoundOn] = useState(true);
 
   return (
-    <div
+    <section
       ref={stageRef}
       className={styles.stage}
+      aria-label="BLCKOLE entry campaign"
       data-detail-open={detailOpen ? "true" : "false"}
       data-recs-open={recsOpen ? "true" : "false"}
     >
-      {/* ── 40% Left Panel ── */}
+      <ScrollSequenceCanvas active={!detailOpen} scrollRootRef={stageRef} />
+
       <div className={styles.leftPanel}>
-        {detailOpen ? (
-          <LookInfo
-            key={activeProduct.id}
-            product={activeProduct}
-            index={safeIndex}
-            total={total}
-            recommendations={activeRecommendations}
-            expanded={recsOpen}
-            onClose={onClose}
+        <HeroLeftContent />
+      </div>
+
+      <div className={styles.rightPanel}>
+        {!detailOpen && (
+          <HeroRightActions
+            onSelectAvatar={() => {
+              onSelect(currentIndex, { open: true, userInitiated: true });
+            }}
           />
-        ) : (
-          <div className={styles.textContent}>
-            <h1 className={styles.heroHeadline}>Wear what pulls you back.</h1>
-            <p className={styles.heroBody}>
-              Denim and layers built to hold a room without shouting. Pick a
-              silhouette to see the two-piece capsule — then head to the shop
-              when you are ready to buy.
-            </p>
-            <div className={styles.heroLinks}>
-              <a href="/indexes/products" className={styles.heroLinkBtn}>
-                SHOP ALL PIECES
-              </a>
-              <a href="/story" className={styles.heroLinkBtn}>
-                VIEW LOOKBOOK
-              </a>
-            </div>
-            <p className={styles.heroInstruction}>
-              OR HOVER A FIGURE BELOW · CLICK TO OPEN THE CAPSULE
-            </p>
-          </div>
         )}
       </div>
 
-      {/* ── 60% Right Panel (character) ── */}
-      <div className={styles.rightPanel}>
-        <div className={styles.mainCharacterWrapper}>
-          <div className={styles.floorGlow} aria-hidden="true" />
-          <div className={styles.mainCharacter}>
-            {characterLayers.map((entry, i, arr) => {
-              const isLatest = i === arr.length - 1;
-              const cls = isLatest
-                ? entry.dir === -1
-                  ? styles.charLayerInLeft
-                  : entry.dir === 1
-                    ? styles.charLayerInRight
-                    : styles.charLayerInitial
-                : entry.dir === -1
-                  ? styles.charLayerOutRight
-                  : styles.charLayerOutLeft;
-              return (
-                <div
-                  key={entry.product.id}
-                  className={`${styles.charLayer} ${cls}`}
-                >
-                  <RotatingFigure
-                    product={entry.product}
-                    listenToGlobalFrame={isLatest}
-                    priority={true}
-                    paused={paused}
-                    onClick={isLatest ? handleModelClick : undefined}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Bottom thumbnail strip (hidden when recs sheet is up) ── */}
-      <div className={styles.thumbnailListWrapper}>
-        <div className={styles.thumbnailList}>
-          {products.map((p, i) => (
-            <button
-              type="button"
-              key={p.id}
-              className={`${styles.thumbnailSlot} ${i === safeIndex ? styles.thumbnailSlotActive : ""}`}
-              onClick={() => onSelect(i, { open: false, userInitiated: true })}
-              aria-label={`Select ${p.title}`}
-              aria-pressed={i === safeIndex}
-            >
-              <span className={styles.thumbnailFigure}>
-                <RotatingFigure
-                  product={p}
-                  priority={i < 4}
-                  quality="thumb"
-                  paused={paused}
-                  noLink
-                />
-              </span>
-              <span className={styles.activeBar} aria-hidden="true" />
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+      <HeroBottomBar
+        soundOn={soundOn}
+        onToggleSound={() => setSoundOn((v) => !v)}
+      />
+    </section>
   );
 });

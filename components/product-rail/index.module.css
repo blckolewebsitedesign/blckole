@@ -1,9 +1,10 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 32rem;
+  gap: 28rem;
   padding: 80rem var(--grid-margin) 0;
-  max-width: 1440rem;
+  width: 100%;
+  max-width: none;
   margin: 50rem auto;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -35,7 +36,7 @@
 
 .title {
   font-family: var(--font-family-serif);
-  font-size: clamp(32rem, 5vw, 64rem);
+  font-size: clamp(32rem, 5vw, 58rem);
   font-weight: 400;
   font-style: italic;
   letter-spacing: -0.02em;
@@ -81,10 +82,13 @@
   padding: 0 0 4rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24rem;
+  align-items: start;
+  gap: 10rem;
 }
 
 .cell {
+  display: flex;
+  width: 100%;
   min-width: 0;
 }
 
@@ -101,13 +105,13 @@
   }
   .rail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20rem 12rem;
+    gap: 10rem;
   }
 }
 
 @media (max-width: 480px) {
   .rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16rem 10rem;
+    grid-template-columns: 1fr;
+    gap: 10rem;
   }
 }

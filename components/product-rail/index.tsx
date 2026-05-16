@@ -12,7 +12,14 @@ type Props = {
   viewAllLabel?: string;
 };
 
-export function ProductRail({ title, products, viewAllHref, eyebrow, description, viewAllLabel = "View all" }: Props) {
+export function ProductRail({
+  title,
+  products,
+  viewAllHref,
+  eyebrow,
+  description,
+  viewAllLabel = "View all",
+}: Props) {
   if (products.length === 0) return null;
 
   return (
@@ -21,7 +28,9 @@ export function ProductRail({ title, products, viewAllHref, eyebrow, description
         <div className={styles.headContent}>
           {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
           <h2 className={styles.title}>{title}</h2>
-          {description ? <p className={styles.description}>{description}</p> : null}
+          {description ? (
+            <p className={styles.description}>{description}</p>
+          ) : null}
         </div>
         {viewAllHref ? (
           <Link href={viewAllHref} className={styles.viewAll}>

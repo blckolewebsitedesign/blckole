@@ -59,6 +59,53 @@ export async function addItem(
   }
 }
 
+export async function addItems(prevState: any, selectedVariantIds: string[]) {
+  const variantIds = selectedVariantIds.filter(Boolean);
+
+  if (variantIds.length === 0) {
+    return "Select at least one item";
+  }
+
+  const selectedCountryCode = await getSelectedCountryCode();
+  let cartId = (await cookies()).get("cartId")?.value;
+  let cart;
+  const lines = variantIds.map((merchandiseId) => ({
+    merchandiseId,
+    quantity: 1,
+  }));
+
+  if (cartId) {
+    cart = await getCart();
+
+    if (
+      cart?.buyerIdentity.countryCode &&
+      cart.buyerIdentity.countryCode !== selectedCountryCode
+    ) {
+      cart = await updateCartBuyerIdentity(selectedCountryCode);
+    }
+  }
+
+  if (!cartId || !cart) {
+    cart = await createCart(lines, selectedCountryCode);
+    (await cookies()).set("cartId", cart.id!);
+    updateTag(TAGS.cart);
+    return;
+  }
+
+  try {
+    await addToCart(lines);
+    updateTag(TAGS.cart);
+  } catch {
+    try {
+      cart = await createCart(lines, selectedCountryCode);
+      (await cookies()).set("cartId", cart.id!);
+      updateTag(TAGS.cart);
+    } catch {
+      return "Error adding items to cart";
+    }
+  }
+}
+
 export async function removeItem(prevState: any, merchandiseId: string) {
   try {
     const cart = await getCart();

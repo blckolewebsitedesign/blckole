@@ -149,8 +149,7 @@
 .headline {
   /* Match the home hero (.heroHeadline in scroll-stage) exactly so both
      pages share the same display look. */
-  font-family:
-    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-family: var(--font-family-mono) !important;
   font-size: clamp(32rem, 8vw, 70rem) !important;
   font-weight: 500 !important;
   font-style: italic !important;

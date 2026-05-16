@@ -2,7 +2,8 @@
   background: var(--color-background);
   color: var(--color-off-black);
   padding: 140rem var(--grid-margin) 80rem;
-  max-width: 1480rem;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
 }
 
@@ -26,9 +27,8 @@
 }
 
 .headline {
-  font-family:
-    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
-  font-size: clamp(48rem, 7vw, 96rem) !important;
+  font-family: var(--font-family-mono) !important;
+  font-size: clamp(48rem, 7vw, 64rem) !important;
   font-weight: 500 !important;
   font-style: italic !important;
   line-height: 1 !important;
@@ -92,7 +92,8 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32rem 24rem;
+  align-items: start;
+  gap: 10rem;
 }
 
 @media (max-width: 1100px) {
@@ -110,7 +111,7 @@
   }
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24rem 16rem;
+    gap: 10rem;
   }
   .chips {
     margin-bottom: 32rem;

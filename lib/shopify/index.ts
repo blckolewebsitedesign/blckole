@@ -24,6 +24,7 @@ import {
   editCartItemsMutation,
   removeFromCartMutation,
 } from "./mutations/cart";
+import { customerCreateMutation } from "./mutations/customer";
 import { getCartQuery } from "./queries/cart";
 import {
   getCollectionProductsQuery,
@@ -56,6 +57,7 @@ import {
   ShopifyCollectionProductsOperation,
   ShopifyCollectionsOperation,
   ShopifyCreateCartOperation,
+  ShopifyCustomerCreateOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
   ShopifyPagesOperation,
@@ -330,6 +332,34 @@ export async function updateCart(
   });
 
   return reshapeCart(res.body.data.cartLinesUpdate.cart);
+}
+
+export async function subscribeToNewsletter(
+  email: string,
+): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
+  // customerCreate requires a password even when we only want to capture
+  // marketing consent. Generate one the subscriber will never use; they can
+  // run a password reset later if they decide to claim the account.
+  const password = `${crypto.randomUUID()}!Aa1`;
+
+  const res = await shopifyFetch<ShopifyCustomerCreateOperation>({
+    query: customerCreateMutation,
+    variables: {
+      input: {
+        email,
+        password,
+        acceptsMarketing: true,
+      },
+    },
+  });
+
+  const errors = res.body.data.customerCreate.customerUserErrors;
+  if (errors.length > 0) {
+    const first = errors[0]!;
+    return { ok: false, code: first.code, message: first.message };
+  }
+
+  return { ok: true };
 }
 
 export async function getCart(): Promise<Cart | undefined> {

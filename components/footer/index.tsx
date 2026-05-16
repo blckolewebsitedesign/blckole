@@ -19,7 +19,11 @@ export function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.lockup}>
-        <img src="/logo-lockup-white.png" alt="BLCKHOLE" className={styles.logo} />
+        <img
+          src="/logo-lockup-white.png"
+          alt="BLCKHOLE"
+          className={styles.logo}
+        />
       </div>
       <p className={styles.tag}>You always find your way back</p>
 

@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { subscribeAction, type NewsletterState } from "./actions";
 import styles from "./index.module.css";
 
-export function Newsletter() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+const INITIAL_STATE: NewsletterState = { status: "idle" };
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!email) return;
-    // No backend wired yet — flip UI state for now.
-    setSubmitted(true);
-  }
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className={styles.btn} disabled={pending}>
+      {pending ? "..." : "SUBSCRIBE"}
+    </button>
+  );
+}
+
+export function Newsletter() {
+  const [state, formAction] = useActionState(subscribeAction, INITIAL_STATE);
 
   return (
     <section className={styles.section}>
@@ -27,22 +32,25 @@ export function Newsletter() {
           </p>
         </div>
 
-        {submitted ? (
+        {state.status === "success" ? (
           <p className={styles.thanks}>You&apos;re on the list.</p>
         ) : (
-          <form className={styles.form} onSubmit={onSubmit}>
+          <form className={styles.form} action={formAction}>
             <input
               type="email"
+              name="email"
               required
               placeholder="Email address"
               aria-label="Email address"
               className={styles.input}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              defaultValue=""
             />
-            <button type="submit" className={styles.btn}>
-              SUBSCRIBE
-            </button>
+            <SubmitButton />
+            {state.status === "error" && state.message ? (
+              <p className={styles.error} role="alert">
+                {state.message}
+              </p>
+            ) : null}
           </form>
         )}
       </div>

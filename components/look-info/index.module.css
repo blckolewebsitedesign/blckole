@@ -45,8 +45,7 @@
 }
 
 .title {
-  font-family:
-    "Cormorant Garamond", "Playfair Display", Georgia, serif !important;
+  font-family: var(--font-family-mono) !important;
   font-size: clamp(48rem, 5.5vw, 80rem) !important;
   font-weight: 500 !important;
   font-style: italic !important;

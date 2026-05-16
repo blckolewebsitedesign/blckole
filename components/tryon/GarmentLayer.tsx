@@ -1,0 +1,128 @@
+"use client";
+
+import { bindGarmentToAvatar } from "lib/three/bindGarmentToAvatar";
+import React, { useEffect, useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import type { TryOnProduct } from "types/tryon";
+import * as THREE from "three";
+
+type Props = {
+  avatarScene: THREE.Object3D;
+  product: TryOnProduct;
+  glbUrl: string;
+  onError?: (productId: string, message: string) => void;
+  onLoaded?: (productId: string) => void;
+};
+
+type ErrorBoundaryProps = {
+  product: TryOnProduct;
+  onError?: (productId: string, message: string) => void;
+  children: React.ReactNode;
+};
+
+class GarmentErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError?.(
+      this.props.product.id,
+      error.message || "Unable to load this 3D garment",
+    );
+  }
+
+  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+    if (prevProps.product.id !== this.props.product.id && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+function setSceneOpacity(scene: THREE.Object3D, opacity: number) {
+  scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    const materials = Array.isArray(object.material)
+      ? object.material
+      : [object.material];
+
+    for (const material of materials) {
+      const origTransparent = material.userData.originalTransparent ?? false;
+      const origOpacity = material.userData.originalOpacity ?? 1;
+      const origDepthWrite = material.userData.originalDepthWrite ?? true;
+
+      const isFading = opacity < 0.999;
+      material.transparent = isFading ? true : origTransparent;
+      material.opacity = isFading ? opacity * origOpacity : origOpacity;
+      material.depthWrite = isFading ? false : origDepthWrite;
+      material.needsUpdate = true;
+    }
+  });
+}
+
+function cloneMaterials(scene: THREE.Object3D) {
+  scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    
+    const saveMaterialProps = (mat: THREE.Material) => {
+      const m = mat.clone();
+      m.userData.originalTransparent = m.transparent;
+      m.userData.originalOpacity = m.opacity;
+      m.userData.originalDepthWrite = m.depthWrite;
+      return m;
+    };
+
+    object.material = Array.isArray(object.material)
+      ? object.material.map(saveMaterialProps)
+      : saveMaterialProps(object.material);
+  });
+}
+
+function InnerGarmentLayer({ avatarScene, product, glbUrl, onLoaded }: Props) {
+  const gltf = useGLTF(glbUrl);
+  const opacityRef = useRef(0);
+
+  const scene = useMemo(() => {
+    const garmentScene = clone(gltf.scene);
+    cloneMaterials(garmentScene);
+
+    // Garments should be exported against the same rig as the avatar. If they
+    // are not, keep them visible as a static fallback so one bad asset never
+    // breaks the entire try-on experience.
+    bindGarmentToAvatar(garmentScene, avatarScene);
+    setSceneOpacity(garmentScene, 0);
+    return garmentScene;
+  }, [avatarScene, gltf.scene]);
+
+  useEffect(() => {
+    onLoaded?.(product.id);
+  }, [onLoaded, product.id]);
+
+  useFrame((_, delta) => {
+    if (opacityRef.current >= 1) return;
+    opacityRef.current = Math.min(1, opacityRef.current + delta * 3.2);
+    setSceneOpacity(scene, opacityRef.current);
+  });
+
+  return <primitive object={scene} />;
+}
+
+export function GarmentLayer(props: Props) {
+  return (
+    <GarmentErrorBoundary product={props.product} onError={props.onError}>
+      <InnerGarmentLayer {...props} />
+    </GarmentErrorBoundary>
+  );
+}

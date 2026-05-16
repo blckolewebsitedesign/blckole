@@ -17,6 +17,21 @@ import React, {
 
 type UpdateType = "plus" | "minus" | "delete";
 
+type OptimisticVariant = Pick<
+  ProductVariant,
+  "id" | "title" | "selectedOptions" | "price"
+>;
+
+type OptimisticProduct = Pick<
+  Product,
+  "id" | "handle" | "title" | "featuredImage"
+>;
+
+type OptimisticCartInput = {
+  variant: OptimisticVariant;
+  product: OptimisticProduct;
+};
+
 type CartAction =
   | {
       type: "UPDATE_ITEM";
@@ -24,7 +39,11 @@ type CartAction =
     }
   | {
       type: "ADD_ITEM";
-      payload: { variant: ProductVariant; product: Product };
+      payload: OptimisticCartInput;
+    }
+  | {
+      type: "ADD_ITEMS";
+      payload: OptimisticCartInput[];
     };
 
 type CartContextType = {
@@ -68,8 +87,8 @@ function updateCartItem(
 
 function createOrUpdateCartItem(
   existingItem: CartItem | undefined,
-  variant: ProductVariant,
-  product: Product,
+  variant: OptimisticVariant,
+  product: OptimisticProduct,
 ): CartItem {
   const quantity = existingItem ? existingItem.quantity + 1 : 1;
   const totalAmount = calculateItemCost(quantity, variant.price.amount);
@@ -187,6 +206,31 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
         lines: updatedLines,
       };
     }
+    case "ADD_ITEMS": {
+      let updatedLines = currentCart.lines;
+
+      for (const { variant, product } of action.payload) {
+        const existingItem = updatedLines.find(
+          (item) => item.merchandise.id === variant.id,
+        );
+        const updatedItem = createOrUpdateCartItem(
+          existingItem,
+          variant,
+          product,
+        );
+        updatedLines = existingItem
+          ? updatedLines.map((item) =>
+              item.merchandise.id === variant.id ? updatedItem : item,
+            )
+          : [...updatedLines, updatedItem];
+      }
+
+      return {
+        ...currentCart,
+        ...updateCartTotals(updatedLines),
+        lines: updatedLines,
+      };
+    }
     default:
       return currentCart;
   }
@@ -229,11 +273,16 @@ export function useCart() {
     updateOptimisticCart({ type: "ADD_ITEM", payload: { variant, product } });
   };
 
+  const addCartItems = (items: OptimisticCartInput[]) => {
+    updateOptimisticCart({ type: "ADD_ITEMS", payload: items });
+  };
+
   return useMemo(
     () => ({
       cart: optimisticCart,
       updateCartItem,
       addCartItem,
+      addCartItems,
     }),
     [optimisticCart],
   );

@@ -2,8 +2,7 @@ import { CartProvider } from "components/cart/cart-context";
 import { CustomCursor } from "components/custom-cursor";
 import { SiteShell } from "components/site-shell";
 import { CUSTOMER_ACCOUNT_PROFILE_URL } from "lib/constants";
-import { getSelectedCurrencyMarket } from "lib/currency-server";
-import { getCart, getPages } from "lib/shopify";
+import { getCart } from "lib/shopify";
 import { baseUrl } from "lib/utils";
 import { ReactNode } from "react";
 import "./globals.css";
@@ -24,24 +23,19 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const cart = getCart();
-  const activeCurrencyMarket = await getSelectedCurrencyMarket();
-
-  const pages = await getPages().catch(() => []);
-  const storyCount = pages.filter((p) => p.handle.startsWith("story-")).length;
+  const cart = getCart().catch((error) => {
+    console.error("[cart] Unable to hydrate cart", error);
+    return undefined;
+  });
 
   const leftNavItems = [
-    { title: "EXPERIENCE", href: "/" },
-    { title: "SHOP", href: "/indexes/products" },
+    { title: "ENTRY", href: "/" },
+    { title: "COLLECTIONS", href: "/indexes/products" },
+    { title: "STORY", href: "/story" },
   ];
 
   const rightNavItems = [
-    {
-      title: "STORY",
-      href: "/story",
-      ...(storyCount > 0 ? { count: storyCount } : {}),
-    },
-    { title: "PROFILE", href: CUSTOMER_ACCOUNT_PROFILE_URL },
+    { title: "ACCOUNT", href: CUSTOMER_ACCOUNT_PROFILE_URL },
   ];
 
   return (
@@ -66,7 +60,6 @@ export default async function RootLayout({
             rightNavItems={rightNavItems}
             logoSrc="/logo-lockup-white.png"
             locales={["EN", "IN"]}
-            activeCurrencyMarket={activeCurrencyMarket}
           >
             {children}
           </SiteShell>
