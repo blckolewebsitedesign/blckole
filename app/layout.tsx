@@ -4,7 +4,7 @@ import { SiteShell } from "components/site-shell";
 import { CUSTOMER_ACCOUNT_PROFILE_URL } from "lib/constants";
 import { getCart } from "lib/shopify";
 import { baseUrl } from "lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import "./globals.css";
 
 const SITE_NAME = process.env.SITE_NAME || "BLCKOLE";
@@ -55,14 +55,16 @@ export default async function RootLayout({
       <body>
         <CartProvider cartPromise={cart}>
           <CustomCursor />
-          <SiteShell
-            leftNavItems={leftNavItems}
-            rightNavItems={rightNavItems}
-            logoSrc="/logo-lockup-white.png"
-            locales={["EN", "IN"]}
-          >
-            {children}
-          </SiteShell>
+          <Suspense fallback={null}>
+            <SiteShell
+              leftNavItems={leftNavItems}
+              rightNavItems={rightNavItems}
+              logoSrc="/logo-lockup-white.png"
+              locales={["EN", "IN"]}
+            >
+              {children}
+            </SiteShell>
+          </Suspense>
         </CartProvider>
       </body>
     </html>

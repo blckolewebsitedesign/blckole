@@ -7,8 +7,6 @@ export const metadata = {
   description: "Style BLCKOLE pieces on a 3D avatar.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default async function TryOnPage(props: {
   searchParams?: Promise<{ currency?: string }>;
 }) {

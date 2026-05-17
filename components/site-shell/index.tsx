@@ -4,7 +4,7 @@ import { useCart } from "components/cart/cart-context";
 import { CartDrawer } from "components/cart/drawer";
 import { Header } from "components/header";
 import { PageTransition } from "components/page-transition";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 type NavItem = {
   title: string;
@@ -12,21 +12,26 @@ type NavItem = {
   count?: number;
 };
 
-type Props = {
+type ChromeProps = {
   leftNavItems: NavItem[];
   rightNavItems: NavItem[];
   logoSrc?: string;
   locales?: string[];
+};
+
+type Props = ChromeProps & {
   children: React.ReactNode;
 };
 
-export function SiteShell({
+// Header + CartDrawer depend on the private cart promise (use cache: private),
+// which must resolve inside a Suspense boundary. Isolating them here lets the
+// rest of the page tree (children) render without waiting on the cart.
+function CartAwareChrome({
   leftNavItems,
   rightNavItems,
   logoSrc,
   locales,
-  children,
-}: Props) {
+}: ChromeProps) {
   const [cartOpen, setCartOpen] = useState(false);
   const { cart } = useCart();
   const cartCount = cart?.totalQuantity ?? 0;
@@ -52,6 +57,27 @@ export function SiteShell({
         locales={locales}
       />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+    </>
+  );
+}
+
+export function SiteShell({
+  leftNavItems,
+  rightNavItems,
+  logoSrc,
+  locales,
+  children,
+}: Props) {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <CartAwareChrome
+          leftNavItems={leftNavItems}
+          rightNavItems={rightNavItems}
+          logoSrc={logoSrc}
+          locales={locales}
+        />
+      </Suspense>
       <PageTransition>{children}</PageTransition>
     </>
   );

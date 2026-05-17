@@ -6,13 +6,9 @@ import {
   getProducts,
 } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
-export default async function BrowserLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+async function BrowserShell({ children }: { children: ReactNode }) {
   const countryCode = await getSelectedCountryCode();
   const products = await getCollectionProducts({
     collection: "hidden-homepage-featured-items",
@@ -45,5 +41,13 @@ export default async function BrowserLayout({
       />
       {children}
     </>
+  );
+}
+
+export default function BrowserLayout({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <BrowserShell>{children}</BrowserShell>
+    </Suspense>
   );
 }

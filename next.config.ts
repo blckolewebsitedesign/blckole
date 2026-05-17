@@ -1,16 +1,22 @@
-export default {
+// next.config.ts
+
+const nextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+
+  // Next.js 16 replacement for:
+  // experimental.ppr + experimental.useCache
+  cacheComponents: true,
+
   experimental: {
     cpus: 1,
-    ppr: true,
     inlineCss: true,
     staticGenerationMaxConcurrency: 1,
     staticGenerationMinPagesPerWorker: 1,
-    useCache: true,
     webpackBuildWorker: false,
   },
+
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
@@ -22,3 +28,5 @@ export default {
     ],
   },
 };
+
+export default nextConfig;

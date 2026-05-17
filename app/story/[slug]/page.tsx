@@ -1,7 +1,6 @@
 import { Footer } from "components/footer";
 import { getPage, getPages } from "lib/shopify";
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import styles from "./page.module.css";
 
@@ -17,13 +16,6 @@ export async function generateMetadata(props: {
     description: page.seo?.description,
     openGraph: { type: "article" },
   };
-}
-
-export async function generateStaticParams() {
-  const pages = await getPages().catch(() => []);
-  return pages
-    .filter((p) => p.handle.startsWith("story-"))
-    .map((p) => ({ slug: p.handle.replace("story-", "") }));
 }
 
 export default async function StoryPage(props: {
