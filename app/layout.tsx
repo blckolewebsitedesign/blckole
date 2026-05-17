@@ -23,8 +23,17 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const cart = getCart().catch((error) => {
-    console.error("[cart] Unable to hydrate cart", error);
+  const cart = getCart().catch((error: unknown) => {
+    // `"use cache: private"` promises are intentionally cancelled when a static
+    // prerender finishes — they resolve at request time on the client instead.
+    // Only log genuine failures, not that expected cancellation.
+    const digest =
+      typeof error === "object" && error !== null && "digest" in error
+        ? (error as { digest?: string }).digest
+        : undefined;
+    if (digest !== "HANGING_PROMISE_REJECTION") {
+      console.error("[cart] Unable to hydrate cart", error);
+    }
     return undefined;
   });
 
